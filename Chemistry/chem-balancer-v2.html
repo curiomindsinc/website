@@ -1,0 +1,1385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BalanceLab — Chemical Equations</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #080c10;
+  --surface: #0e1420;
+  --surface2: #151d2c;
+  --surface3: #1c2638;
+  --border: #253044;
+  --border2: #2e3d56;
+  --text: #e2eaf6;
+  --muted: #6b7f99;
+  --blue: #4d9fff;
+  --blue2: #2563eb;
+  --green: #34d399;
+  --red: #f87171;
+  --yellow: #fbbf24;
+  --purple: #a78bfa;
+  --cyan: #22d3ee;
+  --green-dim: rgba(52,211,153,0.12);
+  --red-dim: rgba(248,113,113,0.12);
+  --yellow-dim: rgba(251,191,36,0.12);
+  --blue-dim: rgba(77,159,255,0.12);
+  --purple-dim: rgba(167,139,250,0.12);
+  --r: 14px;
+  --r-sm: 8px;
+  --pts-easy: 10;
+  --pts-med: 20;
+  --pts-hard: 40;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;transition:background 0.3s,color 0.3s;}
+body.light{
+  --bg:#f0f4f8;--surface:#ffffff;--surface2:#e8edf3;--surface3:#dde4ec;
+  --border:#c8d3df;--border2:#b8c6d6;--text:#1a2332;--muted:#5a6a80;
+  --green-dim:rgba(22,163,74,0.1);--red-dim:rgba(220,38,38,0.1);
+  --yellow-dim:rgba(202,138,4,0.1);--blue-dim:rgba(37,99,235,0.1);
+  --purple-dim:rgba(124,58,237,0.1);
+}
+
+/* ── SCREENS ── */
+.screen{display:none;min-height:100vh;}
+.screen.active{display:flex;flex-direction:column;}
+
+/* ════════════════════════════════
+   NAME ENTRY SCREEN
+════════════════════════════════ */
+#name-screen{
+  align-items:center;justify-content:center;
+  background:radial-gradient(ellipse 80% 60% at 50% 0%,#0a1f3d 0%,var(--bg) 70%);
+}
+.name-card{
+  background:var(--surface);border:1px solid var(--border2);border-radius:20px;
+  padding:3rem 2.5rem;max-width:460px;width:90%;text-align:center;
+  box-shadow:0 40px 80px rgba(0,0,0,0.6),0 0 0 1px rgba(77,159,255,0.08);
+  animation:riseIn 0.6s cubic-bezier(0.16,1,0.3,1) both;
+}
+.name-logo{font-family:'Space Mono',monospace;font-size:1.5rem;color:var(--blue);letter-spacing:-1px;margin-bottom:0.4rem;}
+.name-tagline{font-size:0.85rem;color:var(--muted);margin-bottom:2.5rem;}
+.atom-row{display:flex;justify-content:center;gap:10px;margin-bottom:2rem;}
+.atom-pip{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:0.65rem;font-weight:700;color:#fff;animation:pipFloat 3s ease-in-out infinite;}
+.atom-pip:nth-child(2){animation-delay:.5s;}
+.atom-pip:nth-child(3){animation-delay:1s;}
+.atom-pip:nth-child(4){animation-delay:1.5s;}
+.name-label{font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);text-align:left;margin-bottom:0.5rem;}
+.name-input{
+  width:100%;background:var(--surface2);border:2px solid var(--border2);border-radius:10px;
+  padding:0.85rem 1rem;font-family:'DM Sans',sans-serif;font-size:1rem;color:var(--text);
+  margin-bottom:1rem;transition:border-color 0.2s;
+}
+.name-input:focus{outline:none;border-color:var(--blue);}
+.diff-selector{display:flex;gap:8px;margin-bottom:1.5rem;}
+.diff-btn{
+  flex:1;padding:0.65rem 0.5rem;border-radius:8px;border:2px solid var(--border);
+  background:var(--surface2);color:var(--muted);font-family:'DM Sans',sans-serif;
+  font-size:0.85rem;font-weight:700;cursor:pointer;transition:all 0.15s;text-align:center;
+}
+.diff-btn .pts{font-size:0.7rem;display:block;margin-top:2px;}
+.diff-btn.sel-easy.active{border-color:var(--green);background:var(--green-dim);color:var(--green);}
+.diff-btn.sel-med.active{border-color:var(--yellow);background:var(--yellow-dim);color:var(--yellow);}
+.diff-btn.sel-hard.active{border-color:var(--red);background:var(--red-dim);color:var(--red);}
+.btn-start{
+  width:100%;background:linear-gradient(135deg,var(--blue2),var(--blue));color:#fff;
+  border:none;border-radius:10px;padding:1rem;font-family:'DM Sans',sans-serif;
+  font-size:1rem;font-weight:800;cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;
+}
+.btn-start:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(77,159,255,0.35);}
+.name-skip{margin-top:1rem;font-size:0.8rem;color:var(--muted);cursor:pointer;}
+.name-skip:hover{color:var(--blue);}
+
+/* ════════════════════════════════
+   TUTORIAL
+════════════════════════════════ */
+#tutorial-screen{align-items:center;justify-content:center;padding:2rem;background:radial-gradient(ellipse 60% 40% at 60% 20%,#1a0a3a 0%,var(--bg) 65%);}
+.tut-card{background:var(--surface);border:1px solid var(--border2);border-radius:20px;max-width:540px;width:100%;padding:2.5rem;box-shadow:0 32px 64px rgba(0,0,0,0.5);animation:riseIn 0.5s ease both;}
+.tut-dots{display:flex;gap:6px;margin-bottom:2rem;}
+.tut-dot{flex:1;height:5px;border-radius:3px;background:var(--border);transition:all 0.3s;}
+.tut-dot.done{background:var(--green);}
+.tut-dot.active{background:var(--blue);}
+.tut-icon{font-size:2.8rem;margin-bottom:0.75rem;}
+.tut-title{font-size:1.4rem;font-weight:800;margin-bottom:0.6rem;}
+.tut-body{font-size:0.9rem;color:var(--muted);line-height:1.75;margin-bottom:1.25rem;}
+.tut-demo{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:1rem;font-family:'Space Mono',monospace;font-size:0.9rem;text-align:center;margin-bottom:1.5rem;line-height:1.8;}
+.coeff-hi{color:var(--blue);font-size:1.1em;font-weight:700;}
+.sub-hi{font-size:0.75em;vertical-align:sub;color:var(--muted);}
+.tut-nav{display:flex;gap:0.6rem;justify-content:flex-end;}
+.btn-ghost{background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:0.55rem 1.2rem;font-family:'DM Sans',sans-serif;font-size:0.9rem;font-weight:700;cursor:pointer;transition:background 0.15s;}
+.btn-ghost:hover{background:var(--border);}
+.btn-cta{background:var(--blue);color:#fff;border:none;border-radius:8px;padding:0.55rem 1.4rem;font-family:'DM Sans',sans-serif;font-size:0.9rem;font-weight:800;cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;}
+.btn-cta:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(77,159,255,0.4);}
+
+/* ════════════════════════════════
+   GAME SCREEN
+════════════════════════════════ */
+#game-screen{background:var(--bg);}
+.topbar{
+  display:flex;align-items:center;gap:0.75rem;padding:0.7rem 1.25rem;
+  background:var(--surface);border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:50;flex-wrap:wrap;
+}
+.topbar-logo{font-family:'Space Mono',monospace;font-weight:700;color:var(--blue);font-size:1rem;white-space:nowrap;}
+.topbar-name{font-size:0.8rem;color:var(--muted);font-weight:600;}
+.topbar-name span{color:var(--text);font-weight:800;}
+.tb-gap{flex:1;}
+.diff-pill{
+  padding:0.25rem 0.75rem;border-radius:20px;font-size:0.75rem;font-weight:800;
+  font-family:'Space Mono',monospace;border:1px solid;
+}
+.diff-pill.easy{background:var(--green-dim);color:var(--green);border-color:var(--green);}
+.diff-pill.med{background:var(--yellow-dim);color:var(--yellow);border-color:var(--yellow);}
+.diff-pill.hard{background:var(--red-dim);color:var(--red);border-color:var(--red);}
+.score-chip{background:var(--blue-dim);color:var(--blue);border:1px solid var(--blue);border-radius:20px;padding:0.25rem 0.85rem;font-family:'Space Mono',monospace;font-size:0.8rem;font-weight:700;}
+.streak-chip{background:var(--yellow-dim);color:var(--yellow);border:1px solid var(--yellow);border-radius:20px;padding:0.25rem 0.75rem;font-size:0.8rem;font-weight:800;display:none;}
+.streak-chip.show{display:flex;align-items:center;gap:4px;}
+.tb-btn{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:0.4rem 0.85rem;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:0.82rem;font-weight:700;transition:all 0.15s;white-space:nowrap;}
+.tb-btn:hover{background:var(--border);}
+.tb-btn.teacher{border-color:var(--purple);color:var(--purple);background:var(--purple-dim);}
+.tb-btn.end-session{border-color:var(--red);color:var(--red);background:var(--red-dim);}
+
+/* challenge bar */
+.chal-bar{
+  display:none;align-items:center;gap:1rem;padding:0.65rem 1.25rem;
+  background:linear-gradient(90deg,rgba(251,191,36,0.08),transparent);
+  border-bottom:1px solid rgba(251,191,36,0.2);
+}
+.chal-bar.on{display:flex;}
+.timer-num{font-family:'Space Mono',monospace;font-size:1.5rem;font-weight:700;color:var(--yellow);min-width:48px;}
+.timer-num.urgent{color:var(--red);animation:urgentPulse 0.5s ease infinite alternate;}
+.chal-score{font-family:'Space Mono',monospace;font-size:0.85rem;color:var(--muted);}
+.chal-score b{color:var(--text);font-size:1rem;}
+.combo-tag{background:var(--purple);color:#fff;border-radius:20px;padding:0.2rem 0.7rem;font-size:0.8rem;font-weight:800;display:none;}
+.combo-tag.on{display:block;}
+
+/* progress bar */
+.progress-wrap{padding:0.5rem 1.25rem;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:0.75rem;}
+.prog-label{font-size:0.75rem;color:var(--muted);font-weight:700;white-space:nowrap;}
+.prog-bar-bg{flex:1;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;}
+.prog-bar-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--cyan));border-radius:3px;transition:width 0.5s ease;}
+.prog-count{font-size:0.75rem;font-family:'Space Mono',monospace;color:var(--muted);white-space:nowrap;}
+
+/* game body */
+.game-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:1.5rem;gap:1.25rem;max-width:860px;margin:0 auto;width:100%;}
+
+/* question card */
+.q-card{
+  background:var(--surface);border:1px solid var(--border2);border-radius:20px;
+  padding:2rem;width:100%;text-align:center;position:relative;
+}
+.q-number{font-size:0.72rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:0.4rem;}
+.q-diff-tag{display:inline-block;margin-bottom:1.25rem;}
+.equation-wrap{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:0.4rem;margin-bottom:1.75rem;}
+.eq-arrow{font-size:1.6rem;color:var(--muted);margin:0 0.3rem;}
+.eq-plus{font-size:1.2rem;color:var(--muted);}
+.mol-group{display:flex;flex-direction:column;align-items:center;gap:0.4rem;}
+.coeff-row{display:flex;align-items:center;gap:0.4rem;}
+.c-btn{
+  width:34px;height:34px;border-radius:50%;border:2px solid var(--border2);
+  background:var(--surface2);color:var(--text);font-size:1.1rem;font-weight:700;
+  cursor:pointer;transition:all 0.15s;display:flex;align-items:center;justify-content:center;
+  font-family:'Space Mono',monospace;flex-shrink:0;
+}
+.c-btn:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-dim);}
+.c-val{font-family:'Space Mono',monospace;font-size:1.7rem;font-weight:700;min-width:38px;text-align:center;color:var(--blue);line-height:1;}
+.c-val.one{color:var(--muted);}
+.mol-formula{font-family:'Space Mono',monospace;font-size:1.1rem;font-weight:700;}
+.mol-sub{font-size:0.68em;vertical-align:sub;color:var(--muted);}
+.mol-vis{display:flex;flex-wrap:wrap;justify-content:center;gap:3px;max-width:140px;min-height:28px;}
+.mol-inst{display:flex;align-items:center;gap:2px;}
+.a-ball{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.5rem;font-weight:800;color:#fff;font-family:'Space Mono',monospace;flex-shrink:0;box-shadow:inset 0 -3px 5px rgba(0,0,0,0.35),0 2px 5px rgba(0,0,0,0.4);}
+.bond{width:5px;height:3px;background:rgba(255,255,255,0.25);border-radius:2px;}
+
+/* action buttons */
+.q-actions{display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap;}
+.btn-hint-action{background:var(--yellow-dim);color:var(--yellow);border:1px solid var(--yellow);border-radius:8px;padding:0.5rem 1.1rem;font-family:'DM Sans',sans-serif;font-size:0.85rem;font-weight:700;cursor:pointer;transition:all 0.15s;}
+.btn-hint-action:hover{background:rgba(251,191,36,0.2);}
+.btn-reveal{background:var(--red-dim);color:var(--red);border:1px solid var(--red);border-radius:8px;padding:0.5rem 1.1rem;font-family:'DM Sans',sans-serif;font-size:0.85rem;font-weight:700;cursor:pointer;transition:all 0.15s;}
+.btn-reveal:hover{background:rgba(248,113,113,0.2);}
+.btn-skip{background:var(--surface2);color:var(--muted);border:1px solid var(--border);border-radius:8px;padding:0.5rem 1.1rem;font-family:'DM Sans',sans-serif;font-size:0.85rem;font-weight:700;cursor:pointer;transition:all 0.15s;}
+.btn-skip:hover{color:var(--text);border-color:var(--border2);}
+
+/* feedback */
+.fb-area{min-height:52px;display:flex;align-items:center;justify-content:center;margin-top:0.5rem;}
+.fb-msg{padding:0.6rem 1.25rem;border-radius:10px;font-weight:700;font-size:0.92rem;text-align:center;animation:popIn 0.25s ease;}
+.fb-msg.success{background:var(--green-dim);color:var(--green);border:1px solid rgba(52,211,153,0.3);}
+.fb-msg.hint{background:var(--yellow-dim);color:var(--yellow);border:1px solid rgba(251,191,36,0.3);}
+.fb-msg.error{background:var(--red-dim);color:var(--red);border:1px solid rgba(248,113,113,0.3);}
+.fb-msg.info{background:var(--blue-dim);color:var(--blue);border:1px solid rgba(77,159,255,0.3);}
+
+/* atom counter */
+.counter-card{background:var(--surface);border:1px solid var(--border2);border-radius:16px;padding:1.25rem;width:100%;}
+.counter-head{font-size:0.72rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:0.9rem;}
+.counter-tbl{width:100%;border-collapse:collapse;}
+.counter-tbl th{font-size:0.7rem;font-weight:800;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);padding:0.35rem 0.6rem;text-align:left;border-bottom:1px solid var(--border);}
+.counter-tbl td{padding:0.45rem 0.6rem;font-family:'Space Mono',monospace;font-size:0.88rem;}
+.c-row{transition:background 0.25s;}
+.c-row.bal{background:var(--green-dim);}
+.c-row.unbal{background:var(--red-dim);}
+.c-el{font-weight:700;}
+.c-num.bal{color:var(--green);font-weight:700;}
+.c-num.unbal{color:var(--red);font-weight:700;}
+.c-status.bal{color:var(--green);font-size:0.75rem;font-weight:700;}
+.c-status.unbal{color:var(--red);font-size:0.75rem;font-weight:700;}
+
+/* ════════════════════════════════
+   TEACHER SCREEN
+════════════════════════════════ */
+#teacher-screen{background:var(--bg);}
+.teacher-top{display:flex;align-items:center;gap:1rem;padding:1rem 1.5rem;background:var(--surface);border-bottom:1px solid var(--border);}
+.teacher-body{display:flex;flex:1;}
+.t-panel{width:280px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);padding:1.25rem;overflow-y:auto;}
+.t-main{flex:1;display:flex;align-items:center;justify-content:center;padding:2rem;}
+.t-eq-card{background:var(--surface);border:1px solid var(--border2);border-radius:24px;padding:3rem;max-width:680px;width:100%;text-align:center;}
+.t-formula{font-family:'Space Mono',monospace;font-size:2.2rem;font-weight:700;margin-bottom:1rem;line-height:1.3;}
+.t-name{font-size:1rem;color:var(--muted);margin-bottom:1.5rem;}
+.sec-title{font-size:0.7rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:0.75rem;}
+.t-eq-list{display:flex;flex-direction:column;gap:5px;margin-bottom:1rem;}
+.t-eq-item{padding:0.55rem 0.7rem;border-radius:8px;border:1px solid var(--border);cursor:pointer;font-size:0.78rem;background:var(--surface2);color:var(--muted);font-family:'Space Mono',monospace;line-height:1.4;transition:all 0.15s;}
+.t-eq-item:hover{border-color:var(--blue);color:var(--text);}
+.t-eq-item.active{border-color:var(--blue);background:var(--blue-dim);color:var(--blue);}
+.t-eq-name{font-family:'DM Sans',sans-serif;font-size:0.72rem;font-weight:700;color:var(--muted);margin-bottom:2px;}
+.t-diff-tabs{display:flex;gap:4px;margin-bottom:0.9rem;}
+.t-dtab{flex:1;padding:0.35rem;text-align:center;border-radius:6px;font-size:0.72rem;font-weight:800;cursor:pointer;border:1px solid var(--border);background:var(--surface2);color:var(--muted);transition:all 0.15s;}
+.t-dtab.active{border-color:var(--blue);background:var(--blue-dim);color:var(--blue);}
+.t-panel-toggle{display:none;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:0.4rem 0.8rem;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:0.82rem;font-weight:700;}
+@media(max-width:700px){
+  .t-panel{
+    position:fixed;left:0;top:0;bottom:0;z-index:150;
+    transform:translateX(-100%);transition:transform 0.28s cubic-bezier(0.4,0,0.2,1);
+    width:260px;padding-top:1rem;
+  }
+  .t-panel.open{transform:translateX(0);box-shadow:8px 0 32px rgba(0,0,0,0.5);}
+  .t-panel-toggle{display:block;}
+  .t-panel-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:140;}
+  .t-panel-backdrop.open{display:block;}
+  .t-formula{font-size:1.3rem;}
+  .t-eq-card{padding:1.5rem;}
+}
+
+/* ════════════════════════════════
+   LEADERBOARD / END SCREEN
+════════════════════════════════ */
+#end-screen{align-items:center;justify-content:flex-start;padding:2rem;background:radial-gradient(ellipse 70% 50% at 50% 0%,#0a1f0f 0%,var(--bg) 65%);overflow-y:auto;}
+.end-inner{max-width:600px;width:100%;margin:0 auto;}
+.end-trophy{font-size:4rem;text-align:center;margin-bottom:0.5rem;animation:trophyIn 0.6s cubic-bezier(0.34,1.56,0.64,1) both;}
+.end-title{font-size:1.9rem;font-weight:900;color:var(--green);text-align:center;margin-bottom:0.3rem;}
+.end-sub{font-size:0.9rem;color:var(--muted);text-align:center;margin-bottom:1.75rem;}
+.end-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:0.75rem;margin-bottom:1.75rem;}
+.stat-box{background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:1rem;text-align:center;}
+.stat-val{font-family:'Space Mono',monospace;font-size:1.5rem;font-weight:700;color:var(--blue);}
+.stat-label{font-size:0.72rem;color:var(--muted);font-weight:700;margin-top:3px;}
+.lb-card{background:var(--surface);border:1px solid var(--border2);border-radius:16px;padding:1.5rem;margin-bottom:1.25rem;}
+.lb-title{font-size:0.72rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:1rem;}
+.lb-loading{text-align:center;color:var(--muted);font-size:0.85rem;padding:1rem;}
+.lb-row{display:flex;align-items:center;gap:10px;padding:0.6rem 0.5rem;border-radius:8px;margin-bottom:3px;transition:background 0.2s;}
+.lb-row.me{background:var(--blue-dim);}
+.lb-rank{width:28px;font-family:'Space Mono',monospace;font-size:0.85rem;font-weight:700;color:var(--muted);text-align:center;flex-shrink:0;}
+.lb-rank.g{color:#f0c040;}
+.lb-rank.s{color:#c0c0c0;}
+.lb-rank.b{color:#cd7f32;}
+.lb-name{flex:1;font-weight:700;font-size:0.9rem;}
+.lb-diff{font-size:0.72rem;color:var(--muted);margin-left:4px;}
+.lb-pts{font-family:'Space Mono',monospace;font-weight:700;color:var(--blue);font-size:0.9rem;}
+.lb-solved{font-size:0.72rem;color:var(--muted);font-family:'Space Mono',monospace;}
+.end-actions{display:flex;gap:0.75rem;flex-wrap:wrap;}
+.btn-again{flex:1;background:linear-gradient(135deg,var(--blue2),var(--blue));color:#fff;border:none;border-radius:10px;padding:0.85rem;font-family:'DM Sans',sans-serif;font-size:0.95rem;font-weight:800;cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;}
+.btn-again:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(77,159,255,0.35);}
+.btn-teacher-end{flex:1;background:var(--purple-dim);color:var(--purple);border:1px solid var(--purple);border-radius:10px;padding:0.85rem;font-family:'DM Sans',sans-serif;font-size:0.95rem;font-weight:800;cursor:pointer;transition:all 0.15s;}
+.btn-teacher-end:hover{background:rgba(167,139,250,0.2);}
+
+/* reflection */
+.refl-card{background:var(--surface);border:1px solid var(--border2);border-radius:16px;padding:1.5rem;margin-bottom:1.25rem;}
+.refl-q{font-size:0.82rem;font-weight:700;color:var(--muted);margin-bottom:0.4rem;margin-top:0.9rem;}
+.refl-q:first-child{margin-top:0;}
+.refl-inp{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0.6rem 0.8rem;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.88rem;resize:vertical;min-height:56px;transition:border-color 0.2s;}
+.refl-inp:focus{outline:none;border-color:var(--blue);}
+
+/* sheet config */
+.sheet-cfg{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:1rem;margin-bottom:1rem;font-size:0.82rem;color:var(--muted);line-height:1.6;}
+.sheet-cfg code{background:var(--surface3);padding:1px 6px;border-radius:4px;font-family:'Space Mono',monospace;color:var(--cyan);font-size:0.8rem;}
+.sheet-url-input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:0.55rem 0.8rem;color:var(--text);font-family:'Space Mono',monospace;font-size:0.78rem;margin-top:0.5rem;transition:border-color 0.2s;}
+.sheet-url-input:focus{outline:none;border-color:var(--blue);}
+.btn-submit-score{background:var(--green-dim);color:var(--green);border:1px solid var(--green);border-radius:8px;padding:0.55rem 1.2rem;font-family:'DM Sans',sans-serif;font-size:0.85rem;font-weight:700;cursor:pointer;transition:all 0.15s;margin-top:0.75rem;}
+.btn-submit-score:hover{background:rgba(52,211,153,0.2);}
+.submit-status{font-size:0.8rem;color:var(--muted);margin-top:0.5rem;min-height:20px;}
+
+/* XP float */
+.xp-wrap{display:flex;align-items:center;gap:5px;}
+.xp-lbl{font-size:0.7rem;color:var(--muted);font-weight:800;}
+.xp-bg{width:80px;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;}
+.xp-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--purple));border-radius:3px;transition:width 0.5s ease;}
+.lv-chip{background:var(--purple-dim);color:var(--purple);border:1px solid var(--purple);border-radius:20px;padding:0.2rem 0.6rem;font-family:'Space Mono',monospace;font-size:0.72rem;font-weight:700;}
+.theme-btn{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:0.4rem 0.6rem;cursor:pointer;font-size:0.9rem;transition:background 0.15s;}
+.theme-btn:hover{background:var(--border);}
+
+.xp-float{position:fixed;font-weight:900;color:var(--blue);font-size:1rem;pointer-events:none;z-index:999;animation:xpPop 0.9s ease forwards;font-family:'Space Mono',monospace;}
+.badge-modal{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.25s ease;}
+.badge-box{background:var(--surface);border:2px solid var(--purple);border-radius:18px;padding:2rem;text-align:center;max-width:320px;box-shadow:0 0 48px rgba(167,139,250,0.25);}
+.badge-ico{font-size:3.5rem;margin-bottom:0.65rem;}
+.badge-ttl{font-size:1.25rem;font-weight:900;color:var(--purple);margin-bottom:0.35rem;}
+.badge-dsc{font-size:0.85rem;color:var(--muted);margin-bottom:1rem;}
+
+/* ANIMATIONS */
+@keyframes riseIn{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pipFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+@keyframes popIn{from{transform:scale(0.85);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes urgentPulse{from{opacity:1}to{opacity:0.4}}
+@keyframes xpPop{0%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(-50px) scale(1.4);opacity:0}}
+@keyframes trophyIn{from{transform:scale(0.3) rotate(-20deg);opacity:0}to{transform:scale(1) rotate(0deg);opacity:1}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes celebrate{0%{transform:scale(1)}30%{transform:scale(1.04)}70%{transform:scale(0.98)}100%{transform:scale(1)}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+
+/* ── MOBILE OVERFLOW MENU ── */
+.tb-overflow-btn{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:0.4rem 0.6rem;cursor:pointer;font-size:1rem;display:none;position:relative;z-index:60;}
+.tb-overflow-menu{
+  display:none;position:absolute;top:calc(100% + 6px);right:0;
+  background:var(--surface);border:1px solid var(--border2);border-radius:12px;
+  padding:0.5rem;min-width:180px;z-index:200;box-shadow:0 12px 32px rgba(0,0,0,0.5);
+  flex-direction:column;gap:4px;
+}
+.tb-overflow-menu.open{display:flex;}
+.tb-overflow-menu .tb-btn,.tb-overflow-menu .theme-btn{width:100%;text-align:left;border-radius:8px;}
+.topbar-right{display:flex;align-items:center;gap:0.5rem;position:relative;}
+
+@media(max-width:700px){
+  .topbar{flex-wrap:nowrap;overflow:hidden;}
+  .topbar-name{display:none;}
+  .xp-wrap{display:none;}
+  .lv-chip{display:none;}
+  /* hide secondary buttons, show overflow toggle */
+  .tb-btn.teacher,.tb-btn.end-session,.theme-btn,.tb-btn#chal-toggle{display:none;}
+  .tb-overflow-btn{display:block;}
+  .game-body{padding:0.75rem;}
+  .end-stats{grid-template-columns:1fr 1fr;}
+  .t-panel{display:none;}
+}
+@media(max-width:420px){
+  .diff-pill{display:none;}
+  .score-chip{font-size:0.7rem;padding:0.2rem 0.5rem;}
+  .streak-chip{font-size:0.72rem;}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════
+     NAME ENTRY
+══════════════════════════════════════ -->
+<div id="name-screen" class="screen active">
+  <div class="name-card">
+    <div class="atom-row">
+      <div class="atom-pip" style="background:#e74c4c">H</div>
+      <div class="atom-pip" style="background:#3b82f6">O</div>
+      <div class="atom-pip" style="background:#374151">C</div>
+      <div class="atom-pip" style="background:#f59e0b">Fe</div>
+    </div>
+    <div class="name-logo">⚗️ BalanceLab</div>
+    <div class="name-tagline">Master Chemical Equation Balancing</div>
+    <div class="name-label">Your Name</div>
+    <input class="name-input" id="name-input" type="text" placeholder="Enter your name…" maxlength="24" autocomplete="off"/>
+    <div class="name-label" style="margin-bottom:0.6rem;">Difficulty</div>
+    <div class="diff-selector">
+      <div class="diff-btn sel-easy active" onclick="selDiff('beginner',this)">Easy<span class="pts">10 pts/eq</span></div>
+      <div class="diff-btn sel-med" onclick="selDiff('intermediate',this)">Medium<span class="pts">20 pts/eq</span></div>
+      <div class="diff-btn sel-hard" onclick="selDiff('advanced',this)">Hard<span class="pts">40 pts/eq</span></div>
+    </div>
+    <button class="btn-start" onclick="beginSession()">Start Session →</button>
+    <div class="name-skip" onclick="showTutorial()">View tutorial first</div>
+    <div style="margin-top:1.75rem;padding-top:1.25rem;border-top:1px solid var(--border);font-size:0.75rem;color:var(--muted);text-align:center;line-height:1.6;">
+      Created by <strong style="color:var(--text);">Mr Lau Chin Hang</strong><br>
+      <a href="https://www.instagram.com/curiominds.inc" target="_blank" style="color:var(--blue);text-decoration:none;font-weight:700;">@curiominds.inc</a>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     TUTORIAL
+══════════════════════════════════════ -->
+<div id="tutorial-screen" class="screen">
+  <div class="tut-card">
+    <div class="tut-dots" id="tut-dots"></div>
+    <div class="tut-icon" id="tut-icon"></div>
+    <div class="tut-title" id="tut-title"></div>
+    <div class="tut-body" id="tut-body"></div>
+    <div class="tut-demo" id="tut-demo"></div>
+    <div class="tut-nav">
+      <button class="btn-ghost" id="tut-back" onclick="tutNav(-1)">← Back</button>
+      <button class="btn-cta" id="tut-fwd" onclick="tutNav(1)">Next →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     GAME
+══════════════════════════════════════ -->
+<div id="game-screen" class="screen">
+  <div class="topbar">
+    <div class="topbar-logo">⚗️ BalanceLab</div>
+    <div class="topbar-name">Playing as <span id="tb-name">—</span></div>
+    <div class="tb-gap"></div>
+    <div class="streak-chip" id="streak-chip">🔥 <span id="streak-num">0</span></div>
+    <div class="diff-pill easy" id="diff-pill">Easy</div>
+    <div class="score-chip">Score: <span id="tb-score">0</span></div>
+    <button class="tb-btn" id="chal-toggle" onclick="toggleChallenge()">⏱ Challenge</button>
+    <div class="xp-wrap">
+      <div class="xp-lbl">XP</div>
+      <div class="xp-bg"><div class="xp-fill" id="xp-fill" style="width:0%"></div></div>
+    </div>
+    <div class="lv-chip" id="lv-chip">Lv 1</div>
+    <div class="topbar-right">
+      <button class="theme-btn" id="theme-btn" onclick="toggleTheme()" title="Toggle light/dark">☀️</button>
+      <button class="tb-btn teacher" onclick="showTeacher()">👩‍🏫 Teacher</button>
+      <button class="tb-btn end-session" onclick="confirmEnd()">End Session</button>
+      <!-- mobile overflow -->
+      <button class="tb-overflow-btn" onclick="toggleOverflow(this)" title="More">⋯</button>
+      <div class="tb-overflow-menu" id="tb-overflow-menu">
+        <button class="tb-btn" onclick="toggleChallenge();closeOverflow()">⏱ Challenge</button>
+        <button class="theme-btn" onclick="toggleTheme();closeOverflow()">☀️ Theme</button>
+        <button class="tb-btn teacher" onclick="showTeacher();closeOverflow()">👩‍🏫 Teacher</button>
+        <button class="tb-btn end-session" onclick="confirmEnd();closeOverflow()">🏁 End Session</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="chal-bar" id="chal-bar">
+    <div><div style="font-size:0.65rem;color:var(--muted);font-weight:800;margin-bottom:2px;">TIME</div>
+      <div class="timer-num" id="timer-num">60</div></div>
+    <div class="chal-score">Challenge Score: <b id="chal-score-val">0</b></div>
+    <div class="combo-tag" id="combo-tag"></div>
+    <div style="flex:1"></div>
+    <button class="btn-ghost" onclick="toggleChallenge()">Stop</button>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="prog-label">Progress</div>
+    <div class="prog-bar-bg"><div class="prog-bar-fill" id="prog-fill" style="width:0%"></div></div>
+    <div class="prog-count" id="prog-count">0 / 0</div>
+  </div>
+
+  <div class="game-body">
+    <!-- Equation card -->
+    <div class="q-card" id="q-card">
+      <div class="q-number" id="q-number">Question 1</div>
+      <div class="q-diff-tag"><span class="diff-pill easy" id="q-diff-tag">Easy · 10 pts</span></div>
+      <div class="equation-wrap" id="eq-wrap"></div>
+      <div class="q-actions">
+        <button class="btn-hint-action" onclick="showHintBtn()">💡 Hint</button>
+        <button class="btn-reveal" onclick="revealAnswer()">👁 Reveal Answer</button>
+        <button class="btn-skip" onclick="skipQuestion()">⏭ Skip</button>
+      </div>
+      <div class="fb-area" id="fb-area"></div>
+    </div>
+
+    <!-- Atom counter -->
+    <div class="counter-card">
+      <div class="counter-head">⚛️ Atom Counter — Live</div>
+      <table class="counter-tbl">
+        <thead><tr>
+          <th>Element</th><th>Left Side</th><th>Right Side</th><th>Status</th>
+        </tr></thead>
+        <tbody id="counter-body"><tr><td colspan="4" style="color:var(--muted);text-align:center;padding:1rem;font-size:0.85rem;">Loading first equation…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     TEACHER
+══════════════════════════════════════ -->
+<div id="teacher-screen" class="screen">
+  <div class="teacher-top">
+    <div class="topbar-logo">👩‍🏫 Teacher Mode</div>
+    <button class="t-panel-toggle" onclick="toggleTPanel()">☰ Equations</button>
+    <div style="flex:1"></div>
+    <button class="btn-ghost" onclick="showGame()">← Back</button>
+    <button class="tb-btn" onclick="teacherRandom()">🎲 Random</button>
+    <button class="tb-btn" onclick="teacherReset()">↺ Reset</button>
+    <button class="tb-btn" onclick="toggleFS()">⛶ Fullscreen</button>
+  </div>
+  <div class="t-panel-backdrop" id="t-backdrop" onclick="closeTPanel()"></div>
+  <div class="teacher-body">
+    <div class="t-panel" id="t-panel">
+      <div class="sec-title">Difficulty</div>
+      <div class="t-diff-tabs">
+        <div class="t-dtab active" onclick="setTDiff('beginner',this)">Easy</div>
+        <div class="t-dtab" onclick="setTDiff('intermediate',this)">Med</div>
+        <div class="t-dtab" onclick="setTDiff('advanced',this)">Hard</div>
+      </div>
+      <div class="sec-title">Equations</div>
+      <div class="t-eq-list" id="t-eq-list"></div>
+    </div>
+    <div class="t-main">
+      <div class="t-eq-card">
+        <div class="t-name" id="t-eq-name">Select an equation from the panel</div>
+        <div class="t-formula" id="t-eq-formula">—</div>
+        <div style="margin-top:1.25rem;">
+          <button class="btn-ghost" id="t-reveal-btn" onclick="toggleTeacherAnswer()" style="font-size:0.82rem;">👁 Show Answer</button>
+        </div>
+        <div id="t-answer-wrap" style="display:none;margin-top:0.75rem;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     END / LEADERBOARD
+══════════════════════════════════════ -->
+<div id="end-screen" class="screen">
+  <div class="end-inner">
+    <div class="end-trophy">🏆</div>
+    <div class="end-title">Session Complete!</div>
+    <div class="end-sub" id="end-sub">Great work. Here's how you did.</div>
+
+    <div class="end-stats">
+      <div class="stat-box"><div class="stat-val" id="end-score">0</div><div class="stat-label">Total Score</div></div>
+      <div class="stat-box"><div class="stat-val" id="end-solved">0</div><div class="stat-label">Solved</div></div>
+      <div class="stat-box"><div class="stat-val" id="end-streak">0</div><div class="stat-label">Best Streak</div></div>
+    </div>
+    <div class="diff-breakdown" id="diff-breakdown" style="display:flex;gap:0.6rem;margin-bottom:1.5rem;flex-wrap:wrap;"></div>
+
+    <!-- Google Sheets submission -->
+    <div class="lb-card">
+      <div class="lb-title">📊 Submit Score to Leaderboard</div>
+      <button class="btn-submit-score" id="submit-btn" onclick="submitScore()">📤 Submit My Score</button>
+      <div class="submit-status" id="submit-status"></div>
+    </div>
+
+    <!-- Live leaderboard -->
+    <div class="lb-card">
+      <div class="lb-title">🏆 Class Leaderboard</div>
+      <div id="lb-body"><div class="lb-loading">Submit your score and click refresh to load leaderboard.</div></div>
+      <div style="margin-top:0.75rem;">
+        <button class="btn-ghost" onclick="fetchLeaderboard()" style="font-size:0.8rem;">🔄 Refresh Leaderboard</button>
+      </div>
+    </div>
+
+    <!-- Reflection -->
+    <div class="refl-card">
+      <div class="lb-title">💭 Reflect</div>
+      <div class="refl-q">What strategy helped you the most?</div>
+      <textarea class="refl-inp" placeholder="e.g. I focused on the most complex element first…"></textarea>
+      <div class="refl-q">Which atoms were hardest to balance?</div>
+      <textarea class="refl-inp" placeholder="e.g. Oxygen kept changing when I adjusted hydrogen…"></textarea>
+      <div class="refl-q">What pattern did you notice?</div>
+      <textarea class="refl-inp" placeholder="e.g. I noticed that…"></textarea>
+    </div>
+
+    <div class="end-actions">
+      <button class="btn-again" onclick="restartSession()">🔁 Play Again</button>
+      <button class="btn-teacher-end" onclick="showTeacher()">👩‍🏫 Teacher View</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════
+// ATOM COLORS
+// ══════════════════════════════════════════════════
+const AC = {H:'#e74c4c',O:'#3b82f6',C:'#374151',N:'#10b981',Fe:'#f59e0b',
+  S:'#eab308',Ca:'#8b5cf6',Cl:'#06b6d4',Na:'#ec4899',Mg:'#14b8a6',
+  Al:'#6366f1',Cu:'#f97316',Zn:'#84cc16',P:'#f43f5e',K:'#a855f7',
+  Ag:'#94a3b8',Au:'#fbbf24',Si:'#64748b',Br:'#dc2626',I:'#7c3aed',
+  Pb:'#6b7280',Ba:'#0ea5e9',Mn:'#d946ef',Cr:'#16a34a',Ni:'#0d9488',
+  default:'#6b7280'};
+const ac = el => AC[el]||AC.default;
+
+// ══════════════════════════════════════════════════
+// MOLECULE DATA
+// ══════════════════════════════════════════════════
+const MA = {
+  H2:{H:2},O2:{O:2},H2O:{H:2,O:1},HCl:{H:1,Cl:1},Cl2:{Cl:2},
+  Mg:{Mg:1},MgO:{Mg:1,O:1},Na:{Na:1},NaCl:{Na:1,Cl:1},
+  C:{C:1},CO2:{C:1,O:2},CO:{C:1,O:1},Fe:{Fe:1},Fe2O3:{Fe:2,O:3},Fe3O4:{Fe:3,O:4},
+  CH4:{C:1,H:4},Al:{Al:1},Al2O3:{Al:2,O:3},CaCO3:{Ca:1,C:1,O:3},CaO:{Ca:1,O:1},
+  Cu:{Cu:1},AgNO3:{Ag:1,N:1,O:3},CuNO32:{Cu:1,N:2,O:6},Ag:{Ag:1},
+  C2H6:{C:2,H:6},C6H12O6:{C:6,H:12,O:6},N2:{N:2},NH3:{N:1,H:3},
+  FeCl2:{Fe:1,Cl:2},FeCl3:{Fe:1,Cl:3},C3H8:{C:3,H:8},C4H10:{C:4,H:10},
+  H2SO4:{H:2,S:1,O:4},H2SO3:{H:2,S:1,O:3},HNO3:{H:1,N:1,O:3},HNO2:{H:1,N:1,O:2},
+  NaOH:{Na:1,O:1,H:1},KOH:{K:1,O:1,H:1},Ca_OH_2:{Ca:1,O:2,H:2},
+  SO2:{S:1,O:2},SO3:{S:1,O:3},NO:{N:1,O:1},NO2:{N:1,O:2},N2O:{N:2,O:1},
+  H3PO4:{H:3,P:1,O:4},H2O2:{H:2,O:2},Na2O:{Na:2,O:1},K2O:{K:2,O:1},
+  CaF2:{Ca:1,F:2},MgCl2:{Mg:1,Cl:2},ZnO:{Zn:1,O:1},Zn:{Zn:1},ZnCl2:{Zn:1,Cl:2},
+  Cu2O:{Cu:2,O:1},CuO:{Cu:1,O:1},CuSO4:{Cu:1,S:1,O:4},
+  Na2SO4:{Na:2,S:1,O:4},Na2CO3:{Na:2,C:1,O:3},NaHCO3:{Na:1,H:1,C:1,O:3},
+  CaCl2:{Ca:1,Cl:2},Ca3PO42:{Ca:3,P:2,O:8},BaSO4:{Ba:1,S:1,O:4},BaCl2:{Ba:1,Cl:2},
+  BaCO3:{Ba:1,C:1,O:3},BaO:{Ba:1,O:1},K2SO4:{K:2,S:1,O:4},KCl:{K:1,Cl:1},
+  MgSO4:{Mg:1,S:1,O:4},MgCO3:{Mg:1,C:1,O:3},AlCl3:{Al:1,Cl:3},
+  FeS:{Fe:1,S:1},FeS2:{Fe:1,S:2},S:{S:1},S8:{S:8},
+  P4:{P:4},P4O10:{P:4,O:10},PH3:{P:1,H:3},
+  C2H4:{C:2,H:4},C2H2:{C:2,H:2},C5H12:{C:5,H:12},C6H6:{C:6,H:6},
+  C7H16:{C:7,H:16},C8H18:{C:8,H:18},C10H22:{C:10,H:22},
+  NH4NO3:{N:2,H:4,O:3},NH4Cl:{N:1,H:4,Cl:1},
+  Br2:{Br:2},HBr:{H:1,Br:1},NaBr:{Na:1,Br:1},I2:{I:2},HI:{H:1,I:1},
+  KMnO4:{K:1,Mn:1,O:4},MnO2:{Mn:1,O:2},Mn2O3:{Mn:2,O:3},
+  Cr2O3:{Cr:2,O:3},Cr:{Cr:1},NiO:{Ni:1,O:1},Ni:{Ni:1},
+  PbO:{Pb:1,O:1},Pb:{Pb:1},PbO2:{Pb:1,O:2},PbSO4:{Pb:1,S:1,O:4},
+  SiO2:{Si:1,O:2},Si:{Si:1},
+};
+const MD = {
+  H2:'H₂',O2:'O₂',H2O:'H₂O',HCl:'HCl',Cl2:'Cl₂',Mg:'Mg',MgO:'MgO',
+  Na:'Na',NaCl:'NaCl',C:'C',CO2:'CO₂',CO:'CO',Fe:'Fe',Fe2O3:'Fe₂O₃',Fe3O4:'Fe₃O₄',
+  CH4:'CH₄',Al:'Al',Al2O3:'Al₂O₃',CaCO3:'CaCO₃',CaO:'CaO',Cu:'Cu',
+  AgNO3:'AgNO₃',CuNO32:'Cu(NO₃)₂',Ag:'Ag',C2H6:'C₂H₆',C6H12O6:'C₆H₁₂O₆',
+  N2:'N₂',NH3:'NH₃',FeCl2:'FeCl₂',FeCl3:'FeCl₃',C3H8:'C₃H₈',C4H10:'C₄H₁₀',
+  H2SO4:'H₂SO₄',H2SO3:'H₂SO₃',HNO3:'HNO₃',HNO2:'HNO₂',NaOH:'NaOH',
+  KOH:'KOH',Ca_OH_2:'Ca(OH)₂',SO2:'SO₂',SO3:'SO₃',NO:'NO',NO2:'NO₂',
+  N2O:'N₂O',H3PO4:'H₃PO₄',H2O2:'H₂O₂',Na2O:'Na₂O',K2O:'K₂O',
+  CaF2:'CaF₂',MgCl2:'MgCl₂',ZnO:'ZnO',Zn:'Zn',ZnCl2:'ZnCl₂',
+  Cu2O:'Cu₂O',CuO:'CuO',CuSO4:'CuSO₄',Na2SO4:'Na₂SO₄',Na2CO3:'Na₂CO₃',
+  NaHCO3:'NaHCO₃',CaCl2:'CaCl₂',Ca3PO42:'Ca₃(PO₄)₂',BaSO4:'BaSO₄',
+  BaCl2:'BaCl₂',BaCO3:'BaCO₃',BaO:'BaO',K2SO4:'K₂SO₄',KCl:'KCl',
+  MgSO4:'MgSO₄',MgCO3:'MgCO₃',AlCl3:'AlCl₃',FeS:'FeS',FeS2:'FeS₂',
+  S:'S',S8:'S₈',P4:'P₄',P4O10:'P₄O₁₀',PH3:'PH₃',
+  C2H4:'C₂H₄',C2H2:'C₂H₂',C5H12:'C₅H₁₂',C6H6:'C₆H₆',
+  C7H16:'C₇H₁₆',C8H18:'C₈H₁₈',C10H22:'C₁₀H₂₂',
+  NH4NO3:'NH₄NO₃',NH4Cl:'NH₄Cl',Br2:'Br₂',HBr:'HBr',NaBr:'NaBr',
+  I2:'I₂',HI:'HI',KMnO4:'KMnO₄',MnO2:'MnO₂',Mn2O3:'Mn₂O₃',
+  Cr2O3:'Cr₂O₃',Cr:'Cr',NiO:'NiO',Ni:'Ni',PbO:'PbO',Pb:'Pb',
+  PbO2:'PbO₂',PbSO4:'PbSO₄',SiO2:'SiO₂',Si:'Si',
+};
+
+// ══════════════════════════════════════════════════
+// 90 EQUATION DATABASE — 30 per tier
+// ══════════════════════════════════════════════════
+const DB = {
+  beginner:[
+    {name:"Water Formation",         r:[{m:'H2'},{m:'O2'}],  p:[{m:'H2O'}],  sol:[2,1,2]},
+    {name:"Hydrogen Chloride",       r:[{m:'H2'},{m:'Cl2'}], p:[{m:'HCl'}],  sol:[1,1,2]},
+    {name:"Magnesium Oxide",         r:[{m:'Mg'},{m:'O2'}],  p:[{m:'MgO'}],  sol:[2,1,2]},
+    {name:"Sodium Chloride",         r:[{m:'Na'},{m:'Cl2'}], p:[{m:'NaCl'}], sol:[2,1,2]},
+    {name:"Carbon Dioxide",          r:[{m:'C'},{m:'O2'}],   p:[{m:'CO2'}],  sol:[1,1,1]},
+    {name:"Carbon Monoxide",         r:[{m:'C'},{m:'O2'}],   p:[{m:'CO'}],   sol:[2,1,2]},
+    {name:"Zinc Oxide",              r:[{m:'Zn'},{m:'O2'}],  p:[{m:'ZnO'}],  sol:[2,1,2]},
+    {name:"Copper(II) Oxide",        r:[{m:'Cu'},{m:'O2'}],  p:[{m:'CuO'}],  sol:[2,1,2]},
+    {name:"Sodium Oxide",            r:[{m:'Na'},{m:'O2'}],  p:[{m:'Na2O'}], sol:[4,1,2]},
+    {name:"Potassium Chloride",      r:[{m:'K2O'},{m:'HCl'}],p:[{m:'KCl'},{m:'H2O'}], sol:[1,2,2,1]},
+    {name:"Magnesium Chloride",      r:[{m:'Mg'},{m:'HCl'}], p:[{m:'MgCl2'},{m:'H2'}], sol:[1,2,1,1]},
+    {name:"Zinc Chloride",           r:[{m:'Zn'},{m:'HCl'}], p:[{m:'ZnCl2'},{m:'H2'}], sol:[1,2,1,1]},
+    {name:"Iron(II) Chloride",       r:[{m:'Fe'},{m:'HCl'}], p:[{m:'FeCl2'},{m:'H2'}], sol:[1,2,1,1]},
+    {name:"Hydrogen Bromide",        r:[{m:'H2'},{m:'Br2'}], p:[{m:'HBr'}],  sol:[1,1,2]},
+    {name:"Hydrogen Iodide",         r:[{m:'H2'},{m:'I2'}],  p:[{m:'HI'}],   sol:[1,1,2]},
+    {name:"Phosphine",               r:[{m:'P4'},{m:'H2'}],  p:[{m:'PH3'}],  sol:[1,6,4]},
+    {name:"Silicon Dioxide",         r:[{m:'Si'},{m:'O2'}],  p:[{m:'SiO2'}], sol:[1,1,1]},
+    {name:"Sodium Bromide",          r:[{m:'Na'},{m:'Br2'}], p:[{m:'NaBr'}], sol:[2,1,2]},
+    {name:"Calcium Oxide decomp",    r:[{m:'CaCO3'}],        p:[{m:'CaO'},{m:'CO2'}], sol:[1,1,1]},
+    {name:"Barium Oxide + Water",      r:[{m:'BaO'},{m:'H2O'}],p:[{m:'Ba_OH_2'}], sol:[1,1,1]},
+    {name:"Hydrogen Peroxide decomp",r:[{m:'H2O2'}],         p:[{m:'H2O'},{m:'O2'}], sol:[2,2,1]},
+    {name:"Nickel Oxide",            r:[{m:'Ni'},{m:'O2'}],  p:[{m:'NiO'}],  sol:[2,1,2]},
+    {name:"Lead(II) Oxide",          r:[{m:'Pb'},{m:'O2'}],  p:[{m:'PbO'}],  sol:[2,1,2]},
+    {name:"Chromium Oxide",          r:[{m:'Cr'},{m:'O2'}],  p:[{m:'Cr2O3'}],sol:[4,3,2]},
+    {name:"Iron + Sulfur",           r:[{m:'Fe'},{m:'S'}],   p:[{m:'FeS'}],  sol:[1,1,1]},
+    {name:"Copper(I) Oxide",         r:[{m:'Cu'},{m:'O2'}],  p:[{m:'Cu2O'}], sol:[4,1,2]},
+    {name:"Nitrogen Monoxide",       r:[{m:'N2'},{m:'O2'}],  p:[{m:'NO'}],   sol:[1,1,2]},
+    {name:"Sulfur Dioxide",          r:[{m:'S'},{m:'O2'}],   p:[{m:'SO2'}],  sol:[1,1,1]},
+    {name:"Ammonia Synthesis",       r:[{m:'N2'},{m:'H2'}],  p:[{m:'NH3'}],  sol:[1,3,2]},
+    {name:"Aluminium + HCl",         r:[{m:'Al'},{m:'HCl'}], p:[{m:'AlCl3'},{m:'H2'}], sol:[2,6,2,3]},
+  ],
+  intermediate:[
+    {name:"Iron Oxide (Rust)",       r:[{m:'Fe'},{m:'O2'}],    p:[{m:'Fe2O3'}],  sol:[4,3,2]},
+    {name:"Methane Combustion",      r:[{m:'CH4'},{m:'O2'}],   p:[{m:'CO2'},{m:'H2O'}], sol:[1,2,1,2]},
+    {name:"Aluminium Oxide",         r:[{m:'Al'},{m:'O2'}],    p:[{m:'Al2O3'}],  sol:[4,3,2]},
+    {name:"Copper + Silver Nitrate", r:[{m:'Cu'},{m:'AgNO3'}], p:[{m:'CuNO32'},{m:'Ag'}], sol:[1,2,1,2]},
+    {name:"Sulphuric Acid + NaOH",   r:[{m:'H2SO4'},{m:'NaOH'}],p:[{m:'Na2SO4'},{m:'H2O'}], sol:[1,2,1,2]},
+    {name:"Nitric Acid + KOH",       r:[{m:'HNO3'},{m:'KOH'}], p:[{m:'KNO3'},{m:'H2O'}], sol:[1,1,1,1]},
+    {name:"Sulphur Trioxide form",   r:[{m:'SO2'},{m:'O2'}],   p:[{m:'SO3'}],    sol:[2,1,2]},
+    {name:"Nitrogen Dioxide",        r:[{m:'N2'},{m:'O2'}],    p:[{m:'NO2'}],    sol:[1,2,2]},
+    {name:"Ethylene Combustion",     r:[{m:'C2H4'},{m:'O2'}],  p:[{m:'CO2'},{m:'H2O'}], sol:[1,3,2,2]},
+    {name:"Acetylene Combustion",    r:[{m:'C2H2'},{m:'O2'}],  p:[{m:'CO2'},{m:'H2O'}], sol:[2,5,4,2]},
+    {name:"Iron(III) Chloride",      r:[{m:'Fe'},{m:'Cl2'}],   p:[{m:'FeCl3'}],  sol:[2,3,2]},
+    {name:"Magnesium + HCl",         r:[{m:'Mg'},{m:'HCl'}],   p:[{m:'MgCl2'},{m:'H2'}], sol:[1,2,1,1]},
+    {name:"Barium Carbonate decomp", r:[{m:'BaCO3'}],          p:[{m:'BaO'},{m:'CO2'}], sol:[1,1,1]},
+    {name:"Zinc + H2SO4",            r:[{m:'Zn'},{m:'H2SO4'}], p:[{m:'ZnSO4'},{m:'H2'}], sol:[1,1,1,1]},
+    {name:"Iron Sulfide",            r:[{m:'Fe'},{m:'S8'}],    p:[{m:'FeS'}],    sol:[8,1,8]},
+    {name:"Phosphorus Pentoxide",    r:[{m:'P4'},{m:'O2'}],    p:[{m:'P4O10'}],  sol:[1,5,1]},
+    {name:"Sodium Bicarbonate decomp",r:[{m:'NaHCO3'}],        p:[{m:'Na2CO3'},{m:'H2O'},{m:'CO2'}], sol:[2,1,1,1]},
+    {name:"MnO₂ Decomposition",      r:[{m:'MnO2'}],           p:[{m:'Mn2O3'},{m:'O2'}],sol:[4,2,1]},
+    {name:"Calcium + Water",         r:[{m:'Ca_OH_2'},{m:'CO2'}],p:[{m:'CaCO3'},{m:'H2O'}],sol:[1,1,1,1]},
+    {name:"Lead + Oxygen",           r:[{m:'Pb'},{m:'O2'}],    p:[{m:'PbO'}],    sol:[2,1,2]},
+    {name:"Copper Sulfate + NaOH",   r:[{m:'CuSO4'},{m:'NaOH'}],p:[{m:'Cu_OH_2'},{m:'Na2SO4'}],sol:[1,2,1,1]},
+    {name:"Potassium Oxide + Water", r:[{m:'K2O'},{m:'H2O'}],  p:[{m:'KOH'}],   sol:[1,1,2]},
+    {name:"Iron(III) Oxide + CO",    r:[{m:'Fe2O3'},{m:'CO'}], p:[{m:'Fe'},{m:'CO2'}], sol:[1,3,2,3]},
+    {name:"Calcium Phosphate form",  r:[{m:'Ca_OH_2'},{m:'H3PO4'}],p:[{m:'Ca3PO42'},{m:'H2O'}],sol:[3,2,1,6]},
+    {name:"BaCl₂ + H₂SO₄",          r:[{m:'BaCl2'},{m:'H2SO4'}],p:[{m:'BaSO4'},{m:'HCl'}],sol:[1,1,1,2]},
+    {name:"Sodium Hydroxide + HCl",  r:[{m:'NaOH'},{m:'HCl'}], p:[{m:'NaCl'},{m:'H2O'}], sol:[1,1,1,1]},
+    {name:"Fe₃O₄ Formation",         r:[{m:'Fe'},{m:'O2'}],    p:[{m:'Fe3O4'}],  sol:[3,2,1]},
+    {name:"Dinitrogen Monoxide decomp",r:[{m:'N2O'}],           p:[{m:'N2'},{m:'O2'}],   sol:[2,2,1]},
+    {name:"Nitrous Acid decomp",     r:[{m:'HNO2'}],           p:[{m:'HNO3'},{m:'NO'},{m:'H2O'}],sol:[3,1,2,1]},
+    {name:"Chromium + Oxygen",       r:[{m:'Cr'},{m:'O2'}],    p:[{m:'Cr2O3'}],  sol:[4,3,2]},
+  ],
+  advanced:[
+    {name:"Ethane Combustion",       r:[{m:'C2H6'},{m:'O2'}],  p:[{m:'CO2'},{m:'H2O'}], sol:[2,7,4,6]},
+    {name:"Glucose Combustion",      r:[{m:'C6H12O6'},{m:'O2'}],p:[{m:'CO2'},{m:'H2O'}],sol:[1,6,6,6]},
+    {name:"Propane Combustion",      r:[{m:'C3H8'},{m:'O2'}],  p:[{m:'CO2'},{m:'H2O'}], sol:[1,5,3,4]},
+    {name:"Butane Combustion",       r:[{m:'C4H10'},{m:'O2'}], p:[{m:'CO2'},{m:'H2O'}], sol:[2,13,8,10]},
+    {name:"Pentane Combustion",      r:[{m:'C5H12'},{m:'O2'}], p:[{m:'CO2'},{m:'H2O'}], sol:[1,8,5,6]},
+    {name:"Benzene Combustion",      r:[{m:'C6H6'},{m:'O2'}],  p:[{m:'CO2'},{m:'H2O'}], sol:[2,15,12,6]},
+    {name:"Heptane Combustion",      r:[{m:'C7H16'},{m:'O2'}], p:[{m:'CO2'},{m:'H2O'}], sol:[1,11,7,8]},
+    {name:"Octane Combustion",       r:[{m:'C8H18'},{m:'O2'}], p:[{m:'CO2'},{m:'H2O'}], sol:[2,25,16,18]},
+    {name:"Decane Combustion",       r:[{m:'C10H22'},{m:'O2'}],p:[{m:'CO2'},{m:'H2O'}], sol:[2,31,20,22]},
+    {name:"Iron Pyrite Combustion",  r:[{m:'FeS2'},{m:'O2'}],  p:[{m:'Fe2O3'},{m:'SO2'}],sol:[4,11,2,8]},
+    {name:"KMnO4 Decomposition",     r:[{m:'KMnO4'}],          p:[{m:'K2MnO4'},{m:'MnO2'},{m:'O2'}],sol:[2,1,1,1]},
+    {name:"KMnO4 + HCl → Cl2",      r:[{m:'KMnO4'},{m:'HCl'}],p:[{m:'KCl'},{m:'MnCl2'},{m:'Cl2'},{m:'H2O'}],sol:[2,16,2,2,5,8]},
+    {name:"Phosphoric Acid form",    r:[{m:'P4O10'},{m:'H2O'}],p:[{m:'H3PO4'}],          sol:[1,6,4]},
+    {name:"Aluminium Thermite",      r:[{m:'Fe2O3'},{m:'Al'}], p:[{m:'Al2O3'},{m:'Fe'}], sol:[1,2,1,2]},
+    {name:"Ammonium Nitrate decomp", r:[{m:'NH4NO3'}],         p:[{m:'N2O'},{m:'H2O'}],  sol:[1,1,2]},
+    {name:"NH4Cl decomp",            r:[{m:'NH4Cl'}],          p:[{m:'NH3'},{m:'HCl'}],  sol:[1,1,1]},
+    {name:"Ca3(PO4)2 + H2SO4",      r:[{m:'Ca3PO42'},{m:'H2SO4'}],p:[{m:'CaSO4'},{m:'H3PO4'}],sol:[1,3,3,2]},
+    {name:"Copper + Nitric Acid",    r:[{m:'Cu'},{m:'HNO3'}],  p:[{m:'CuNO32'},{m:'NO2'},{m:'H2O'}],sol:[1,4,1,2,2]},
+    {name:"Lead + HCl",              r:[{m:'Pb'},{m:'HCl'}],   p:[{m:'PbCl2'},{m:'H2'}], sol:[1,2,1,1]},
+    {name:"Ethane + Cl2",            r:[{m:'C2H6'},{m:'Cl2'}], p:[{m:'C2H4'},{m:'HCl'}], sol:[1,1,1,2]},
+    {name:"Cr2O3 + Al (thermite)",   r:[{m:'Cr2O3'},{m:'Al'}], p:[{m:'Al2O3'},{m:'Cr'}], sol:[1,2,1,2]},
+    {name:"NiO reduction",           r:[{m:'NiO'},{m:'H2'}],   p:[{m:'Ni'},{m:'H2O'}],   sol:[1,1,1,1]},
+    {name:"Lead(IV) Oxide decomp",   r:[{m:'PbO2'}],           p:[{m:'PbO'},{m:'O2'}],   sol:[2,2,1]},
+    {name:"Fe + H2SO4 dilute",       r:[{m:'Fe'},{m:'H2SO4'}], p:[{m:'FeSO4'},{m:'H2'}], sol:[1,1,1,1]},
+    {name:"SO3 + H2O → H2SO4",       r:[{m:'SO3'},{m:'H2O'}],  p:[{m:'H2SO4'}],          sol:[1,1,1]},
+    {name:"NO2 + H2O → HNO3+NO",    r:[{m:'NO2'},{m:'H2O'}],  p:[{m:'HNO3'},{m:'NO'}],  sol:[3,1,2,1]},
+    {name:"Mg + CO2 Combustion",     r:[{m:'Mg'},{m:'CO2'}],   p:[{m:'MgO'},{m:'C'}],    sol:[2,1,2,1]},
+    {name:"SiO2 + NaOH",            r:[{m:'SiO2'},{m:'NaOH'}],p:[{m:'Na2SiO3'},{m:'H2O'}],sol:[1,2,1,1]},
+    {name:"Oxalic Acid combustion",  r:[{m:'C2H2'},{m:'O2'}],  p:[{m:'CO2'},{m:'H2O'}],  sol:[2,5,4,2]},
+    {name:"Photosynthesis",          r:[{m:'CO2'},{m:'H2O'}],  p:[{m:'C6H12O6'},{m:'O2'}],sol:[6,6,1,6]},
+  ]
+};
+
+// patch missing MA entries used above
+MA['Cu_OH_2']={Cu:1,O:2,H:2};
+MA['CaSO4']={Ca:1,S:1,O:4};
+MA['MgSO4']={Mg:1,S:1,O:4};
+MA['Ca_OH_2']={Ca:1,O:2,H:2};
+MA['KNO3']={K:1,N:1,O:3};
+MA['NaNO3']={Na:1,N:1,O:3};
+MA['Na2SiO3']={Na:2,Si:1,O:3};
+MA['ZnSO4']={Zn:1,S:1,O:4};
+MA['FeSO4']={Fe:1,S:1,O:4};
+MA['MnCl2']={Mn:1,Cl:2};
+MA['K2MnO4']={K:2,Mn:1,O:4};
+MA['PbCl2']={Pb:1,Cl:2};
+MA['Ba_OH_2']={Ba:1,O:2,H:2};
+
+// patch missing MD display names
+MD['Cu_OH_2']='Cu(OH)₂';
+MD['Ca_OH_2']='Ca(OH)₂';
+MD['CaSO4']='CaSO₄';
+MD['MgSO4']='MgSO₄';
+MD['KNO3']='KNO₃';
+MD['NaNO3']='NaNO₃';
+MD['Na2SiO3']='Na₂SiO₃';
+MD['ZnSO4']='ZnSO₄';
+MD['FeSO4']='FeSO₄';
+MD['MnCl2']='MnCl₂';
+MD['K2MnO4']='K₂MnO₄';
+MD['PbCl2']='PbCl₂';
+MD['Ba_OH_2']='Ba(OH)₂';
+
+// ══════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════
+const PTS = {beginner:10, intermediate:20, advanced:40};
+let S = {
+  name:'', diff:'beginner',
+  queue:[], qIdx:0,
+  coeffs:[],
+  score:0, solved:0, skipped:0, streak:0, bestStreak:0,
+  xp:0, level:1, xpNext:100,
+  diffSolved:{beginner:0,intermediate:0,advanced:0},
+  diffScore:{beginner:0,intermediate:0,advanced:0},
+  challengeOn:false, chalTimer:null, chalTime:60, chalScore:0, combo:0, chalPaused:false,
+};
+
+// ══════════════════════════════════════════════════
+// DIFFICULTY SELECT (name screen)
+// ══════════════════════════════════════════════════
+function selDiff(d, el){
+  S.diff = d;
+  document.querySelectorAll('.diff-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// ══════════════════════════════════════════════════
+// TUTORIAL
+// ══════════════════════════════════════════════════
+const TUTS=[
+  {icon:'⚖️',title:'Why Balance?',body:'Atoms cannot appear or vanish in a reaction. The count of every element must be equal on both sides — this is the <b>Law of Conservation of Mass</b>.',demo:'2H + O → H₂O ❌ &nbsp; Atoms missing!'},
+  {icon:'🔢',title:'Coefficients vs Subscripts',body:'The <b>big front number</b> is the coefficient — you control it. The <b>small subscript</b> is fixed by chemistry. Change only coefficients!',demo:'<span class="coeff-hi">2</span> H₂ + <span class="coeff-hi">1</span> O₂ → <span class="coeff-hi">2</span> H₂<span class="sub-hi">O</span>'},
+  {icon:'➕',title:'Use the + / − Buttons',body:'Each molecule has + and − buttons to adjust its coefficient. Start low and adjust — watch the atom counter update live!',demo:'Press  −  or  +  to change the big number in front'},
+  {icon:'🟢',title:'Read the Atom Counter',body:'The table shows how many of each atom exist on each side. Green = matched. Red = mismatch. Your goal: make every row green!',demo:'H: Left = 4 ✅ &nbsp; Right = 4 ✅<br>O: Left = 2 ✅ &nbsp; Right = 2 ✅'},
+  {icon:'💡',title:'Stuck? Use Hints & Skip',body:'If you\'re stuck, press <b>Hint</b> for a clue, <b>Reveal Answer</b> to see the solution (no points), or <b>Skip</b> to move to the next equation.',demo:'💡 Hint &nbsp;|&nbsp; 👁 Reveal &nbsp;|&nbsp; ⏭ Skip'},
+  {icon:'🏆',title:"Ready? Let's Go!",body:'Equations are assigned one at a time — no peeking ahead! Earn points, build streaks, and hit End Session to see the class leaderboard.',demo:'🎉 Balanced! +10 pts'},
+];
+let tutStep=0;
+function showTutorial(){tutStep=0;renderTut();show('tutorial-screen');}
+function tutNav(d){
+  tutStep+=d;
+  if(tutStep>=TUTS.length){show('name-screen');return;}
+  if(tutStep<0)tutStep=0;
+  renderTut();
+}
+function renderTut(){
+  const t=TUTS[tutStep];
+  document.getElementById('tut-icon').textContent=t.icon;
+  document.getElementById('tut-title').textContent=t.title;
+  document.getElementById('tut-body').innerHTML=t.body;
+  document.getElementById('tut-demo').innerHTML=t.demo;
+  document.getElementById('tut-dots').innerHTML=TUTS.map((_,i)=>
+    `<div class="tut-dot ${i<tutStep?'done':i===tutStep?'active':''}"></div>`).join('');
+  document.getElementById('tut-back').style.display=tutStep===0?'none':'';
+  document.getElementById('tut-fwd').textContent=tutStep===TUTS.length-1?'Start! →':'Next →';
+}
+
+// ══════════════════════════════════════════════════
+// SESSION START
+// ══════════════════════════════════════════════════
+function beginSession(){
+  const n=document.getElementById('name-input').value.trim();
+  if(!n){document.getElementById('name-input').focus();return;}
+  S.name=n;
+  S.score=0;S.solved=0;S.skipped=0;S.streak=0;S.bestStreak=0;
+  S.xp=0;S.level=1;S.xpNext=100;
+  S.diffSolved={beginner:0,intermediate:0,advanced:0};
+  S.diffScore={beginner:0,intermediate:0,advanced:0};
+  S.challengeOn=false;clearInterval(S.chalTimer);S.chalTime=60;S.chalScore=0;S.combo=0;
+  // shuffle the pool
+  S.queue=shuffle([...DB[S.diff]]);
+  S.qIdx=0;
+  // update topbar
+  document.getElementById('tb-name').textContent=S.name;
+  const dp=document.getElementById('diff-pill');
+  dp.className='diff-pill '+(S.diff==='beginner'?'easy':S.diff==='intermediate'?'med':'hard');
+  dp.textContent=S.diff==='beginner'?'Easy':S.diff==='intermediate'?'Medium':'Hard';
+  updateProgress();
+  show('game-screen');
+  loadQuestion();
+}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+// ══════════════════════════════════════════════════
+// QUESTION LOADING
+// ══════════════════════════════════════════════════
+function loadQuestion(){
+  if(S.qIdx>=S.queue.length){endSession();return;}
+  const eq=S.queue[S.qIdx];
+  const all=[...eq.r,...eq.p];
+  S.coeffs=all.map(()=>1);
+  document.getElementById('q-number').textContent=`Question ${S.qIdx+1} of ${S.queue.length}`;
+  const pts=PTS[S.diff];
+  const dTag=document.getElementById('q-diff-tag');
+  dTag.className='diff-pill '+(S.diff==='beginner'?'easy':S.diff==='intermediate'?'med':'hard');
+  dTag.textContent=(S.diff==='beginner'?'Easy':S.diff==='intermediate'?'Medium':'Hard')+` · ${pts} pts`;
+  renderEquation();
+  updateCounter();
+  clearFb();
+  updateProgress();
+}
+
+// ══════════════════════════════════════════════════
+// RENDER EQUATION
+// ══════════════════════════════════════════════════
+function renderEquation(){
+  const eq=S.queue[S.qIdx];
+  const rLen=eq.r.length;
+  const all=[...eq.r,...eq.p];
+  let html='';
+  all.forEach((m,i)=>{
+    if(i===rLen) html+='<div class="eq-arrow">→</div>';
+    else if(i>0&&i!==rLen) html+='<div class="eq-plus">+</div>';
+    const c=S.coeffs[i];
+    html+=`<div class="mol-group">
+      <div class="coeff-row">
+        <button class="c-btn" onclick="adj(${i},-1)">−</button>
+        <div class="c-val${c===1?' one':''}" id="cv${i}">${c}</div>
+        <button class="c-btn" onclick="adj(${i},1)">+</button>
+      </div>
+      <div class="mol-formula">${fmtF(MD[m.m]||m.m)}</div>
+      <div class="mol-vis" id="mv${i}">${molVis(m.m,c)}</div>
+    </div>`;
+  });
+  document.getElementById('eq-wrap').innerHTML=html;
+}
+
+function adj(i,d){
+  const nv=S.coeffs[i]+d;
+  if(nv<1||nv>15)return;
+  S.coeffs[i]=nv;
+  const cv=document.getElementById('cv'+i);
+  if(cv){cv.textContent=nv;cv.className='c-val'+(nv===1?' one':'');}
+  const eq=S.queue[S.qIdx];
+  const all=[...eq.r,...eq.p];
+  const mv=document.getElementById('mv'+i);
+  if(mv)mv.innerHTML=molVis(all[i].m,nv);
+  updateCounter();
+}
+
+function molVis(mol,count){
+  const atoms=MA[mol]||{};
+  const els=Object.entries(atoms);
+  const vis=Math.min(count,4);
+  let h='';
+  for(let c=0;c<vis;c++){
+    h+='<div class="mol-inst">';
+    els.forEach(([el,n],idx)=>{
+      for(let k=0;k<Math.min(n,3);k++){
+        if(k>0||idx>0)h+='<div class="bond"></div>';
+        h+=`<div class="a-ball" style="background:${ac(el)}">${el}</div>`;
+      }
+    });
+    h+='</div>';
+  }
+  if(count>4)h+=`<div style="font-size:0.68rem;color:var(--muted);width:100%;text-align:center">×${count}</div>`;
+  return h;
+}
+
+function fmtF(f){return (f||'').replace(/[₀-₉]/g,m=>`<span class="mol-sub">${m}</span>`);}
+
+// ══════════════════════════════════════════════════
+// ATOM COUNTER
+// ══════════════════════════════════════════════════
+function countSide(mols,coeffs){
+  const t={};
+  mols.forEach((m,i)=>{
+    Object.entries(MA[m.m]||{}).forEach(([el,n])=>{t[el]=(t[el]||0)+n*coeffs[i];});
+  });
+  return t;
+}
+function updateCounter(){
+  if(!S.queue.length)return;
+  const eq=S.queue[S.qIdx];
+  const rLen=eq.r.length;
+  const L=countSide(eq.r,S.coeffs.slice(0,rLen));
+  const R=countSide(eq.p,S.coeffs.slice(rLen));
+  const els=[...new Set([...Object.keys(L),...Object.keys(R)])];
+  let allBal=true;
+  document.getElementById('counter-body').innerHTML=els.map(el=>{
+    const l=L[el]||0,r=R[el]||0,bal=l===r;
+    if(!bal)allBal=false;
+    return `<tr class="c-row ${bal?'bal':'unbal'}">
+      <td class="c-el" style="color:${ac(el)};font-weight:800">${el}</td>
+      <td class="c-num ${bal?'bal':'unbal'}">${l}</td>
+      <td class="c-num ${bal?'bal':'unbal'}">${r}</td>
+      <td class="c-status ${bal?'bal':'unbal'}">${bal?'✅ Match':'❌ Off'}</td>
+    </tr>`;
+  }).join('');
+  if(allBal&&els.length)onSolved();
+  else if(els.length)autoHint(L,R,els);
+}
+
+function autoHint(L,R,els){
+  const unbal=els.filter(e=>(L[e]||0)!==(R[e]||0));
+  if(!unbal.length)return;
+  const el=unbal[0];const l=L[el]||0,r=R[el]||0;
+  showFb(l>r
+    ?`${el}: too many on the left (${l} vs ${r}) — reduce a reactant or increase a product.`
+    :`${el}: not enough on the right (${l} vs ${r}) — increase a product coefficient.`,'hint');
+}
+
+// ══════════════════════════════════════════════════
+// SOLVE
+// ══════════════════════════════════════════════════
+let solvedThisQ=false;
+function onSolved(){
+  if(solvedThisQ)return;
+  solvedThisQ=true;
+  S.solved++;
+  S.streak++;
+  if(S.streak>S.bestStreak)S.bestStreak=S.streak;
+  const pts=PTS[S.diff];
+  S.score+=pts;
+  S.diffSolved[S.diff]++;
+  S.diffScore[S.diff]+=pts;
+  document.getElementById('tb-score').textContent=S.score;
+  if(S.challengeOn){
+    S.combo++;
+    S.chalScore+=pts*(S.combo>1?2:1);
+    document.getElementById('chal-score-val').textContent=S.chalScore;
+    if(S.combo>1){const cb=document.getElementById('combo-tag');cb.textContent=`🔥 ×${S.combo} combo`;cb.classList.add('on');setTimeout(()=>cb.classList.remove('on'),2000);}
+  }
+  updateStreak();
+  checkBadges();
+  addXP(pts);
+  showFb(`🎉 Balanced! +${pts} pts`,'success');
+  floatXP(`+${pts}`);
+  document.getElementById('q-card').style.animation='celebrate 0.5s ease';
+  setTimeout(()=>{document.getElementById('q-card').style.animation='';},500);
+  setTimeout(nextQuestion,1600);
+}
+
+function nextQuestion(){
+  solvedThisQ=false;
+  S.qIdx++;
+  if(S.qIdx>=S.queue.length)endSession();
+  else loadQuestion();
+}
+
+function updateStreak(){
+  const sc=document.getElementById('streak-chip');
+  document.getElementById('streak-num').textContent=S.streak;
+  sc.classList.toggle('show',S.streak>=2);
+}
+
+function addXP(amt){
+  S.xp+=amt;
+  while(S.xp>=S.xpNext){
+    S.xp-=S.xpNext;S.level++;
+    S.xpNext=Math.floor(S.xpNext*1.5);
+    document.getElementById('lv-chip').textContent=`Lv ${S.level}`;
+    showBadge('🆙',`Level ${S.level}!`,`You levelled up! Keep going.`);
+  }
+  const pct=Math.min(100,Math.round((S.xp/S.xpNext)*100));
+  document.getElementById('xp-fill').style.width=pct+'%';
+  floatXP(`+${amt}`);
+}
+
+function toggleTheme(){
+  document.body.classList.toggle('light');
+  document.getElementById('theme-btn').textContent=document.body.classList.contains('light')?'🌙':'☀️';
+}
+
+// ══════════════════════════════════════════════════
+// HINT / REVEAL / SKIP
+// ══════════════════════════════════════════════════
+function showHintBtn(){
+  const eq=S.queue[S.qIdx];
+  const rLen=eq.r.length;
+  const L=countSide(eq.r,S.coeffs.slice(0,rLen));
+  const R=countSide(eq.p,S.coeffs.slice(rLen));
+  const els=[...new Set([...Object.keys(L),...Object.keys(R)])];
+  autoHint(L,R,els);
+}
+
+function revealAnswer(){
+  const eq=S.queue[S.qIdx];
+  const all=[...eq.r,...eq.p];
+  const rLen=eq.r.length;
+  // Build readable answer string cleanly
+  let ansHtml='';
+  all.forEach((m,i)=>{
+    if(i>0) ansHtml+= i===rLen ? ' → ' : ' + ';
+    ansHtml+=`<b style="color:var(--green)">${eq.sol[i]}</b> ${fmtF(MD[m.m]||m.m)}`;
+  });
+  showFb(`Answer: ${ansHtml} &nbsp;<span style="color:var(--muted)">(No points)</span>`,'info');
+  eq.sol.forEach((v,i)=>{
+    S.coeffs[i]=v;
+    const cv=document.getElementById('cv'+i);
+    if(cv){cv.textContent=v;cv.className='c-val'+(v===1?' one':'');}
+    const mv=document.getElementById('mv'+i);
+    if(mv)mv.innerHTML=molVis(all[i].m,v);
+  });
+  // skip scoring
+  S.streak=0;updateStreak();
+  setTimeout(()=>{solvedThisQ=true;nextQuestion();},2500);
+}
+
+function skipQuestion(){
+  S.skipped++;S.streak=0;updateStreak();
+  showFb('Skipped — moving on.','info');
+  solvedThisQ=true;
+  setTimeout(nextQuestion,1000);
+}
+
+// ══════════════════════════════════════════════════
+// PROGRESS
+// ══════════════════════════════════════════════════
+function updateProgress(){
+  const total=S.queue.length;
+  const done=S.qIdx;
+  const pct=total?Math.round((done/total)*100):0;
+  document.getElementById('prog-fill').style.width=pct+'%';
+  document.getElementById('prog-count').textContent=`${done} / ${total}`;
+}
+
+// ══════════════════════════════════════════════════
+// CHALLENGE MODE
+// ══════════════════════════════════════════════════
+function toggleChallenge(){
+  S.challengeOn=!S.challengeOn;
+  const bar=document.getElementById('chal-bar');
+  const btn=document.getElementById('chal-toggle');
+  if(S.challengeOn){
+    S.chalTime=60;S.chalScore=0;S.combo=0;
+    bar.classList.add('on');btn.classList.add('active');btn.textContent='⏱ Active';
+    runChalTimer();
+  } else {
+    bar.classList.remove('on');btn.classList.remove('active');btn.textContent='⏱ Challenge';
+    clearInterval(S.chalTimer);
+  }
+}
+function runChalTimer(){
+  clearInterval(S.chalTimer);
+  S.chalTimer=setInterval(()=>{
+    S.chalTime--;
+    const td=document.getElementById('timer-num');
+    td.textContent=S.chalTime;
+    td.classList.toggle('urgent',S.chalTime<=10);
+    if(S.chalTime<=0){
+      clearInterval(S.chalTimer);
+      S.challengeOn=false;
+      document.getElementById('chal-bar').classList.remove('on');
+      document.getElementById('chal-toggle').classList.remove('active');
+      document.getElementById('chal-toggle').textContent='⏱ Challenge';
+      showBadge('⏱','Time\'s Up!',`Challenge over! You scored ${S.chalScore} bonus pts.`);
+    }
+  },1000);
+}
+
+// ══════════════════════════════════════════════════
+// BADGES
+// ══════════════════════════════════════════════════
+const GIVEN=new Set();
+function checkBadges(){
+  if(S.solved===1&&!GIVEN.has('first')){GIVEN.add('first');showBadge('🧪','First Balance!','You balanced your first equation!');}
+  if(S.streak===3&&!GIVEN.has('s3')){GIVEN.add('s3');showBadge('🔥','On Fire!','3-equation streak!');}
+  if(S.streak===5&&!GIVEN.has('s5')){GIVEN.add('s5');showBadge('⚡','Unstoppable!','5-equation streak!');}
+  if(S.solved===10&&!GIVEN.has('10')){GIVEN.add('10');showBadge('🎓','Chemist!','10 equations solved!');}
+  if(S.score>=100&&!GIVEN.has('100')){GIVEN.add('100');showBadge('💯','Century!','100 points scored!');}
+}
+function showBadge(ico,ttl,dsc){
+  const m=document.createElement('div');m.className='badge-modal';
+  m.innerHTML=`<div class="badge-box"><div class="badge-ico">${ico}</div><div class="badge-ttl">${ttl}</div><div class="badge-dsc">${dsc}</div><button class="btn-cta" onclick="this.closest('.badge-modal').remove()">Nice!</button></div>`;
+  document.body.appendChild(m);setTimeout(()=>{if(m.parentNode)m.remove();},4000);
+}
+
+// ══════════════════════════════════════════════════
+// FEEDBACK
+// ══════════════════════════════════════════════════
+function showFb(msg,type){document.getElementById('fb-area').innerHTML=`<div class="fb-msg ${type}">${msg}</div>`;}
+function clearFb(){document.getElementById('fb-area').innerHTML='';}
+
+// XP float
+function floatXP(txt){
+  const e=document.createElement('div');e.className='xp-float';e.textContent=txt;
+  e.style.cssText=`left:${window.innerWidth/2-20}px;top:${window.innerHeight/2}px;`;
+  document.body.appendChild(e);setTimeout(()=>e.remove(),1000);
+}
+
+// ══════════════════════════════════════════════════
+// CONFIRM END — inline modal (confirm() blocked in iframes)
+// ══════════════════════════════════════════════════
+function confirmEnd(){
+  // If nothing started yet, just go straight to end
+  if(S.solved===0&&S.qIdx===0){endSession();return;}
+  const modal=document.createElement('div');
+  modal.id='confirm-modal';
+  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:300;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.2s ease';
+  modal.innerHTML=`<div style="background:var(--surface);border:1px solid var(--border2);border-radius:18px;padding:2rem;max-width:360px;width:90%;text-align:center;box-shadow:0 32px 64px rgba(0,0,0,0.5)">
+    <div style="font-size:2rem;margin-bottom:0.75rem">🏁</div>
+    <div style="font-size:1.1rem;font-weight:800;margin-bottom:0.5rem">End Session?</div>
+    <div style="font-size:0.88rem;color:var(--muted);margin-bottom:1.5rem">You've solved <b style="color:var(--text)">${S.solved}</b> equation(s) for <b style="color:var(--blue)">${S.score} pts</b>.<br>Your score will be shown on the leaderboard.</div>
+    <div style="display:flex;gap:0.75rem;justify-content:center">
+      <button onclick="document.getElementById('confirm-modal').remove()" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0.65rem;font-family:'DM Sans',sans-serif;font-size:0.9rem;font-weight:700;color:var(--text);cursor:pointer">Keep Playing</button>
+      <button onclick="document.getElementById('confirm-modal').remove();endSession();" style="flex:1;background:var(--red-dim);border:1px solid var(--red);border-radius:8px;padding:0.65rem;font-family:'DM Sans',sans-serif;font-size:0.9rem;font-weight:800;color:var(--red);cursor:pointer">End Session</button>
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+}
+
+// ══════════════════════════════════════════════════
+// END SESSION
+// ══════════════════════════════════════════════════
+function endSession(){
+  if(S.challengeOn){clearInterval(S.chalTimer);S.challengeOn=false;}
+  document.getElementById('end-score').textContent=S.score;
+  document.getElementById('end-solved').textContent=S.solved;
+  document.getElementById('end-streak').textContent=S.bestStreak;
+  document.getElementById('end-sub').textContent=`${S.name}, here's how you did on ${S.diff} difficulty.`;
+  // per-diff breakdown
+  const bd=document.getElementById('diff-breakdown');
+  const labels={beginner:'Easy',intermediate:'Medium',advanced:'Hard'};
+  const colors={beginner:'var(--green)',intermediate:'var(--yellow)',advanced:'var(--red)'};
+  bd.innerHTML=Object.keys(S.diffSolved).filter(d=>S.diffSolved[d]>0).map(d=>
+    `<div style="background:var(--surface);border:1px solid ${colors[d]};border-radius:10px;padding:0.5rem 0.9rem;font-size:0.8rem;flex:1;min-width:100px;text-align:center;">
+      <div style="color:${colors[d]};font-weight:800;font-size:1.1rem;font-family:'Space Mono',monospace">${S.diffSolved[d]}</div>
+      <div style="color:var(--muted);font-weight:700">${labels[d]} solved</div>
+      <div style="color:${colors[d]};font-size:0.75rem;font-family:'Space Mono',monospace">+${S.diffScore[d]} pts</div>
+    </div>`
+  ).join('')||'';
+  document.getElementById('lb-body').innerHTML='<div class="lb-loading">⏳ Submitting your score…</div>';
+  document.getElementById('submit-status').textContent='';
+  show('end-screen');
+  // auto-submit then auto-fetch leaderboard
+  setTimeout(()=>submitScore(),400);
+}
+
+// ══════════════════════════════════════════════════
+// GOOGLE SHEETS INTEGRATION
+// ══════════════════════════════════════════════════
+const SHEET_URL='https://script.google.com/macros/s/AKfycbzbs6Kl9_iCT51YonK-7dKwt0T-_jj_uvvKLgygW1EGV_smmPlFkZl2YYyPmCH19quW/exec';
+
+async function submitScore(){
+  const btn=document.getElementById('submit-btn');
+  const status=document.getElementById('submit-status');
+  btn.textContent='Submitting…';btn.disabled=true;
+  status.textContent='';
+  const payload={name:S.name,difficulty:S.diff,score:S.score,solved:S.solved,streak:S.bestStreak};
+  try{
+    await fetch(SHEET_URL,{method:'POST',body:JSON.stringify(payload),headers:{'Content-Type':'text/plain'}});
+    status.textContent='✅ Score submitted!';
+    btn.textContent='📤 Resubmit';btn.disabled=false;
+    setTimeout(()=>fetchLeaderboard(),600);
+  }catch(e){
+    status.textContent='❌ Could not connect. Check your internet and try again.';
+    btn.textContent='📤 Submit My Score';btn.disabled=false;
+  }
+}
+
+async function fetchLeaderboard(){
+  document.getElementById('lb-body').innerHTML='<div class="lb-loading">⏳ Loading leaderboard…</div>';
+  try{
+    const res=await fetch(SHEET_URL+'?action=get');
+    const data=await res.json();
+    if(!Array.isArray(data)||!data.length){document.getElementById('lb-body').innerHTML='<div class="lb-loading">No scores yet. Be the first!</div>';return;}
+    const sorted=data.sort((a,b)=>b.score-a.score).slice(0,20);
+    document.getElementById('lb-body').innerHTML=sorted.map((row,i)=>{
+      const rankCls=i===0?'g':i===1?'s':i===2?'b':'';
+      const isMe=row.name===S.name;
+      const diffLabel=row.difficulty==='beginner'?'Easy':row.difficulty==='intermediate'?'Med':'Hard';
+      return `<div class="lb-row ${isMe?'me':''}">
+        <div class="lb-rank ${rankCls}">#${i+1}</div>
+        <div class="lb-name" style="${isMe?'color:var(--blue)':''}">${row.name||'—'} <span class="lb-diff">${diffLabel}</span></div>
+        <div class="lb-solved">${row.solved||0} solved</div>
+        <div class="lb-pts">${row.score||0} pts</div>
+      </div>`;
+    }).join('');
+  }catch(e){
+    document.getElementById('lb-body').innerHTML='<div class="lb-loading">❌ Could not load. Try refreshing.</div>';
+  }
+}
+
+// ══════════════════════════════════════════════════
+// TEACHER MODE
+// ══════════════════════════════════════════════════
+let tDiff='beginner',tIdx=null;
+function showTeacher(){
+  if(S.challengeOn){clearInterval(S.chalTimer);S.chalPaused=true;}
+  buildTeacherList();show('teacher-screen');
+}
+function showGame(){
+  if(S.challengeOn&&S.chalPaused){S.chalPaused=false;runChalTimer();}
+  show('game-screen');
+}
+function setTDiff(d,el){tDiff=d;document.querySelectorAll('.t-dtab').forEach(t=>t.classList.remove('active'));el.classList.add('active');buildTeacherList();}
+function buildTeacherList(){
+  document.getElementById('t-eq-list').innerHTML=DB[tDiff].map((eq,i)=>
+    `<div class="t-eq-item${tIdx===i?' active':''}" id="teq${i}" onclick="loadTeacherEq(${i})">
+      <div class="t-eq-name">${eq.name}</div>${fmtF(DB[tDiff][i].r.map(m=>MD[m.m]).join(' + '))} → ${fmtF(DB[tDiff][i].p.map(m=>MD[m.m]).join(' + '))}
+    </div>`).join('');
+}
+function loadTeacherEq(i){
+  tIdx=i;const eq=DB[tDiff][i];
+  document.querySelectorAll('.t-eq-item').forEach((el,j)=>el.classList.toggle('active',j===i));
+  document.getElementById('t-eq-name').textContent=eq.name;
+  closeTPanel();
+  const rLen=eq.r.length;
+  // Build formula display cleanly using index-based separator
+  function buildEqHtml(mols,coeffs,rL,colored){
+    let h='';
+    mols.forEach((m,idx)=>{
+      if(idx>0) h+= idx===rL
+        ? '<span style="color:var(--muted);margin:0 0.4rem">→</span>'
+        : '<span style="color:var(--muted);margin:0 0.3rem">+</span>';
+      if(colored&&coeffs){
+        const c=coeffs[idx];
+        h+=`<span style="color:var(--green);font-weight:800">${c}</span>`;
+      }
+      h+=fmtF(MD[m.m]||m.m);
+    });
+    return h;
+  }
+  const allMols=[...eq.r,...eq.p];
+  document.getElementById('t-eq-formula').innerHTML=buildEqHtml(allMols,null,rLen,false);
+  // reset reveal state
+  const aw=document.getElementById('t-answer-wrap');
+  const rb=document.getElementById('t-reveal-btn');
+  if(aw){aw.style.display='none';}
+  if(rb){rb.textContent='👁 Show Answer';}
+  aw.innerHTML=`
+    <div style="font-size:0.78rem;color:var(--muted);margin-top:1rem;margin-bottom:0.5rem;font-weight:700;text-transform:uppercase;letter-spacing:1px">Balanced Solution</div>
+    <div style="font-size:1.05rem;font-family:'Space Mono',monospace;line-height:2">${buildEqHtml(allMols,eq.sol,rLen,true)}</div>
+    <div style="font-size:0.75rem;color:var(--muted);margin-top:0.5rem">Coefficients: [${eq.sol.join(', ')}]</div>`;
+}
+function toggleTeacherAnswer(){
+  const wrap=document.getElementById('t-answer-wrap');
+  const btn=document.getElementById('t-reveal-btn');
+  if(!wrap||!btn)return;
+  const showing=wrap.style.display!=='none';
+  wrap.style.display=showing?'none':'block';
+  btn.textContent=showing?'👁 Show Answer':'🙈 Hide Answer';
+}
+function teacherRandom(){const eqs=DB[tDiff];loadTeacherEq(Math.floor(Math.random()*eqs.length));}
+function teacherReset(){
+  tIdx=null;
+  document.getElementById('t-eq-name').textContent='Select an equation from the panel';
+  document.getElementById('t-eq-formula').textContent='—';
+  const aw=document.getElementById('t-answer-wrap');
+  if(aw){aw.innerHTML='';aw.style.display='none';}
+  const rb=document.getElementById('t-reveal-btn');
+  if(rb)rb.textContent='👁 Show Answer';
+  document.querySelectorAll('.t-eq-item').forEach(e=>e.classList.remove('active'));
+}
+function toggleFS(){if(!document.fullscreenElement)document.documentElement.requestFullscreen();else document.exitFullscreen();}
+
+// ══════════════════════════════════════════════════
+// RESTART
+// ══════════════════════════════════════════════════
+function restartSession(){
+  GIVEN.clear();
+  solvedThisQ=false;
+  const xpFill=document.getElementById('xp-fill');if(xpFill)xpFill.style.width='0%';
+  const lvChip=document.getElementById('lv-chip');if(lvChip)lvChip.textContent='Lv 1';
+  const chalBar=document.getElementById('chal-bar');if(chalBar)chalBar.classList.remove('on');
+  const chalBtn=document.getElementById('chal-toggle');if(chalBtn){chalBtn.classList.remove('active');chalBtn.textContent='⏱ Challenge';}
+  const subBtn=document.getElementById('submit-btn');if(subBtn){subBtn.textContent='📤 Submit My Score';subBtn.disabled=false;}
+  show('name-screen');
+}
+
+// ══════════════════════════════════════════════════
+// SCREEN UTIL
+// ══════════════════════════════════════════════════
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ── OVERFLOW MENU (mobile) ──
+function toggleOverflow(btn){
+  const m=document.getElementById('tb-overflow-menu');
+  m.classList.toggle('open');
+  // close on outside click
+  if(m.classList.contains('open')){
+    setTimeout(()=>document.addEventListener('click',closeOnOutside),0);
+  }
+}
+function closeOnOutside(e){
+  const m=document.getElementById('tb-overflow-menu');
+  if(m&&!m.contains(e.target)&&!e.target.classList.contains('tb-overflow-btn')){
+    m.classList.remove('open');
+    document.removeEventListener('click',closeOnOutside);
+  }
+}
+function closeOverflow(){
+  document.getElementById('tb-overflow-menu').classList.remove('open');
+  document.removeEventListener('click',closeOnOutside);
+}
+
+function toggleTPanel(){
+  document.getElementById('t-panel').classList.toggle('open');
+  document.getElementById('t-backdrop').classList.toggle('open');
+}
+function closeTPanel(){
+  document.getElementById('t-panel').classList.remove('open');
+  document.getElementById('t-backdrop').classList.remove('open');
+}
+
+// Enter key on name screen
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('name-input').addEventListener('keydown',e=>{
+    if(e.key==='Enter')beginSession();
+  });
+});
+</script>
+</body>
+</html>

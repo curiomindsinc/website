@@ -1,0 +1,1288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>BioFlow Simulator | @curiominds.inc</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --soil-dark: #5c3d1e;
+    --soil-mid: #7a5230;
+    --soil-light: #a0764a;
+    --grass: #4a7c3f;
+    --leaf-dark: #2d6a2d;
+    --leaf-mid: #3d8b3d;
+    --leaf-light: #5cb85c;
+    --stem: #5a7a2a;
+    --stem-dark: #3d5a1a;
+    --xylem: #4fc3f7;
+    --phloem: #ffb74d;
+    --sky-cool: #c8e6f5;
+    --sky-warm: #ffe0b2;
+    --water-mol: #29b6f6;
+    --bg: #f0ebe0;
+    --panel: #faf6ee;
+    --border: #c8b89a;
+    --text: #3a2a1a;
+    --text-light: #6a5a4a;
+    --accent: #4a7c3f;
+    --shadow: rgba(90,60,20,0.15);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+  }
+
+  header {
+    background: linear-gradient(135deg, #2d5a1a 0%, #4a7c3f 50%, #3d6b32 100%);
+    padding: 14px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.25);
+    flex-wrap: wrap;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  .header-left h1 {
+    font-family: 'Playfair Display', serif;
+    color: #e8f5e1;
+    font-size: 1.55rem;
+    letter-spacing: 0.5px;
+  }
+
+  .header-left p {
+    color: #a8d5a2;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-top: 1px;
+  }
+
+  .header-right {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .view-toggle {
+    display: flex;
+    background: rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 3px;
+    gap: 2px;
+  }
+
+  .view-btn {
+    padding: 6px 14px;
+    border-radius: 16px;
+    border: none;
+    cursor: pointer;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: all 0.3s;
+    background: transparent;
+    color: #c8e6c9;
+  }
+
+  .view-btn.active {
+    background: white;
+    color: #2d5a1a;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+
+  .download-btn {
+    background: linear-gradient(135deg, #8bc34a, #558b2f);
+    color: white;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.25);
+    transition: all 0.2s;
+    text-decoration: none;
+  }
+
+  .download-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 14px rgba(0,0,0,0.3);
+    background: linear-gradient(135deg, #9ccc65, #689f38);
+  }
+
+  /* ── DESKTOP LAYOUT ── */
+  .main {
+    display: flex;
+    flex: 1;
+    gap: 0;
+    overflow: hidden;
+    min-height: 0;
+  }
+
+  /* CONTROLS PANEL */
+  .controls {
+    width: 270px;
+    min-width: 270px;
+    background: var(--panel);
+    border-right: 2px solid var(--border);
+    padding: 18px 16px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    flex-shrink: 0;
+  }
+
+  .controls-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    color: var(--accent);
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 8px;
+    margin-bottom: 2px;
+  }
+
+  .var-card {
+    background: white;
+    border-radius: 12px;
+    padding: 13px 14px;
+    box-shadow: 0 2px 8px var(--shadow);
+    border: 1px solid #e0d5c5;
+    transition: box-shadow 0.2s;
+  }
+
+  .var-card:hover { box-shadow: 0 4px 14px var(--shadow); }
+
+  .var-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .var-label {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .var-icon { font-size: 1rem; }
+
+  .var-value {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--accent);
+    background: #e8f5e0;
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+
+  input[type=range] {
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    outline: none;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+    margin-top: 2px;
+  }
+
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+    cursor: pointer;
+    transition: transform 0.15s;
+  }
+
+  input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.15); }
+
+  input[type=range]::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+    cursor: pointer;
+    border: none;
+  }
+
+  .var-visual-cue {
+    margin-top: 7px;
+    font-size: 0.7rem;
+    color: var(--text-light);
+    font-style: italic;
+    min-height: 14px;
+  }
+
+  /* DATA PANEL */
+  .data-panel {
+    background: white;
+    border-radius: 12px;
+    padding: 13px 14px;
+    box-shadow: 0 2px 8px var(--shadow);
+    border: 1px solid #e0d5c5;
+  }
+
+  .data-panel h3 {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .data-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+    border-bottom: 1px solid #f0e8d8;
+    font-size: 0.75rem;
+  }
+
+  .data-row:last-child { border-bottom: none; }
+
+  .data-label { color: var(--text-light); }
+
+  .data-val {
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .rate-bar-wrap {
+    margin-top: 8px;
+    background: #f0ebe0;
+    border-radius: 6px;
+    height: 10px;
+    overflow: hidden;
+  }
+
+  .rate-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #4a7c3f, #8bc34a);
+    border-radius: 6px;
+    transition: width 0.5s ease;
+  }
+
+  /* SIMULATION AREA */
+  .sim-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+    min-width: 0;
+  }
+
+  #plant-svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  /* TOOLTIP */
+  .tooltip {
+    position: absolute;
+    background: rgba(45,35,20,0.92);
+    color: #f5f0e8;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 0.78rem;
+    max-width: 220px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+    z-index: 100;
+    line-height: 1.5;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  }
+
+  .tooltip.show { opacity: 1; }
+  .tooltip strong { color: #a8d5a2; display: block; margin-bottom: 3px; font-size: 0.82rem; }
+
+  /* LEGEND */
+  .legend {
+    position: absolute;
+    bottom: 14px;
+    left: 14px;
+    background: rgba(250,246,238,0.92);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 0.72rem;
+    box-shadow: 0 2px 8px var(--shadow);
+  }
+
+  .legend-title {
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 6px;
+    font-size: 0.75rem;
+  }
+
+  .legend-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 4px;
+    color: var(--text-light);
+  }
+
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  footer {
+    background: #2d5a1a;
+    color: #a8d5a2;
+    text-align: center;
+    font-size: 0.7rem;
+    padding: 7px;
+    letter-spacing: 1px;
+    flex-shrink: 0;
+  }
+
+  /* Wilt indicator */
+  .wilt-warning {
+    position: absolute;
+    top: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #bf360c;
+    color: white;
+    padding: 6px 16px;
+    border-radius: 16px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    opacity: 0;
+    transition: opacity 0.4s;
+    pointer-events: none;
+    z-index: 50;
+    white-space: nowrap;
+  }
+
+  .wilt-warning.show { opacity: 1; }
+
+  /* ═══════════════════════════════════════════════
+     MOBILE LAYOUT — graphics top, controls bottom
+     ═══════════════════════════════════════════════ */
+  @media (max-width: 768px) {
+    header {
+      padding: 10px 14px;
+    }
+
+    .header-left h1 {
+      font-size: 1.1rem;
+    }
+
+    .header-left p {
+      font-size: 0.6rem;
+      letter-spacing: 0.5px;
+    }
+
+    .view-btn {
+      padding: 5px 10px;
+      font-size: 0.7rem;
+    }
+
+    .download-btn {
+      padding: 6px 12px;
+      font-size: 0.7rem;
+    }
+
+    /* Stack vertically: sim on top, controls below */
+    .main {
+      flex-direction: column;
+      overflow: hidden;
+      height: calc(100vh - 90px); /* fill remaining screen below header+footer */
+    }
+
+    /* Simulation occupies the TOP portion */
+    .sim-area {
+      flex: 0 0 55%;
+      width: 100%;
+      min-height: 0;
+      order: 1;
+      border-bottom: 2px solid var(--border);
+    }
+
+    /* Controls scroll at the BOTTOM */
+    .controls {
+      flex: 0 0 45%;
+      width: 100%;
+      min-width: 0;
+      border-right: none;
+      border-top: none;
+      padding: 10px 12px;
+      gap: 8px;
+      overflow-y: auto;
+      order: 2;
+    }
+
+    .controls-title {
+      font-size: 0.85rem;
+      padding-bottom: 6px;
+      margin-bottom: 0;
+    }
+
+    /* Compact var cards on mobile */
+    .var-card {
+      padding: 8px 10px;
+    }
+
+    .var-label {
+      font-size: 0.72rem;
+    }
+
+    .var-icon {
+      font-size: 0.85rem;
+    }
+
+    .var-value {
+      font-size: 0.68rem;
+      padding: 1px 6px;
+    }
+
+    .var-visual-cue {
+      font-size: 0.62rem;
+      margin-top: 4px;
+      min-height: 12px;
+    }
+
+    input[type=range] {
+      height: 5px;
+    }
+
+    input[type=range]::-webkit-slider-thumb {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* Stack the var cards in a 2-column grid on mobile */
+    .controls-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    /* Data panel spans full width */
+    .data-panel {
+      grid-column: 1 / -1;
+      padding: 8px 10px;
+    }
+
+    .data-panel h3 {
+      font-size: 0.72rem;
+      margin-bottom: 6px;
+    }
+
+    .data-row {
+      font-size: 0.68rem;
+      padding: 3px 0;
+    }
+
+    .rate-bar-wrap {
+      margin-top: 6px;
+      height: 8px;
+    }
+
+    /* Legend smaller on mobile */
+    .legend {
+      bottom: 6px;
+      left: 6px;
+      right: auto;
+      padding: 6px 8px;
+      font-size: 0.6rem;
+    }
+
+    .legend-title {
+      font-size: 0.64rem;
+      margin-bottom: 4px;
+    }
+
+    .legend-dot {
+      width: 8px;
+      height: 8px;
+    }
+
+    .tooltip {
+      max-width: 170px;
+      font-size: 0.68rem;
+      padding: 7px 9px;
+    }
+
+    .wilt-warning {
+      font-size: 0.66rem;
+      padding: 4px 10px;
+    }
+
+    footer {
+      font-size: 0.6rem;
+      padding: 5px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .header-left h1 {
+      font-size: 0.95rem;
+    }
+
+    .main {
+      height: calc(100vh - 80px);
+    }
+
+    .sim-area {
+      flex: 0 0 52%;
+    }
+
+    .controls {
+      flex: 0 0 48%;
+    }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>🌿 BioFlow Simulator</h1>
+    <p>Transpiration &amp; Translocation · by Mr Lau Chin Hang &nbsp;|&nbsp; <a href="https://www.instagram.com/curiominds.inc" target="_blank" style="color:#a8d5a2;text-decoration:underline;">@curiominds.inc</a></p>
+  </div>
+  <div class="header-right">
+    <div class="view-toggle">
+      <button class="view-btn active" onclick="setView('transpiration')">💧 Transpiration</button>
+      <button class="view-btn" onclick="setView('translocation')">🍬 Translocation</button>
+    </div>
+    <button class="download-btn" onclick="downloadHTML()">⬇ Download HTML</button>
+  </div>
+</header>
+
+<div class="main">
+  <!-- SIMULATION (renders first = top on mobile) -->
+  <div class="sim-area" id="sim-area">
+    <svg id="plant-svg" viewBox="0 0 700 620" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="skyGrad" cx="50%" cy="0%" r="100%">
+          <stop id="sky-stop1" offset="0%" stop-color="#c8e6f5"/>
+          <stop id="sky-stop2" offset="100%" stop-color="#e8f5e0"/>
+        </radialGradient>
+        <radialGradient id="sunGrad" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#fff9c4"/>
+          <stop offset="60%" stop-color="#ffee58"/>
+          <stop offset="100%" stop-color="#ffa000" stop-opacity="0"/>
+        </radialGradient>
+        <linearGradient id="soilGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#7a5230"/>
+          <stop offset="100%" stop-color="#4a2e0a"/>
+        </linearGradient>
+        <linearGradient id="stemGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#3d5a1a"/>
+          <stop offset="50%" stop-color="#5a7a2a"/>
+          <stop offset="100%" stop-color="#3d5a1a"/>
+        </linearGradient>
+        <linearGradient id="xylemGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#29b6f6" stop-opacity="0.9"/>
+          <stop offset="100%" stop-color="#0288d1" stop-opacity="0.6"/>
+        </linearGradient>
+        <linearGradient id="phloemGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#ffa726" stop-opacity="0.6"/>
+          <stop offset="100%" stop-color="#ff8f00" stop-opacity="0.9"/>
+        </linearGradient>
+        <filter id="blur-soft">
+          <feGaussianBlur stdDeviation="2"/>
+        </filter>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="3" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+
+      <!-- SKY BACKGROUND -->
+      <rect id="sky-bg" x="0" y="0" width="700" height="420" fill="url(#skyGrad)"/>
+
+      <!-- SUN -->
+      <g id="sun-group">
+        <circle id="sun-glow" cx="80" cy="60" r="55" fill="url(#sunGrad)" opacity="0.6"/>
+        <circle id="sun-core" cx="80" cy="60" r="28" fill="#ffee58" opacity="0.95"/>
+        <g id="sun-rays" stroke="#ffd54f" stroke-width="2.5" stroke-linecap="round" opacity="0.7">
+          <line x1="80" y1="20" x2="80" y2="10"/>
+          <line x1="80" y1="100" x2="80" y2="110"/>
+          <line x1="40" y1="60" x2="30" y2="60"/>
+          <line x1="120" y1="60" x2="130" y2="60"/>
+          <line x1="52" y1="32" x2="44" y2="24"/>
+          <line x1="108" y1="88" x2="116" y2="96"/>
+          <line x1="108" y1="32" x2="116" y2="24"/>
+          <line x1="52" y1="88" x2="44" y2="96"/>
+        </g>
+      </g>
+
+      <!-- HEAT SHIMMER LINES (visible at high temp) -->
+      <g id="heat-lines" opacity="0">
+        <line x1="200" y1="390" x2="210" y2="370" stroke="#ff8f00" stroke-width="1" stroke-dasharray="3,4" opacity="0.4"/>
+        <line x1="300" y1="385" x2="315" y2="365" stroke="#ff8f00" stroke-width="1" stroke-dasharray="3,4" opacity="0.4"/>
+        <line x1="420" y1="390" x2="430" y2="368" stroke="#ff8f00" stroke-width="1" stroke-dasharray="3,4" opacity="0.4"/>
+        <line x1="500" y1="388" x2="512" y2="372" stroke="#ff8f00" stroke-width="1" stroke-dasharray="3,4" opacity="0.4"/>
+      </g>
+
+      <!-- MIST LAYER (humidity) -->
+      <rect id="mist-layer" x="0" y="250" width="700" height="170" fill="#e0f7fa" opacity="0" rx="0"/>
+
+      <!-- WIND LINES -->
+      <g id="wind-lines" opacity="0"></g>
+
+      <!-- GROUND + SOIL -->
+      <rect x="0" y="410" width="700" height="210" fill="url(#soilGrad)"/>
+      <!-- Grass strip -->
+      <path d="M0,410 Q175,400 350,408 Q525,416 700,410 L700,430 Q525,426 350,428 Q175,430 0,430 Z" fill="#4a7c3f"/>
+
+      <!-- SOIL TEXTURE dots -->
+      <g opacity="0.3">
+        <circle cx="180" cy="450" r="3" fill="#8b6520"/>
+        <circle cx="250" cy="480" r="4" fill="#6b4c18"/>
+        <circle cx="400" cy="465" r="3" fill="#8b6520"/>
+        <circle cx="470" cy="500" r="5" fill="#5a3c10"/>
+        <circle cx="550" cy="455" r="3" fill="#8b6520"/>
+        <circle cx="140" cy="520" r="4" fill="#6b4c18"/>
+        <circle cx="330" cy="530" r="3" fill="#8b6520"/>
+        <circle cx="600" cy="520" r="4" fill="#6b4c18"/>
+      </g>
+
+      <!-- ROOTS -->
+      <g id="roots" cursor="pointer" onclick="showTooltip(event,'root')">
+        <path d="M350,480 Q348,510 345,550 Q343,575 340,595" stroke="#6b4020" stroke-width="5" fill="none" stroke-linecap="round"/>
+        <path d="M349,500 Q320,505 295,515 Q270,522 250,530" stroke="#6b4020" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+        <path d="M347,525 Q310,532 280,545 Q260,553 240,565" stroke="#6b4020" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <path d="M348,550 Q325,558 305,570" stroke="#6b4020" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <path d="M349,505 Q375,510 405,520 Q430,528 450,535" stroke="#6b4020" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+        <path d="M347,528 Q385,538 415,550 Q440,560 460,570" stroke="#6b4020" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <path d="M346,552 Q372,560 395,572" stroke="#6b4020" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <g fill="#8b5a28" opacity="0.6">
+          <circle cx="290" cy="518" r="2.5"/>
+          <circle cx="268" cy="526" r="2"/>
+          <circle cx="246" cy="534" r="2"/>
+          <circle cx="278" cy="548" r="2"/>
+          <circle cx="258" cy="560" r="2"/>
+          <circle cx="408" cy="523" r="2.5"/>
+          <circle cx="432" cy="531" r="2"/>
+          <circle cx="452" cy="540" r="2"/>
+          <circle cx="418" cy="554" r="2"/>
+          <circle cx="440" cy="564" r="2"/>
+        </g>
+      </g>
+
+      <!-- STEM -->
+      <g id="stem" cursor="pointer" onclick="showTooltip(event,'stem')">
+        <rect x="338" y="100" width="24" height="380" fill="url(#stemGrad)" rx="4"/>
+        <rect id="xylem-vessel" x="341" y="102" width="8" height="376" fill="url(#xylemGrad)" rx="3" opacity="0.85"/>
+        <rect id="phloem-vessel" x="351" y="102" width="8" height="376" fill="url(#phloemGrad)" rx="3" opacity="0"/>
+      </g>
+
+      <!-- LEAVES GROUP -->
+      <g id="leaves-group"></g>
+
+      <!-- WATER MOLECULE PARTICLES -->
+      <g id="water-molecules"></g>
+
+      <!-- XYLEM FLOW PARTICLES -->
+      <g id="xylem-particles"></g>
+
+      <!-- PHLOEM FLOW PARTICLES -->
+      <g id="phloem-particles"></g>
+
+      <!-- STOMATA DETAIL -->
+      <g id="stomata-detail" cursor="pointer" onclick="showTooltip(event,'stomata')" transform="translate(550,440)">
+        <rect x="0" y="0" width="130" height="90" rx="10" fill="rgba(240,235,220,0.92)" stroke="#c8b89a" stroke-width="1.5"/>
+        <text x="65" y="16" text-anchor="middle" font-size="9" font-weight="700" fill="#2d6a2d" font-family="Nunito,sans-serif">Stomata (close-up)</text>
+        <g id="guard-cells" transform="translate(65,50)">
+          <ellipse id="gc-top" cx="0" cy="-14" rx="18" ry="8" fill="#4a9a4a" opacity="0.8"/>
+          <ellipse id="gc-bot" cx="0" cy="14" rx="18" ry="8" fill="#4a9a4a" opacity="0.8"/>
+          <ellipse id="pore" cx="0" cy="0" rx="6" ry="9" fill="#1a3d1a" opacity="0.7"/>
+        </g>
+        <text id="stomata-label" x="65" y="82" text-anchor="middle" font-size="8" fill="#6a5a4a" font-family="Nunito,sans-serif">Half-open</text>
+      </g>
+
+      <!-- LABELS -->
+      <text x="12" y="435" font-size="11" fill="#c8e6c9" font-family="Nunito,sans-serif" font-weight="600" opacity="0.9">Click plant parts for info</text>
+    </svg>
+
+    <!-- WILT WARNING -->
+    <div class="wilt-warning" id="wilt-warn">⚠️ Plant wilting — excessive water loss!</div>
+
+    <!-- TOOLTIP -->
+    <div class="tooltip" id="tooltip"></div>
+
+    <!-- LEGEND -->
+    <div class="legend" id="legend">
+      <div class="legend-title">Flow Key</div>
+      <div class="legend-row"><div class="legend-dot" style="background:#29b6f6"></div> Water (Xylem)</div>
+      <div class="legend-row" id="legend-phloem" style="opacity:0.3"><div class="legend-dot" style="background:#ffb74d"></div> Sugars (Phloem)</div>
+      <div class="legend-row"><div class="legend-dot" style="background:#b0e0ff; border:1px solid #29b6f6"></div> H₂O vapour</div>
+    </div>
+  </div>
+
+  <!-- CONTROLS (renders second = bottom on mobile) -->
+  <div class="controls">
+    <div class="controls-title">🎛 Variables</div>
+
+    <div class="controls-grid">
+      <!-- Temperature -->
+      <div class="var-card">
+        <div class="var-header">
+          <span class="var-label"><span class="var-icon">🌡️</span> Temperature</span>
+          <span class="var-value" id="temp-val">25°C</span>
+        </div>
+        <input type="range" id="temp" min="10" max="45" value="25"
+          style="background: linear-gradient(90deg,#64b5f6,#ef5350)"
+          oninput="updateSim()">
+        <div class="var-visual-cue" id="temp-cue">Moderate — normal transpiration</div>
+      </div>
+
+      <!-- Humidity -->
+      <div class="var-card">
+        <div class="var-header">
+          <span class="var-label"><span class="var-icon">💧</span> Humidity</span>
+          <span class="var-value" id="hum-val">50%</span>
+        </div>
+        <input type="range" id="hum" min="0" max="100" value="50"
+          style="background: linear-gradient(90deg,#fff9c4,#29b6f6)"
+          oninput="updateSim()">
+        <div class="var-visual-cue" id="hum-cue">Moderate humidity</div>
+      </div>
+
+      <!-- Wind Speed -->
+      <div class="var-card">
+        <div class="var-header">
+          <span class="var-label"><span class="var-icon">💨</span> Wind Speed</span>
+          <span class="var-value" id="wind-val">0 m/s</span>
+        </div>
+        <input type="range" id="wind" min="0" max="20" value="0"
+          style="background: linear-gradient(90deg,#e8f5e9,#78909c)"
+          oninput="updateSim()">
+        <div class="var-visual-cue" id="wind-cue">Still air</div>
+      </div>
+
+      <!-- Light Intensity -->
+      <div class="var-card">
+        <div class="var-header">
+          <span class="var-label"><span class="var-icon">☀️</span> Light Intensity</span>
+          <span class="var-value" id="light-val">50%</span>
+        </div>
+        <input type="range" id="light" min="0" max="100" value="50"
+          style="background: linear-gradient(90deg,#37474f,#fff176)"
+          oninput="updateSim()">
+        <div class="var-visual-cue" id="light-cue">Stomata half-open</div>
+      </div>
+
+      <!-- Number of Leaves -->
+      <div class="var-card">
+        <div class="var-header">
+          <span class="var-label"><span class="var-icon">🍃</span> No. of Leaves</span>
+          <span class="var-value" id="leaves-val">3</span>
+        </div>
+        <input type="range" id="leaves" min="1" max="6" value="3" step="1"
+          style="background: linear-gradient(90deg,#c8e6c9,#2e7d32)"
+          oninput="updateSim()">
+        <div class="var-visual-cue" id="leaves-cue">3 leaves active</div>
+      </div>
+
+      <!-- DATA READOUT -->
+      <div class="data-panel">
+        <h3>📊 Live Data</h3>
+        <div class="data-row">
+          <span class="data-label">Transpiration Rate</span>
+          <span class="data-val" id="d-rate">—</span>
+        </div>
+        <div class="data-row">
+          <span class="data-label">Stomatal Aperture</span>
+          <span class="data-val" id="d-stomata">—</span>
+        </div>
+        <div class="data-row">
+          <span class="data-label">Water Status</span>
+          <span class="data-val" id="d-water">—</span>
+        </div>
+        <div class="data-row">
+          <span class="data-label">Xylem Flow</span>
+          <span class="data-val" id="d-xylem">—</span>
+        </div>
+        <div class="rate-bar-wrap" style="margin-top:10px">
+          <div class="rate-bar" id="rate-bar" style="width:50%"></div>
+        </div>
+        <div style="font-size:0.68rem;color:var(--text-light);margin-top:4px;text-align:center;">Transpiration Rate Index</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>BioFlow Simulator &nbsp;|&nbsp; by Mr Lau Chin Hang &nbsp;|&nbsp; Instagram: <a href="https://www.instagram.com/curiominds.inc" target="_blank" style="color:#a8d5a2; text-decoration:underline;">@curiominds.inc</a></footer>
+
+<script>
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let currentView = 'transpiration';
+let animFrame;
+let molecules = [];
+let xylemParticles = [];
+let phloemParticles = [];
+let windLines = [];
+
+const tooltipTexts = {
+  root: {
+    title: '🌱 Root Hair Cells',
+    text: 'Root hair cells absorb water by osmosis from the soil. The large surface area of root hairs maximises water absorption. Water moves up via the xylem due to transpiration pull.'
+  },
+  stem: {
+    title: '🪵 Stem (Vascular Bundle)',
+    text: 'The stem contains xylem (carries water up) and phloem (carries sugars). Cohesion-tension in the xylem creates a continuous water column from roots to leaves.'
+  },
+  stomata: {
+    title: '🔬 Stomata & Guard Cells',
+    text: 'Stomata are pores on the leaf surface. Guard cells control their opening/closing. In bright light, guard cells take up water and swell, opening the stomata. CO₂ enters; water vapour exits.'
+  },
+  leaf: {
+    title: '🍃 Leaf (Site of Transpiration)',
+    text: 'Water evaporates from mesophyll cells and diffuses out through open stomata into the air. This is transpiration. More leaves = more surface area = more water lost.'
+  }
+};
+
+// ─── LEAF POSITIONS ──────────────────────────────────────────────────────────
+const leafDefs = [
+  { cx: 350, cy: 370, angle: -40, side: 'left',  stemY: 370 },
+  { cx: 350, cy: 330, angle:  35, side: 'right', stemY: 330 },
+  { cx: 350, cy: 285, angle: -45, side: 'left',  stemY: 285 },
+  { cx: 350, cy: 240, angle:  40, side: 'right', stemY: 240 },
+  { cx: 350, cy: 195, angle: -38, side: 'left',  stemY: 195 },
+  { cx: 350, cy: 148, angle:  42, side: 'right', stemY: 148 },
+];
+
+function getLeafPath(lx, ly, angle, side) {
+  const sa = side === 'left' ? -1 : 1;
+  const tx = lx + sa * Math.cos(angle * Math.PI/180) * 70;
+  const ty = ly - Math.abs(Math.sin(angle * Math.PI/180)) * 50;
+  const cx1 = lx + sa * 30, cy1 = ly - 30;
+  const cx2 = tx - sa * 15, cy2 = ty + 10;
+  return `M${lx},${ly} C${cx1},${cy1} ${cx2},${cy2} ${tx},${ty} C${tx - sa*8},${ty+18} ${lx + sa*20},${ly+8} ${lx},${ly}`;
+}
+
+// ─── DRAW LEAVES ─────────────────────────────────────────────────────────────
+function drawLeaves(count) {
+  const g = document.getElementById('leaves-group');
+  g.innerHTML = '';
+  for (let i = 0; i < count; i++) {
+    const def = leafDefs[i];
+    const sa = def.side === 'left' ? -1 : 1;
+    const tx = def.cx + sa * Math.cos(def.angle * Math.PI/180) * 70;
+    const ty = def.cy - Math.abs(Math.sin(def.angle * Math.PI/180)) * 50;
+
+    const petiole = document.createElementNS('http://www.w3.org/2000/svg','line');
+    petiole.setAttribute('x1', def.cx); petiole.setAttribute('y1', def.cy);
+    petiole.setAttribute('x2', tx); petiole.setAttribute('y2', ty);
+    petiole.setAttribute('stroke', '#4a6a1a'); petiole.setAttribute('stroke-width', '2');
+    g.appendChild(petiole);
+
+    const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d', getLeafPath(def.cx, def.cy, def.angle, def.side));
+    path.setAttribute('fill', '#3d8b3d');
+    path.setAttribute('stroke', '#2d6a2d');
+    path.setAttribute('stroke-width', '1');
+    path.setAttribute('cursor', 'pointer');
+    path.setAttribute('opacity', '0.92');
+    path.addEventListener('click', (e) => showTooltip(e, 'leaf'));
+
+    const midrib = document.createElementNS('http://www.w3.org/2000/svg','line');
+    midrib.setAttribute('x1', def.cx); midrib.setAttribute('y1', def.cy);
+    midrib.setAttribute('x2', tx); midrib.setAttribute('y2', ty);
+    midrib.setAttribute('stroke', '#2d6a2d'); midrib.setAttribute('stroke-width', '1.2');
+    midrib.setAttribute('opacity', '0.5');
+
+    g.appendChild(path);
+    g.appendChild(midrib);
+  }
+}
+
+// ─── WIND LINES ──────────────────────────────────────────────────────────────
+// Each line has its own independent x position so they spread across the full width
+function initWindLines() {
+  windLines = [];
+  // Create lines spread across the full 700px width at varied y heights
+  const configs = [
+    { startX: 0,    y: 140, length: 70,  speedMult: 1.0 },
+    { startX: 120,  y: 175, length: 90,  speedMult: 1.2 },
+    { startX: 250,  y: 155, length: 60,  speedMult: 0.8 },
+    { startX: 370,  y: 190, length: 80,  speedMult: 1.1 },
+    { startX: 500,  y: 160, length: 100, speedMult: 0.9 },
+    { startX: 620,  y: 180, length: 65,  speedMult: 1.3 },
+    { startX: 50,   y: 220, length: 85,  speedMult: 0.85 },
+    { startX: 200,  y: 240, length: 55,  speedMult: 1.15 },
+    { startX: 340,  y: 210, length: 75,  speedMult: 1.0  },
+    { startX: 460,  y: 235, length: 90,  speedMult: 0.75 },
+    { startX: 600,  y: 215, length: 70,  speedMult: 1.2  },
+    { startX: 80,   y: 270, length: 60,  speedMult: 1.05 },
+    { startX: 290,  y: 260, length: 80,  speedMult: 0.95 },
+    { startX: 520,  y: 275, length: 65,  speedMult: 1.1  },
+    { startX: 670,  y: 250, length: 55,  speedMult: 0.8  },
+  ];
+  configs.forEach(c => {
+    windLines.push({
+      x: c.startX,
+      y: c.y,
+      length: c.length,
+      speedMult: c.speedMult,
+      speed: 0,
+      // offset so lines don't all start at exact same phase
+      phase: Math.random() * 700,
+    });
+  });
+}
+
+function updateWindLines(windVal) {
+  const baseSpeed = (windVal / 20) * 4.5;
+  windLines.forEach(line => {
+    line.speed = baseSpeed * line.speedMult;
+    line.x += line.speed;
+    // When a line fully exits the right edge, reset it to start just off the left
+    if (line.x > 700 + line.length) {
+      line.x = -(line.length + Math.random() * 60);
+    }
+  });
+}
+
+function renderWindLines() {
+  const g = document.getElementById('wind-lines');
+  g.innerHTML = '';
+  windLines.forEach(line => {
+    if (line.speed === 0) return;
+    const lineEl = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    lineEl.setAttribute('x1', line.x);
+    lineEl.setAttribute('y1', line.y);
+    lineEl.setAttribute('x2', line.x + line.length);
+    lineEl.setAttribute('y2', line.y);
+    lineEl.setAttribute('stroke', '#90a4ae');
+    lineEl.setAttribute('stroke-width', '1.5');
+    lineEl.setAttribute('stroke-linecap', 'round');
+    // Fade ends slightly
+    lineEl.setAttribute('opacity', 0.55 + line.speedMult * 0.25);
+    g.appendChild(lineEl);
+  });
+}
+
+// ─── MOLECULE CREATION ───────────────────────────────────────────────────────
+let molId = 0;
+
+function createMolecule(leafIdx, exitPointIdx, numExitPoints, windVal, lightVal, tempVal, humVal) {
+  const def = leafDefs[leafIdx];
+  const sa = def.side === 'left' ? -1 : 1;
+
+  const t = (exitPointIdx + 0.5) / numExitPoints;
+  const tx = def.cx + sa * Math.cos(def.angle * Math.PI/180) * 70 * t;
+  const ty = def.cy - Math.abs(Math.sin(def.angle * Math.PI/180)) * 50 * t;
+
+  const px = ty > def.cy ? -sa * 8 : sa * 8;
+  const speed = 0.3 + (tempVal / 45) * 0.9 + (windVal / 20) * 0.6;
+  const windDrift = (windVal / 20) * 2.5;
+
+  return {
+    id: molId++,
+    x: tx + px + (Math.random() - 0.5) * 10,
+    y: ty - 6 + (Math.random() - 0.5) * 8,
+    vx: windDrift + (Math.random() - 0.5) * 0.3,
+    vy: -(speed * (0.6 + Math.random() * 0.4)),
+    alpha: 0.85 + Math.random() * 0.15,
+    r: 4 + Math.random() * 3,
+    life: 0,
+    maxLife: 60 + Math.random() * 40 - (humVal * 0.3),
+  };
+}
+
+function createXylemParticle(speed) {
+  return {
+    id: molId++,
+    x: 344 + Math.random() * 4,
+    y: 470 + Math.random() * 10,
+    vy: -(speed * (0.8 + Math.random() * 0.4)),
+    alpha: 0.7 + Math.random() * 0.3,
+    r: 3 + Math.random() * 2.5,
+    life: 0,
+    maxLife: 300
+  };
+}
+
+function createPhloemParticle(leafIdx, leafCount) {
+  const def = leafDefs[Math.min(leafIdx, leafCount - 1)];
+  return {
+    id: molId++,
+    x: 354 + Math.random() * 4,
+    y: def.cy + Math.random() * 6,
+    vy: 0.55 + Math.random() * 0.3,
+    alpha: 0.75 + Math.random() * 0.25,
+    r: 3 + Math.random() * 2,
+    life: 0,
+    maxLife: 220
+  };
+}
+
+const molLayer = document.getElementById('water-molecules');
+const xylemLayer = document.getElementById('xylem-particles');
+const phloemLayer = document.getElementById('phloem-particles');
+const svgNS = 'http://www.w3.org/2000/svg';
+
+// ─── ANIMATION LOOP ──────────────────────────────────────────────────────────
+let lastSpawn = 0;
+
+function animate(ts) {
+  const tempVal   = +document.getElementById('temp').value;
+  const humVal    = +document.getElementById('hum').value;
+  const windVal   = +document.getElementById('wind').value;
+  const lightVal  = +document.getElementById('light').value;
+  const leafCount = +document.getElementById('leaves').value;
+
+  const rate = calcRate(tempVal, humVal, windVal, lightVal, leafCount);
+  const stomataOpen = lightVal / 100;
+  const numExitPerLeaf = Math.max(1, Math.round(1 + stomataOpen * 3));
+
+  updateWindLines(windVal);
+  renderWindLines();
+
+  if (ts - lastSpawn > Math.max(80, 400 - rate * 3)) {
+    lastSpawn = ts;
+    if (stomataOpen > 0.05 && currentView === 'transpiration') {
+      for (let li = 0; li < leafCount; li++) {
+        for (let ep = 0; ep < numExitPerLeaf; ep++) {
+          if (Math.random() < 0.6) {
+            molecules.push(createMolecule(li, ep, numExitPerLeaf, windVal, lightVal, tempVal, humVal));
+          }
+        }
+      }
+    }
+    if (rate > 5) {
+      const xSpeed = 0.5 + rate / 50;
+      xylemParticles.push(createXylemParticle(xSpeed));
+    }
+    if (currentView === 'translocation' && leafCount > 0) {
+      const spawnLeaf = Math.floor(Math.random() * leafCount);
+      phloemParticles.push(createPhloemParticle(spawnLeaf, leafCount));
+    }
+  }
+
+  // Water molecules
+  molLayer.innerHTML = '';
+  molecules = molecules.filter(m => {
+    m.x += m.vx; m.y += m.vy; m.life++;
+    const fade = 1 - m.life / m.maxLife;
+    if (fade <= 0) return false;
+    const c = document.createElementNS(svgNS, 'circle');
+    c.setAttribute('cx', m.x); c.setAttribute('cy', m.y); c.setAttribute('r', m.r);
+    c.setAttribute('fill', '#29b6f6'); c.setAttribute('opacity', m.alpha * fade);
+    c.setAttribute('stroke', '#e0f7ff'); c.setAttribute('stroke-width', '0.8');
+    molLayer.appendChild(c);
+    if (m.r > 5) {
+      const t = document.createElementNS(svgNS, 'text');
+      t.setAttribute('x', m.x); t.setAttribute('y', m.y + 3);
+      t.setAttribute('font-size', '5'); t.setAttribute('fill', 'white');
+      t.setAttribute('text-anchor', 'middle'); t.setAttribute('font-family', 'Nunito,sans-serif');
+      t.setAttribute('font-weight', '700'); t.setAttribute('opacity', m.alpha * fade * 0.9);
+      t.textContent = 'H₂O'; molLayer.appendChild(t);
+    }
+    return true;
+  });
+
+  // Xylem particles
+  xylemLayer.innerHTML = '';
+  xylemParticles = xylemParticles.filter(p => {
+    p.y += p.vy; p.life++;
+    if (p.y < 105 || p.life > p.maxLife) return false;
+    const c = document.createElementNS(svgNS, 'circle');
+    c.setAttribute('cx', p.x); c.setAttribute('cy', p.y); c.setAttribute('r', p.r);
+    c.setAttribute('fill', '#4fc3f7'); c.setAttribute('opacity', p.alpha * (1 - p.life / p.maxLife));
+    xylemLayer.appendChild(c);
+    return true;
+  });
+
+  // Phloem particles
+  phloemLayer.innerHTML = '';
+  phloemParticles = phloemParticles.filter(p => {
+    p.y += p.vy; p.life++;
+    if (p.y > 475 || p.life > p.maxLife) return false;
+    const c = document.createElementNS(svgNS, 'circle');
+    c.setAttribute('cx', p.x); c.setAttribute('cy', p.y); c.setAttribute('r', p.r);
+    c.setAttribute('fill', '#ffb74d'); c.setAttribute('opacity', p.alpha * (1 - p.life / p.maxLife));
+    phloemLayer.appendChild(c);
+    return true;
+  });
+
+  animFrame = requestAnimationFrame(animate);
+}
+
+// ─── RATE CALCULATION ────────────────────────────────────────────────────────
+function calcRate(temp, hum, wind, light, leaves) {
+  const tFactor   = (temp - 10) / 35;
+  const hFactor   = 1 - (hum / 100) * 0.8;
+  const wFactor   = wind / 20;
+  const lFactor   = light / 100;
+  const leafFactor= leaves / 6;
+  const rate = (tFactor * 30 + hFactor * 25 + wFactor * 20 + lFactor * 25) * leafFactor;
+  return Math.min(100, Math.max(0, rate));
+}
+
+// ─── UPDATE SIMULATION ───────────────────────────────────────────────────────
+function updateSim() {
+  const tempVal   = +document.getElementById('temp').value;
+  const humVal    = +document.getElementById('hum').value;
+  const windVal   = +document.getElementById('wind').value;
+  const lightVal  = +document.getElementById('light').value;
+  const leafCount = +document.getElementById('leaves').value;
+  const rate = calcRate(tempVal, humVal, windVal, lightVal, leafCount);
+
+  document.getElementById('temp-val').textContent   = tempVal + '°C';
+  document.getElementById('hum-val').textContent    = humVal + '%';
+  document.getElementById('wind-val').textContent   = windVal + ' m/s';
+  document.getElementById('light-val').textContent  = lightVal + '%';
+  document.getElementById('leaves-val').textContent = leafCount;
+
+  document.getElementById('temp-cue').textContent =
+    tempVal < 18 ? '❄️ Cool — slow evaporation' :
+    tempVal < 30 ? '🌤 Moderate — normal rate' : '🔥 Hot — rapid evaporation';
+
+  document.getElementById('hum-cue').textContent =
+    humVal < 30 ? '🏜 Dry air — fast diffusion out' :
+    humVal < 70 ? '🌤 Moderate humidity' : '🌫 High humidity — slows transpiration';
+
+  document.getElementById('wind-cue').textContent =
+    windVal === 0 ? '😶 Still air' :
+    windVal < 8   ? '🍃 Light breeze — removes vapour' :
+    windVal < 15  ? '💨 Moderate wind — faster loss' : '🌬 Strong wind — maximum loss';
+
+  document.getElementById('light-cue').textContent =
+    lightVal < 20 ? '🌑 Dark — stomata closed' :
+    lightVal < 50 ? '🌤 Dim — stomata slightly open' :
+    lightVal < 80 ? '☀️ Moderate — stomata open' : '🌟 Bright — stomata fully open';
+
+  document.getElementById('leaves-cue').textContent =
+    leafCount + ' leaf' + (leafCount > 1 ? 'ves' : '') + ' — ' + leafCount + ' vapour stream' + (leafCount > 1 ? 's' : '');
+
+  // Sky / temperature
+  const skyR = Math.round(200 + tempVal * 2);
+  const skyG = Math.round(230 - tempVal * 1.5);
+  document.getElementById('sky-stop1').setAttribute('stop-color', `rgb(${skyR},${skyG},245)`);
+  document.getElementById('sky-stop2').setAttribute('stop-color', tempVal > 30 ? '#ffe0b2' : '#e8f5e0');
+
+  document.getElementById('heat-lines').setAttribute('opacity', tempVal > 32 ? (tempVal - 32) / 13 : 0);
+  document.getElementById('mist-layer').setAttribute('opacity', humVal > 60 ? (humVal - 60) / 100 * 0.4 : 0);
+  document.getElementById('wind-lines').setAttribute('opacity', windVal > 0 ? Math.min(1, windVal / 15 * 0.7 + 0.3) : 0);
+
+  const sunOpacity = 0.2 + (lightVal / 100) * 0.8;
+  document.getElementById('sun-core').setAttribute('opacity', sunOpacity);
+  document.getElementById('sun-glow').setAttribute('opacity', sunOpacity * 0.7);
+  const sunR = 20 + lightVal * 0.3;
+  document.getElementById('sun-core').setAttribute('r', sunR);
+  document.getElementById('sun-glow').setAttribute('r', sunR + 28);
+  document.getElementById('sun-rays').setAttribute('opacity', lightVal > 30 ? 0.3 + lightVal / 200 : 0);
+
+  const poreH = 1 + (lightVal / 100) * 12;
+  document.getElementById('pore').setAttribute('ry', poreH);
+  document.getElementById('gc-top').setAttribute('cy', -(8 + (lightVal / 100) * 8));
+  document.getElementById('gc-bot').setAttribute('cy',   (8 + (lightVal / 100) * 8));
+  document.getElementById('stomata-label').textContent =
+    lightVal < 20 ? 'Closed' :
+    lightVal < 50 ? 'Slightly open' :
+    lightVal < 80 ? 'Half-open' : 'Fully open';
+
+  drawLeaves(leafCount);
+
+  document.getElementById('wilt-warn').classList.toggle('show', rate > 80);
+
+  document.getElementById('phloem-vessel').setAttribute('opacity', currentView === 'translocation' ? 0.85 : 0);
+  document.getElementById('xylem-vessel').setAttribute('opacity',  currentView === 'transpiration'  ? 0.85 : 0.3);
+
+  const waterStatus = rate < 30 ? '🟢 Well hydrated' : rate < 65 ? '🟡 Moderate stress' : '🔴 Water stress';
+  const xylemFlow   = rate < 20 ? 'Slow' : rate < 50 ? 'Moderate' : rate < 80 ? 'Fast' : 'Very fast';
+  document.getElementById('d-rate').textContent    = rate.toFixed(1) + ' mL/hr';
+  document.getElementById('d-stomata').textContent = lightVal + '% open';
+  document.getElementById('d-water').textContent   = waterStatus;
+  document.getElementById('d-xylem').textContent   = xylemFlow;
+  document.getElementById('rate-bar').style.width  = rate + '%';
+}
+
+// ─── VIEW TOGGLE ─────────────────────────────────────────────────────────────
+function setView(v) {
+  currentView = v;
+  molecules = []; xylemParticles = []; phloemParticles = [];
+  document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.view-btn')[v === 'transpiration' ? 0 : 1].classList.add('active');
+  document.getElementById('legend-phloem').style.opacity = v === 'translocation' ? '1' : '0.3';
+  updateSim();
+}
+
+// ─── TOOLTIP ─────────────────────────────────────────────────────────────────
+const tooltip = document.getElementById('tooltip');
+let tooltipTimer;
+
+function showTooltip(event, key) {
+  const data = tooltipTexts[key];
+  tooltip.innerHTML = `<strong>${data.title}</strong>${data.text}`;
+  const simArea = document.getElementById('sim-area');
+  const rect = simArea.getBoundingClientRect();
+  let x = event.clientX - rect.left + 12;
+  let y = event.clientY - rect.top + 12;
+  if (x + 240 > rect.width)  x = event.clientX - rect.left - 240;
+  if (y + 120 > rect.height) y = event.clientY - rect.top - 120;
+  tooltip.style.left = x + 'px';
+  tooltip.style.top  = y + 'px';
+  tooltip.classList.add('show');
+  clearTimeout(tooltipTimer);
+  tooltipTimer = setTimeout(() => tooltip.classList.remove('show'), 4000);
+}
+
+document.getElementById('sim-area').addEventListener('click', function(e) {
+  if (!e.target.closest('[onclick]') && !e.target.closest('path') && !e.target.closest('g[cursor]')) {
+    tooltip.classList.remove('show');
+  }
+});
+
+// ─── DOWNLOAD ────────────────────────────────────────────────────────────────
+function downloadHTML() {
+  const html = '<!DOCTYPE html>' + document.documentElement.outerHTML;
+  const blob = new Blob([html], { type: 'text/html' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'bioflow-curiominds-simulator.html';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+initWindLines();
+updateSim();
+requestAnimationFrame(animate);
+</script>
+</body>
+</html>

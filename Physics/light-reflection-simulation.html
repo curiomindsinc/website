@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Light Reflection Simulation</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background:#07090f; color:#e8eaf0;
+    font-family:'Space Mono',monospace;
+    min-height:100vh; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; overflow:hidden;
+  }
+  h1 {
+    font-family:'Crimson Pro',serif; font-size:1.35rem;
+    font-weight:600; letter-spacing:0.1em; color:#c8d0e8;
+    text-transform:uppercase; margin-bottom:3px;
+  }
+  .credits { font-size:0.55rem; color:#445070; letter-spacing:0.1em; margin-bottom:4px; }
+  .credits span { color:#6878a0; }
+  .law-tag { font-size:0.58rem; color:#556080; letter-spacing:0.14em; margin-bottom:10px; }
+  .law-tag span { color:#e8c842; font-weight:700; }
+  .mode-tabs { display:flex; gap:6px; margin-bottom:10px; }
+  .mode-tab {
+    font-family:'Space Mono',monospace; font-size:0.58rem;
+    letter-spacing:0.05em; text-transform:uppercase;
+    padding:7px 13px; border-radius:3px; border:1px solid #1e2540;
+    background:#0c1020; color:#4a5580; cursor:pointer;
+    transition:all 0.2s; line-height:1.6; text-align:center;
+  }
+  .mode-tab:hover { color:#8899cc; border-color:#2a3560; }
+  .mode-tab.active-1 { background:linear-gradient(135deg,#0e1e50,#1a2e70); color:#88aaff; border-color:#3a4a9e; box-shadow:0 0 10px rgba(80,120,255,0.25); }
+  .mode-tab.active-2 { background:linear-gradient(135deg,#301000,#501a00); color:#ffaa44; border-color:#804020; box-shadow:0 0 10px rgba(255,120,30,0.25); }
+  .mode-tab.active-3 { background:linear-gradient(135deg,#003020,#004a30); color:#44ddaa; border-color:#208060; box-shadow:0 0 10px rgba(40,200,120,0.25); }
+  canvas { display:block; cursor:grab; border:1px solid #151d35; border-radius:5px;
+    box-shadow:0 0 50px rgba(8,15,50,0.9),0 0 18px rgba(20,40,100,0.35); }
+  canvas:active { cursor:grabbing; }
+  .bottom-row { display:flex; align-items:center; gap:12px; margin-top:10px; }
+  .angle-display {
+    font-size:0.68rem; color:#ff5577; letter-spacing:0.06em;
+    min-width:340px; text-align:center;
+    background:rgba(255,40,80,0.05); border:1px solid rgba(255,40,80,0.15);
+    padding:7px 14px; border-radius:4px;
+  }
+  .info-box {
+    font-size:0.58rem; color:#6a7a9a; margin-top:8px; text-align:center;
+    letter-spacing:0.07em; max-width:660px; line-height:1.75;
+    padding:7px 18px; border:1px solid #131a30; border-radius:4px;
+    background:rgba(14,20,50,0.5); min-height:34px;
+  }
+  .info-box em { font-style:italic; }
+  .hl1{color:#88aaff;} .hl2{color:#ffaa44;} .hl3{color:#44ddaa;}
+</style>
+</head>
+<body>
+
+<h1>Reflection of Light</h1>
+<div class="credits">Created by <span>Mr Lau Chin Hang</span> &nbsp;·&nbsp; Instagram: <a href="https://www.instagram.com/curiominds.inc" target="_blank" style="color:#a070d0;text-decoration:none;letter-spacing:0.1em;">@curiominds.inc</a></div>
+<div class="law-tag">Law of Reflection — <span>∠i = ∠r</span> measured from the normal</div>
+
+<div class="mode-tabs">
+  <button class="mode-tab active-1" id="tab1" onclick="setMode(1)">① Incident &amp;<br>Reflected Angle</button>
+  <button class="mode-tab" id="tab2" onclick="setMode(2)">② Multiple Rays<br>Rough Surface</button>
+  <button class="mode-tab" id="tab3" onclick="setMode(3)">③ Multiple Rays<br>Smooth Surface</button>
+</div>
+
+<canvas id="canvas" width="660" height="430"></canvas>
+
+<div class="bottom-row">
+  <div class="angle-display" id="angleDisplay">∠i = 40°  |  ∠r = 40°</div>
+</div>
+<div class="info-box" id="infoBox">
+  <span class="hl1">Mode 1 — Single ray, mirror surface:</span> Drag the torch to change the incident angle. The reflected ray goes to the <em>other side</em> of the normal, at the same angle.
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// COORDINATE SYSTEM
+//   x: right is positive
+//   y: DOWN is positive (canvas convention)
+//
+// INCIDENT DIRECTION (unit vector pointing downward toward surface):
+//   Given angleDeg measured from the downward vertical, positive = right:
+//     incDir = { x: sin(angleDeg), y: cos(angleDeg) }
+//   e.g. angleDeg=0  → straight down (0,1)
+//        angleDeg=45 → down-right (0.707, 0.707)
+//        angleDeg=-45→ down-left (-0.707, 0.707)
+//
+// SURFACE NORMAL (unit vector pointing upward away from surface):
+//   For flat surface: normal = (0, -1)
+//   For tilted facet: normal = (sin(tilt), -cos(tilt)), tilt=0 → straight up
+//
+// REFLECTION:  r = d - 2(d·n)n
+//   If d is incident direction and n is the outward normal,
+//   the result r is the REFLECTED direction.
+//   For a flat surface and d=(sin θ, cos θ):
+//     n=(0,-1), d·n = cos θ · (-1) = -cos θ
+//     r = (sin θ, cos θ) - 2(-cos θ)(0,-1) = (sin θ, cos θ - 2cos θ) = (sin θ, -cos θ)
+//   So reflected ray goes UP-RIGHT when incident is DOWN-RIGHT. ✓
+// ─────────────────────────────────────────────────────────────────────────────
+
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+
+let mode = 1;
+// angleDeg: angle of incident ray from straight-down vertical
+// positive = torch is to the RIGHT of centre, ray comes from upper-right going down-left
+// Wait — let's define: torch on LEFT side → ray goes down-right, angleDeg positive
+// angleDeg = angle between the downward vertical and the incident ray, measured at contact point
+// torch position is OPPOSITE: if ray goes down-right (angleDeg>0), torch is upper-LEFT
+let angleDeg = 40;   // positive = incident ray tilted to the right, torch is to the left
+let isDragging = false;
+
+const CX = W / 2;
+const SURFACE_Y = 300;
+const ARC_R = 195;  // radius of torch arc above surface
+
+// ── Wave surface ──────────────────────────────────────────────────────────────
+let wavePoints = [];
+function generateWavePoints() {
+  wavePoints = [];
+  for (let i = 0; i <= 110; i++) {
+    const x = 10 + (i / 110) * (W - 20);
+    wavePoints.push({ x, y: SURFACE_Y + (Math.random() - 0.5) * 14 });
+  }
+}
+generateWavePoints();
+
+// Get surface y at a given x (for wavy surface)
+function getSurfaceY(x) {
+  let best = 0, minD = Infinity;
+  for (let w = 0; w < wavePoints.length; w++) {
+    const d = Math.abs(wavePoints[w].x - x);
+    if (d < minD) { minD = d; best = w; }
+  }
+  return wavePoints[best].y;
+}
+
+// Get local normal direction (unit vector, pointing upward) at x on wavy surface
+// Returns {nx, ny} where ny < 0 (upward in canvas coords)
+function getLocalNormal(x) {
+  let best = 0, minD = Infinity;
+  for (let w = 0; w < wavePoints.length; w++) {
+    const d = Math.abs(wavePoints[w].x - x);
+    if (d < minD) { minD = d; best = w; }
+  }
+  const i0 = Math.max(0, best - 4);
+  const i1 = Math.min(wavePoints.length - 1, best + 4);
+  const tx = wavePoints[i1].x - wavePoints[i0].x; // tangent x
+  const ty = wavePoints[i1].y - wavePoints[i0].y; // tangent y
+  // Normal = rotate tangent 90° CCW = (-ty, tx), then normalise and ensure points up (ny<0)
+  let nx = -ty, ny = tx;
+  const len = Math.sqrt(nx*nx + ny*ny);
+  nx /= len; ny /= len;
+  if (ny > 0) { nx = -nx; ny = -ny; } // flip to point upward
+  return { nx, ny };
+}
+
+// ── Core reflection ───────────────────────────────────────────────────────────
+// d: incident direction unit vector {x,y} (pointing toward surface, so dy>0)
+// n: surface normal unit vector {nx,ny} (pointing away from surface, so ny<0)
+// returns reflected direction unit vector
+function reflect(dx, dy, nx, ny) {
+  const dot = dx*nx + dy*ny;  // should be negative (ray going INTO surface, normal going out)
+  return { rx: dx - 2*dot*nx, ry: dy - 2*dot*ny };
+}
+
+// Incident ray direction from angleDeg
+// angleDeg positive → ray goes down-right: (sin θ, cos θ)
+function incidentDir(deg) {
+  const r = deg * Math.PI / 180;
+  return { dx: Math.sin(r), dy: Math.cos(r) }; // dy always positive (downward)
+}
+
+// Torch position for mode 1: walk BACKWARDS along the incident ray from contact point
+// incidentDir gives (dx,dy) pointing toward surface, so torch is at contact - ARC_R*(dx,dy)
+function torchPos1() {
+  const { dx, dy } = incidentDir(angleDeg);
+  return { x: CX - dx * ARC_R, y: SURFACE_Y - dy * ARC_R };
+}
+
+// For multiple torches: each is placed directly above its hit point at same incident angle
+// torchDist: distance from hit point up along the incident ray
+function torchPosAbove(hitX, hitY, deg, dist) {
+  const { dx, dy } = incidentDir(deg);
+  return { x: hitX - dx * dist, y: hitY - dy * dist };
+}
+
+// ── Draw helpers ──────────────────────────────────────────────────────────────
+
+function drawRay(x1, y1, x2, y2, color, glow, lw, aSize) {
+  const dx = x2-x1, dy = y2-y1, len = Math.sqrt(dx*dx+dy*dy);
+  if (len < 2) return;
+  const ux = dx/len, uy = dy/len;
+  ctx.save();
+  ctx.shadowColor = glow||color; ctx.shadowBlur = 11;
+  ctx.strokeStyle = color; ctx.lineWidth = lw;
+  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+  if (aSize > 0) {
+    const ax = x2 - ux*aSize, ay = y2 - uy*aSize;
+    const px = -uy*aSize*0.38, py = ux*aSize*0.38;
+    ctx.fillStyle = color; ctx.beginPath();
+    ctx.moveTo(x2,y2); ctx.lineTo(ax+px,ay+py); ctx.lineTo(ax-px,ay-py);
+    ctx.closePath(); ctx.fill();
+  }
+  ctx.restore();
+}
+
+// Draw a torch pointing FROM (tx,ty) TOWARD (targetX, targetY)
+function drawTorch(tx, ty, targetX, targetY, scale) {
+  scale = scale || 1;
+  const aimDx = targetX - tx, aimDy = targetY - ty;
+  const aimLen = Math.sqrt(aimDx*aimDx + aimDy*aimDy);
+  // angle of the "down" direction in local space vs actual aim direction
+  const rot = -Math.atan2(aimDx, aimDy); // negate so torch rotates CW when moving left→right
+
+  ctx.save();
+  ctx.translate(tx, ty);
+  ctx.rotate(rot);
+  ctx.scale(scale, scale);
+
+  const bw = 10, bh = 26;
+  // Body
+  const gBody = ctx.createLinearGradient(-bw/2,0,bw/2,0);
+  gBody.addColorStop(0,'#777'); gBody.addColorStop(0.45,'#ddd'); gBody.addColorStop(1,'#555');
+  ctx.fillStyle = gBody;
+  ctx.beginPath(); ctx.roundRect(-bw/2, -bh/2+3, bw, bh-3, 3); ctx.fill();
+  ctx.strokeStyle='#333'; ctx.lineWidth=0.7; ctx.stroke();
+  // Band
+  ctx.fillStyle='#2a2a2a'; ctx.fillRect(-bw/2-1, -5, bw+2, 5);
+  // Nozzle
+  ctx.beginPath();
+  ctx.moveTo(-7, bh/2-3); ctx.lineTo(7, bh/2-3);
+  ctx.lineTo(5, bh/2+9); ctx.lineTo(-5, bh/2+9); ctx.closePath();
+  const gN = ctx.createLinearGradient(-7,0,7,0);
+  gN.addColorStop(0,'#444'); gN.addColorStop(0.5,'#aaa'); gN.addColorStop(1,'#333');
+  ctx.fillStyle=gN; ctx.fill(); ctx.strokeStyle='#222'; ctx.lineWidth=0.7; ctx.stroke();
+  // Lens
+  ctx.beginPath(); ctx.arc(0, bh/2+9, 4.5, 0, Math.PI*2);
+  ctx.fillStyle='rgba(255,238,60,0.95)';
+  ctx.shadowColor='#ffee44'; ctx.shadowBlur=16; ctx.fill(); ctx.shadowBlur=0;
+
+  ctx.restore();
+}
+
+// Protractor: semicircle ABOVE surface at (cx,cy)
+// 0° at top (normal), 90° at each side
+function drawProtractor(cx, cy) {
+  const r = 90;
+  ctx.save(); ctx.translate(cx, cy);
+
+  // Semicircle
+  ctx.beginPath(); ctx.arc(0,0,r,Math.PI,0,false);
+  ctx.strokeStyle='rgba(150,170,230,0.13)'; ctx.lineWidth=1; ctx.stroke();
+  // Baseline
+  ctx.beginPath(); ctx.moveTo(-r,0); ctx.lineTo(r,0);
+  ctx.strokeStyle='rgba(150,170,230,0.1)'; ctx.lineWidth=0.6; ctx.stroke();
+
+  // Ticks: map deg 0..180 → canvas angle π..0 (so 90→top=-π/2)
+  for (let d = 0; d <= 180; d += 10) {
+    const ca = Math.PI - d * Math.PI/180; // canvas angle
+    const cosA = Math.cos(ca), sinA = Math.sin(ca);
+    const main = d % 30 === 0;
+    const tl = main ? 11 : 5;
+    ctx.beginPath();
+    ctx.strokeStyle = main ? 'rgba(160,185,255,0.42)' : 'rgba(100,130,190,0.22)';
+    ctx.lineWidth = main ? 1 : 0.5;
+    ctx.moveTo(cosA*r, sinA*r); ctx.lineTo(cosA*(r-tl), sinA*(r-tl)); ctx.stroke();
+    if (main && d > 0 && d < 180) {
+      ctx.font='7px Space Mono'; ctx.fillStyle='rgba(120,148,210,0.48)';
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(Math.abs(90-d)+'°', cosA*(r-19), sinA*(r-19));
+    }
+  }
+
+  // Single arc from incident ray direction to reflected ray direction (the smaller arc).
+  // Incident ray goes (dx,dy) downward — from surface it came FROM direction (-dx,-dy).
+  // Reflected ray goes (rx,ry) upward.
+  // We want the arc between those two upward-going directions, drawn above the surface.
+  //
+  // incidentDir: angleDeg from straight-down → incident comes FROM angle (angleDeg) above surface
+  //   direction from surface toward torch = (-sin(angleDeg), -cos(angleDeg)) in canvas coords
+  //   canvas angle of that vector = atan2(-sin(angleDeg), -cos(angleDeg))
+  //                                = atan2(y,x) = atan2(-cos(a), -sin(a))
+  //   Simpler: incident direction on protractor is at canvas angle = π/2 + angleDeg (in radians)
+  //   when angleDeg=0 → straight up = -π/2. When angleDeg=45° → -π/2+45°·(π/180) off to right side
+  //   Actually: torch is at (-dx*ARC_R + CX, -dy*ARC_R + SURFACE_Y)
+  //   direction from (CX,SURFACE_Y) to torch = (-dx, -dy) = (-sin(a), -cos(a))
+  //   canvas angle = atan2(-cos(a), -sin(a))
+  //
+  // Let's use computed ray directions directly:
+  const { dx: idx, dy: idy } = incidentDir(angleDeg);
+  const { rx, ry } = reflect(idx, idy, 0, -1);
+
+  // Canvas angle of "from surface toward torch" = atan2(-idy, -idx) = atan2(upward component, x)
+  const incAngle = Math.atan2(-idy, -idx); // angle in canvas coords of incident-incoming direction
+  const refAngle = Math.atan2(ry, rx);     // angle of reflected ray (goes upward, ry<0)
+
+  // Draw the arc between incAngle and refAngle — always the short arc spanning both rays
+  // Both should be in the upper half (y<0 from centre), so both angles are between -π and 0
+  ctx.lineWidth=2.3; ctx.strokeStyle='#ff4060'; ctx.shadowColor='#ff3050'; ctx.shadowBlur=7;
+  ctx.beginPath();
+  // Determine which direction is CCW-shorter
+  let a1 = incAngle, a2 = refAngle;
+  // Normalize both to [-π, π]
+  while (a1 > Math.PI) a1 -= 2*Math.PI; while (a1 < -Math.PI) a1 += 2*Math.PI;
+  while (a2 > Math.PI) a2 -= 2*Math.PI; while (a2 < -Math.PI) a2 += 2*Math.PI;
+  // Arc from a1 to a2 — pick the direction that gives the smaller (≤180°) arc
+  let diff = a2 - a1;
+  while (diff > Math.PI) diff -= 2*Math.PI;
+  while (diff < -Math.PI) diff += 2*Math.PI;
+  const ccw = diff < 0; // if diff<0, going CCW (anticlockwise) from a1 to a2 is shorter
+  ctx.arc(0, 0, 42, a1, a2, ccw);
+  ctx.stroke();
+  ctx.shadowBlur=0;
+  ctx.restore();
+}
+
+function drawNormal(cx, cy) {
+  ctx.save(); ctx.setLineDash([5,5]);
+  ctx.strokeStyle='#3dcc7f'; ctx.lineWidth=1.4;
+  ctx.shadowColor='#3dcc7f'; ctx.shadowBlur=7;
+  ctx.beginPath(); ctx.moveTo(cx, cy-118); ctx.lineTo(cx, cy+34); ctx.stroke();
+  ctx.restore();
+  ctx.font='700 9px Space Mono'; ctx.fillStyle='#3dcc7f';
+  ctx.textAlign='center'; ctx.shadowColor='#3dcc7f'; ctx.shadowBlur=4;
+  ctx.fillText('NORMAL', cx, cy-125); ctx.shadowBlur=0;
+}
+
+function drawFlatSurface() {
+  ctx.save();
+  ctx.strokeStyle='rgba(70,90,150,0.17)'; ctx.lineWidth=0.8;
+  for (let x=30; x<W-20; x+=16) {
+    ctx.beginPath(); ctx.moveTo(x,SURFACE_Y+2); ctx.lineTo(x-9,SURFACE_Y+11); ctx.stroke();
+  }
+  ctx.restore();
+  const sg = ctx.createLinearGradient(0,SURFACE_Y-2,0,SURFACE_Y+5);
+  sg.addColorStop(0,'#8898bb'); sg.addColorStop(1,'#2a3a5e');
+  ctx.beginPath(); ctx.strokeStyle=sg; ctx.lineWidth=2.8;
+  ctx.moveTo(20,SURFACE_Y); ctx.lineTo(W-20,SURFACE_Y); ctx.stroke();
+  ctx.beginPath(); ctx.strokeStyle='rgba(180,210,255,0.15)'; ctx.lineWidth=0.8;
+  ctx.moveTo(20,SURFACE_Y-1); ctx.lineTo(W-20,SURFACE_Y-1); ctx.stroke();
+}
+
+function drawWavySurface() {
+  ctx.save();
+  ctx.strokeStyle='rgba(70,90,140,0.17)'; ctx.lineWidth=0.7;
+  for (let x=30; x<W-20; x+=13) {
+    ctx.beginPath();
+    ctx.moveTo(x, SURFACE_Y+4+Math.sin(x*0.28)*2); ctx.lineTo(x+4, SURFACE_Y+11); ctx.stroke();
+  }
+  ctx.restore();
+  ctx.beginPath();
+  ctx.moveTo(wavePoints[0].x, wavePoints[0].y);
+  for (let i=1; i<wavePoints.length; i++) {
+    const p=wavePoints[i-1], c=wavePoints[i];
+    ctx.quadraticCurveTo(p.x,p.y,(p.x+c.x)/2,(p.y+c.y)/2);
+  }
+  ctx.strokeStyle='#7a8aaa'; ctx.lineWidth=2.2;
+  ctx.shadowColor='rgba(100,120,180,0.18)'; ctx.shadowBlur=4; ctx.stroke(); ctx.shadowBlur=0;
+}
+
+// ── Main draw ─────────────────────────────────────────────────────────────────
+function draw() {
+  ctx.clearRect(0,0,W,H);
+  const bg = ctx.createRadialGradient(CX,SURFACE_Y-70,30,CX,SURFACE_Y,300);
+  bg.addColorStop(0,'#0d1222'); bg.addColorStop(1,'#050709');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+
+  // ── MODE 1 ─────────────────────────────────────────────────────────────────
+  if (mode === 1) {
+    drawFlatSurface();
+    drawNormal(CX, SURFACE_Y);
+    drawProtractor(CX, SURFACE_Y);
+
+    const { dx, dy } = incidentDir(angleDeg);
+    // Flat surface normal is straight up: (0, -1)
+    const { rx, ry } = reflect(dx, dy, 0, -1);
+
+    const tp = torchPos1();
+    // Ray starts slightly past the nozzle tip
+    const sx = tp.x + dx*18, sy = tp.y + dy*18;
+    drawRay(sx, sy, CX, SURFACE_Y, '#ffe844','#ffee44', 2.3, 13);
+
+    // Reflected ray: from contact point, going in reflected direction
+    // rx,ry is the reflected direction — ry should be negative (upward) for a correct reflection
+    drawRay(CX, SURFACE_Y, CX + rx*175, SURFACE_Y + ry*175, '#88ddff','#55ccff', 2.3, 13);
+
+    drawTorch(tp.x, tp.y, CX, SURFACE_Y);
+
+    // Contact dot
+    ctx.beginPath(); ctx.arc(CX,SURFACE_Y,4,0,Math.PI*2);
+    ctx.fillStyle='#fff'; ctx.shadowColor='#fff'; ctx.shadowBlur=10; ctx.fill(); ctx.shadowBlur=0;
+
+    // ∠i and ∠r labels
+    // incident ray comes from upper-left when angleDeg>0 → incident side is LEFT of normal
+    // label ∠i: between normal and incident ray = left side when angleDeg>0
+    const sign = angleDeg >= 0 ? 1 : -1;
+    const absR = Math.abs(angleDeg) * Math.PI/180;
+    const LR = 56;
+    ctx.font='bold 12px Space Mono'; ctx.fillStyle='#ff6070';
+    ctx.shadowColor='#ff3050'; ctx.shadowBlur=5;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    // ∠i bisects between upward (-π/2) and incident direction
+    // incident direction in canvas: the ray goes (dx,dy) so from surface it came from (-dx,-dy)
+    // angle of that direction from positive-x: atan2(-dy,-dx)
+    const incFromSurface = Math.atan2(-dy, -dx); // direction from surface toward torch
+    const normalUp = -Math.PI/2;
+    const bisectI = (incFromSurface + normalUp) / 2;
+    ctx.fillText('∠i', CX + Math.cos(bisectI)*LR, SURFACE_Y + Math.sin(bisectI)*LR);
+    // ∠r bisects between upward (-π/2) and reflected ray direction
+    const refUp = Math.atan2(ry, rx); // direction of reflected ray
+    const bisectR = (refUp + normalUp) / 2;
+    ctx.fillText('∠r', CX + Math.cos(bisectR)*LR, SURFACE_Y + Math.sin(bisectR)*LR);
+    ctx.shadowBlur=0;
+
+    document.getElementById('angleDisplay').textContent =
+      '∠i = '+Math.round(Math.abs(angleDeg))+'°  |  ∠r = '+Math.round(Math.abs(angleDeg))+'°';
+  }
+
+  // ── MODE 2 ─────────────────────────────────────────────────────────────────
+  // Multiple parallel rays → rough (wavy) surface → scattered reflected rays
+  else if (mode === 2) {
+    drawWavySurface();
+
+    const N = 7, SPACING = 30;
+    const totalW = (N-1)*SPACING;
+    const { dx, dy } = incidentDir(angleDeg); // all rays same incident direction
+
+    const TORCH_DIST = 115; // how far above hit point each torch sits along the ray
+
+    // Draw all incident rays first
+    for (let i = 0; i < N; i++) {
+      const hitX = CX - totalW/2 + i*SPACING;
+      const hitY = getSurfaceY(hitX);
+      const tp = torchPosAbove(hitX, hitY, angleDeg, TORCH_DIST);
+      drawRay(tp.x + dx*16, tp.y + dy*16, hitX, hitY, '#ffe844','#ffee44', 1.8, 10);
+    }
+
+    // Draw reflected rays and local normals
+    for (let i = 0; i < N; i++) {
+      const hitX = CX - totalW/2 + i*SPACING;
+      const hitY = getSurfaceY(hitX);
+
+      // Local surface normal at this facet
+      const { nx, ny } = getLocalNormal(hitX);
+
+      // Faint local normal indicator
+      ctx.save(); ctx.setLineDash([3,4]);
+      ctx.strokeStyle='rgba(50,180,100,0.25)'; ctx.lineWidth=0.9;
+      ctx.beginPath();
+      ctx.moveTo(hitX - nx*55, hitY - ny*55); // upward
+      ctx.lineTo(hitX + nx*25, hitY + ny*25); // slightly below surface
+      ctx.stroke(); ctx.restore();
+
+      // Reflect incident ray about local normal
+      const { rx, ry } = reflect(dx, dy, nx, ny);
+
+      // Only draw reflected ray if it actually goes upward (ry < 0)
+      if (ry < 0) {
+        drawRay(hitX, hitY, hitX + rx*130, hitY + ry*130, 'rgba(100,210,255,0.9)','#55ccff', 1.8, 10);
+      }
+
+      // Hit dot
+      ctx.beginPath(); ctx.arc(hitX,hitY,2.5,0,Math.PI*2);
+      ctx.fillStyle='rgba(255,255,255,0.55)'; ctx.fill();
+    }
+
+    // Draw torches LAST (on top)
+    for (let i = 0; i < N; i++) {
+      const hitX = CX - totalW/2 + i*SPACING;
+      const hitY = getSurfaceY(hitX);
+      const tp = torchPosAbove(hitX, hitY, angleDeg, TORCH_DIST);
+      drawTorch(tp.x, tp.y, hitX, hitY, 0.75);
+    }
+
+    document.getElementById('angleDisplay').textContent =
+      '∠i (local) = ∠r (local) at each point  |  reflected angles vary';
+  }
+
+  // ── MODE 3 ─────────────────────────────────────────────────────────────────
+  // Multiple parallel rays → flat surface → all reflected rays parallel
+  else if (mode === 3) {
+    drawFlatSurface();
+
+    const N = 7, SPACING = 30;
+    const totalW = (N-1)*SPACING;
+    const { dx, dy } = incidentDir(angleDeg);
+    const { rx, ry } = reflect(dx, dy, 0, -1); // flat surface normal = (0,-1)
+
+    const TORCH_DIST = 115;
+
+    // Incident rays
+    for (let i = 0; i < N; i++) {
+      const hitX = CX - totalW/2 + i*SPACING;
+      const hitY = SURFACE_Y;
+      const tp = torchPosAbove(hitX, hitY, angleDeg, TORCH_DIST);
+      drawRay(tp.x + dx*16, tp.y + dy*16, hitX, hitY, '#ffe844','#ffee44', 1.8, 10);
+    }
+
+    // Reflected rays
+    for (let i = 0; i < N; i++) {
+      const hitX = CX - totalW/2 + i*SPACING;
+      const hitY = SURFACE_Y;
+      drawRay(hitX, hitY, hitX + rx*130, hitY + ry*130, 'rgba(100,210,255,0.9)','#55ccff', 1.8, 10);
+      ctx.beginPath(); ctx.arc(hitX,hitY,2.5,0,Math.PI*2);
+      ctx.fillStyle='rgba(255,255,255,0.55)'; ctx.fill();
+    }
+
+    // Torches last
+    for (let i = 0; i < N; i++) {
+      const hitX = CX - totalW/2 + i*SPACING;
+      const hitY = SURFACE_Y;
+      const tp = torchPosAbove(hitX, hitY, angleDeg, TORCH_DIST);
+      drawTorch(tp.x, tp.y, hitX, hitY, 0.75);
+    }
+
+    document.getElementById('angleDisplay').textContent =
+      '∠i = '+Math.round(Math.abs(angleDeg))+'°  |  ∠r = '+Math.round(Math.abs(angleDeg))+'° at every point';
+  }
+}
+
+// ── Mode switching ────────────────────────────────────────────────────────────
+function setMode(m) {
+  mode = m;
+  if (m === 2) generateWavePoints();
+  ['tab1','tab2','tab3'].forEach((id,i) => {
+    document.getElementById(id).className = 'mode-tab' + (i+1===m ? ' active-'+m : '');
+  });
+  const info = document.getElementById('infoBox');
+  if (m === 1) {
+    info.innerHTML = '<span class="hl1">Mode 1 — Single ray, mirror surface:</span> Drag the torch to change the incident angle. The reflected ray goes to the <em>other side</em> of the normal, at the same angle.';
+  } else if (m === 2) {
+    info.innerHTML = '<span class="hl2">Mode 2 — Rough surface (diffuse reflection):</span> Each torch fires a parallel ray. At each hit point ∠i&nbsp;=&nbsp;∠r w.r.t. the <em>local normal</em> — but the local normal tilts differently at each facet, so reflected rays scatter in different directions.';
+  } else {
+    info.innerHTML = '<span class="hl3">Mode 3 — Smooth surface (specular reflection):</span> All parallel rays hit a flat mirror. Every normal is identical, so all reflected rays stay parallel and exit at the same angle.';
+  }
+  draw();
+}
+
+// ── Interaction (drag to set incident angle) ──────────────────────────────────
+// In mode 1: drag moves the single torch along its arc → changes angleDeg
+// In modes 2&3: drag anywhere changes the incident angle (tilts all torches together)
+
+function getAngleFromEvent(e) {
+  const r = canvas.getBoundingClientRect();
+  const mx = (e.clientX - r.left) * (W / r.width);
+  const my = (e.clientY - r.top)  * (H / r.height);
+  if (mode === 1) {
+    // Mouse position relative to contact point
+    const relX = mx - CX;
+    const relY = SURFACE_Y - my; // positive = above surface
+    if (relY < 10) return angleDeg;
+    // Torch is placed at (CX - dx*ARC_R, SURFACE_Y - dy*ARC_R) where dx=sin(a), dy=cos(a)
+    // So mouse dragged to upper-LEFT means torch is upper-left → incident ray goes down-RIGHT → angleDeg > 0
+    // atan2(relX, relY) = angle from upward vertical, positive = right
+    // torch on LEFT (relX<0) → angleDeg positive → negate
+    return Math.max(-78, Math.min(78, -Math.atan2(relX, relY) * 180/Math.PI));
+  } else {
+    // Same angular calculation as mode 1 — angle from mouse to surface centre
+    const relX = mx - CX;
+    const relY = SURFACE_Y - my;
+    if (relY < 10) return angleDeg;
+    return Math.max(-65, Math.min(65, -Math.atan2(relX, relY) * 180/Math.PI));
+  }
+}
+
+canvas.addEventListener('mousedown',  e=>{isDragging=true; angleDeg=getAngleFromEvent(e); draw();});
+canvas.addEventListener('mousemove',  e=>{if(!isDragging)return; angleDeg=getAngleFromEvent(e); draw();});
+canvas.addEventListener('mouseup',    ()=>isDragging=false);
+canvas.addEventListener('mouseleave', ()=>isDragging=false);
+canvas.addEventListener('touchstart', e=>{e.preventDefault();isDragging=true;angleDeg=getAngleFromEvent(e.touches[0]);draw();},{passive:false});
+canvas.addEventListener('touchmove',  e=>{e.preventDefault();if(!isDragging)return;angleDeg=getAngleFromEvent(e.touches[0]);draw();},{passive:false});
+canvas.addEventListener('touchend',   ()=>isDragging=false);
+
+draw();
+</script>
+</body>
+</html>
