@@ -1,0 +1,1412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wayfinder — Navigate by Stars</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=Crimson+Pro:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --sky-deep:#04070f;--sky-mid:#0a1628;--ocean-dark:#051525;--ocean-mid:#072035;
+  --gold:#c8973a;--gold-light:#e8bf6a;--gold-pale:#f5e4b0;
+  --star-white:#f8f4e8;--text-primary:#f0e8d8;--text-muted:#8a9bb0;
+  --ui-bg:rgba(4,10,22,0.88);--ui-border:rgba(200,151,58,0.25);--ui-border-bright:rgba(200,151,58,0.6);
+  --clue-bg:rgba(10,22,44,0.95);--clue-border:rgba(200,151,58,0.4);
+}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--sky-deep)}
+body{font-family:'Crimson Pro',Georgia,serif;color:var(--text-primary);user-select:none;-webkit-tap-highlight-color:transparent}
+.screen{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center}
+.screen.active{display:flex}
+
+/* TITLE */
+#screen-title{background:var(--sky-deep);overflow:hidden}
+.title-stars-c{position:absolute;inset:0;pointer-events:none}
+.title-ocean{position:absolute;bottom:0;left:0;right:0;height:32%;background:linear-gradient(to bottom,var(--ocean-dark),var(--ocean-mid))}
+.title-ocean::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:0.4}
+.title-content{position:relative;z-index:2;text-align:center;padding:clamp(1rem,4vw,2rem)}
+.title-eyebrow{font-family:'Cinzel',serif;font-size:clamp(0.58rem,1.8vw,0.7rem);letter-spacing:0.3em;color:var(--gold);text-transform:uppercase;margin-bottom:clamp(0.8rem,2vw,1.5rem);opacity:0;animation:fadeUp 1s 0.5s forwards}
+.title-main{font-family:'Cinzel',serif;font-size:clamp(2.8rem,10vw,7rem);font-weight:600;color:var(--star-white);letter-spacing:0.06em;line-height:1;opacity:0;animation:fadeUp 1s 0.8s forwards;text-shadow:0 0 60px rgba(200,151,58,0.3)}
+.title-sub{font-size:clamp(0.9rem,3vw,1.3rem);font-style:italic;color:var(--text-muted);margin-top:0.7rem;opacity:0;animation:fadeUp 1s 1.1s forwards;font-weight:300}
+.title-divider{width:80px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:clamp(0.8rem,3vw,2rem) auto;opacity:0;animation:fadeUp 1s 1.3s forwards}
+.title-desc{max-width:420px;font-size:clamp(0.88rem,2.5vw,1.05rem);line-height:1.65;color:var(--text-muted);margin-bottom:clamp(1.2rem,4vw,2.5rem);opacity:0;animation:fadeUp 1s 1.5s forwards;font-weight:300;padding:0 0.5rem}
+.btn-primary{font-family:'Cinzel',serif;font-size:clamp(0.65rem,2vw,0.75rem);letter-spacing:0.22em;text-transform:uppercase;padding:clamp(0.7rem,2vw,0.9rem) clamp(1.5rem,5vw,2.5rem);background:transparent;border:1px solid var(--gold);color:var(--gold-light);cursor:pointer;transition:all 0.3s;opacity:0;animation:fadeUp 1s 1.8s forwards;position:relative;overflow:hidden;min-height:44px}
+.btn-primary::before{content:'';position:absolute;inset:0;background:var(--gold);transform:scaleX(0);transform-origin:left;transition:transform 0.3s}
+.btn-primary:hover::before,.btn-primary:active::before{transform:scaleX(1)}
+.btn-primary:hover,.btn-primary:active{color:var(--sky-deep)}
+.btn-primary span{position:relative;z-index:1}
+.canoe-sil{position:absolute;bottom:26%;left:50%;transform:translateX(-50%);opacity:0;animation:fadeUp 1.2s 2s forwards;max-width:min(320px,85vw)}
+
+/* CREDITS */
+.credits{position:absolute;bottom:0.6rem;right:0.8rem;font-size:clamp(0.56rem,1.6vw,0.68rem);color:rgba(138,155,176,0.4);z-index:20;font-style:italic;line-height:1.4}
+.credits a{color:rgba(200,151,58,0.45);text-decoration:none;transition:color 0.3s}
+.credits a:hover,.credits a:active{color:var(--gold)}
+
+/* GAME — desktop row layout */
+#screen-game{background:var(--sky-deep);flex-direction:row;align-items:stretch}
+.sky-canvas-wrap{position:relative;flex:1;overflow:hidden;cursor:grab;min-width:0}
+.sky-canvas-wrap.dragging{cursor:grabbing}
+canvas#skyCanvas{display:block;width:100%;height:100%}
+
+/* HUD TOP */
+.hud-top{position:absolute;top:0;left:0;right:0;display:flex;align-items:flex-start;justify-content:space-between;padding:0.8rem 1rem;pointer-events:none;z-index:10}
+.hud-voyage{background:var(--ui-bg);border:1px solid var(--ui-border);padding:0.45rem 0.8rem;backdrop-filter:blur(6px)}
+.hud-voyage-label{font-family:'Cinzel',serif;font-size:0.52rem;letter-spacing:0.16em;color:var(--gold);text-transform:uppercase;margin-bottom:0.1rem}
+.hud-voyage-dest{font-size:0.9rem;color:var(--text-primary)}
+.hud-steps{display:flex;gap:0.3rem;align-items:center;padding-top:0.3rem}
+.step-dot{width:7px;height:7px;border-radius:50%;background:var(--ui-border);transition:all 0.3s}
+.step-dot.done{background:var(--gold)}.step-dot.active{background:var(--gold-light);box-shadow:0 0 5px var(--gold)}
+
+/* HUD BOTTOM */
+.hud-bottom{position:absolute;bottom:0;left:0;right:0;display:flex;flex-direction:column;align-items:center;padding-bottom:1.2rem;z-index:10;pointer-events:none;gap:0.5rem}
+.heading-indicator{background:var(--ui-bg);border:1px solid var(--ui-border);padding:0.4rem 1.1rem;text-align:center;pointer-events:auto;backdrop-filter:blur(4px);transition:opacity 0.5s}
+.heading-indicator.hidden{opacity:0;pointer-events:none}
+.heading-label{font-family:'Cinzel',serif;font-size:0.52rem;letter-spacing:0.16em;color:var(--gold);text-transform:uppercase}
+.heading-value{font-size:1.3rem;color:var(--star-white);font-family:'Cinzel',serif;font-weight:500}
+.hud-actions{display:flex;gap:0.5rem;pointer-events:auto}
+.btn-action{font-family:'Cinzel',serif;font-size:0.62rem;letter-spacing:0.14em;text-transform:uppercase;padding:0.6rem 1.1rem;cursor:pointer;transition:all 0.3s;border:1px solid var(--ui-border);background:var(--ui-bg);color:var(--text-muted);backdrop-filter:blur(4px);min-height:44px}
+.btn-action:hover,.btn-action:active{border-color:var(--ui-border-bright);color:var(--gold-light)}
+.music-toggle{position:fixed;bottom:1rem;left:1rem;z-index:20;font-family:'Cinzel',serif;font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;padding:0.45rem 0.8rem;cursor:pointer;border:1px solid var(--ui-border);background:var(--ui-bg);color:var(--text-muted);backdrop-filter:blur(4px);transition:all 0.3s;min-height:36px}
+.music-toggle:hover{border-color:var(--ui-border-bright);color:var(--gold-light)}
+.music-toggle.playing{border-color:rgba(200,151,58,0.4);color:var(--gold)}
+.btn-action.confirm{border-color:var(--gold);color:var(--gold);background:rgba(200,151,58,0.08)}
+.btn-action.confirm:hover,.btn-action.confirm:active{background:rgba(200,151,58,0.2)}
+
+/* SKY FEEDBACK */
+.sky-feedback{position:absolute;bottom:90px;left:50%;transform:translateX(-50%);background:rgba(4,10,22,0.8);border:1px solid var(--ui-border);padding:0.4rem 0.9rem;font-size:0.82rem;font-style:italic;color:var(--text-muted);pointer-events:none;opacity:0;transition:opacity 0.6s;white-space:nowrap;backdrop-filter:blur(4px);z-index:9;max-width:88vw;overflow:hidden;text-overflow:ellipsis}
+.sky-feedback.visible{opacity:1}
+.sky-feedback.good{color:#88d8a0;border-color:rgba(100,200,120,0.4)}
+.sky-feedback.warn{color:var(--gold-light);border-color:rgba(220,160,60,0.4)}
+.sky-feedback.off{color:#e08888;border-color:rgba(200,80,60,0.35)}
+
+/* MENTOR PANEL — desktop right sidebar */
+.mentor-panel{width:310px;min-width:290px;flex-shrink:0;background:var(--ui-bg);border-left:1px solid var(--ui-border);display:flex;flex-direction:column;overflow:hidden;backdrop-filter:blur(8px)}
+.panel-close-btn{display:none}
+.mentor-header{padding:0.9rem 1rem 0.8rem;border-bottom:1px solid var(--ui-border);position:relative}
+.mentor-name{font-family:'Cinzel',serif;font-size:0.62rem;letter-spacing:0.2em;color:var(--gold);text-transform:uppercase;margin-bottom:0.1rem}
+.mentor-title{font-size:0.84rem;color:var(--text-muted);font-style:italic;font-weight:300}
+.mentor-avatar{width:38px;height:38px;border-radius:50%;border:1px solid var(--ui-border);background:var(--sky-mid);display:flex;align-items:center;justify-content:center;float:right}
+.mentor-body{flex:1;overflow-y:auto;padding:0.9rem;display:flex;flex-direction:column;gap:0.65rem}
+.mentor-body::-webkit-scrollbar{width:3px}
+.mentor-body::-webkit-scrollbar-thumb{background:var(--ui-border)}
+
+/* Bubbles */
+.mentor-bubble{background:rgba(200,151,58,0.05);border:1px solid var(--ui-border);padding:0.75rem 0.9rem;font-size:0.88rem;line-height:1.65;color:var(--text-primary);font-weight:300;position:relative}
+.mentor-bubble::before{content:'';position:absolute;left:-1px;top:0.7rem;width:3px;height:calc(100% - 1.4rem);background:var(--gold);opacity:0.55}
+.mentor-bubble.system{background:rgba(8,20,40,0.5);border-color:rgba(100,140,180,0.2);color:var(--text-muted);font-style:italic}
+.mentor-bubble.system::before{background:rgba(100,140,180,0.4)}
+
+/* Clue cards */
+.clue-card{background:var(--clue-bg);border:1px solid var(--clue-border);padding:0.8rem 0.9rem 0.7rem;position:relative;transition:border-color 0.3s}
+.clue-card::before{content:'';position:absolute;left:-1px;top:0.65rem;width:3px;height:calc(100% - 1.3rem);background:var(--gold-light);opacity:0.8}
+.clue-number{font-family:'Cinzel',serif;font-size:0.5rem;letter-spacing:0.16em;color:var(--gold);text-transform:uppercase;margin-bottom:0.3rem}
+.clue-text{font-size:0.88rem;line-height:1.65;color:var(--text-primary);font-weight:300}
+.clue-subtext{font-size:0.75rem;color:var(--text-muted);margin-top:0.3rem;font-style:italic;line-height:1.5}
+.clue-card.locked{opacity:0.35;filter:blur(1px);pointer-events:none}
+.clue-card.active{border-color:var(--gold-light)}
+.clue-card.active::before{background:var(--gold-light);opacity:1}
+.clue-reveal-btn{font-family:'Cinzel',serif;font-size:0.58rem;letter-spacing:0.14em;text-transform:uppercase;padding:0.5rem 1rem;cursor:pointer;border:1px solid var(--ui-border);background:transparent;color:var(--text-muted);transition:all 0.3s;width:100%;margin-top:0.35rem;min-height:44px}
+.clue-reveal-btn:hover,.clue-reveal-btn:active{border-color:var(--gold);color:var(--gold)}
+
+/* Constellation key */
+.constellation-key{padding:0.65rem 0.85rem;border-top:1px solid var(--ui-border);flex-shrink:0}
+.const-key-title{font-family:'Cinzel',serif;font-size:0.5rem;letter-spacing:0.15em;color:var(--gold);text-transform:uppercase;margin-bottom:0.5rem}
+.const-key-list{display:flex;flex-direction:column;gap:0.2rem}
+.const-key-item{display:flex;align-items:center;gap:0.5rem;font-size:0.76rem;color:var(--text-muted);cursor:pointer;padding:0.2rem 0;transition:color 0.2s;min-height:34px}
+.const-key-item:hover,.const-key-item:active{color:var(--text-primary)}.const-key-item.active{color:var(--gold-light)}
+.const-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.star-info-inline{font-size:0.72rem;color:var(--text-muted);font-style:italic;line-height:1.5;padding:0.3rem 0 0 1.2rem;display:none}
+.const-key-item.active + .star-info-inline{display:block}
+
+/* MISC */
+.drag-hint{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;opacity:1;transition:opacity 1.5s;z-index:5}
+.drag-hint-icon{font-size:1.6rem;color:rgba(200,151,58,0.5);margin-bottom:0.35rem}
+.drag-hint-text{font-family:'Cinzel',serif;font-size:0.58rem;letter-spacing:0.16em;color:rgba(200,151,58,0.5);text-transform:uppercase}
+.drag-hint.hidden{opacity:0}
+
+/* North arrow removed */
+
+/* Star Guide tooltip — desktop points right */
+.sg-tooltip{position:absolute;bottom:4rem;right:320px;z-index:30;display:flex;align-items:flex-end;gap:0.6rem;pointer-events:none;opacity:1;transition:opacity 0.8s}
+.sg-tooltip.hidden{opacity:0;pointer-events:none}
+.sg-tooltip-bubble{background:var(--ui-bg);border:1px solid var(--gold);padding:0.75rem 0.95rem;max-width:195px;backdrop-filter:blur(8px);position:relative}
+.sg-tooltip-bubble::before{content:'';position:absolute;right:-8px;bottom:14px;border:4px solid transparent;border-left-color:var(--gold)}
+.sg-tooltip-title{font-family:'Cinzel',serif;font-size:0.58rem;letter-spacing:0.15em;color:var(--gold);text-transform:uppercase;margin-bottom:0.3rem}
+.sg-tooltip-text{font-size:0.78rem;line-height:1.5;color:var(--text-primary);font-weight:300}
+.sg-tooltip-dismiss{font-family:'Cinzel',serif;font-size:0.54rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);cursor:pointer;margin-top:0.4rem;display:flex;align-items:center;pointer-events:auto;min-height:34px}
+.sg-tooltip-arrow{display:flex;align-items:center;padding-bottom:0.7rem}
+.sg-arrow-line{width:34px;height:2px;background:linear-gradient(90deg,transparent,var(--gold))}
+.sg-arrow-head{width:0;height:0;border-top:4px solid transparent;border-bottom:4px solid transparent;border-left:7px solid var(--gold)}
+@keyframes sgPulse{0%,100%{transform:translateX(0)}50%{transform:translateX(5px)}}
+.sg-tooltip-arrow{animation:sgPulse 1.2s ease-in-out infinite}
+
+/* Drawer — hidden on desktop */
+.drawer-toggle{display:none}
+.drawer-backdrop{display:none}
+
+/* VOYAGE */
+#screen-voyage{background:var(--sky-deep);overflow:hidden}
+canvas#voyageCanvas{position:absolute;inset:0;width:100%;height:100%}
+.voyage-overlay{position:relative;z-index:2;text-align:center;pointer-events:none;padding:1rem}
+.voyage-title{font-family:'Cinzel',serif;font-size:clamp(1.2rem,4vw,1.8rem);color:var(--gold-pale);letter-spacing:0.1em;margin-bottom:0.5rem;opacity:0;transition:opacity 1s}
+.voyage-subtitle{font-size:clamp(0.85rem,2.5vw,1rem);color:var(--text-muted);font-style:italic;font-weight:300;opacity:0;transition:opacity 1s}
+
+/* RESULT / COMPLETE */
+#screen-result,#screen-complete{background:var(--sky-deep);overflow-y:auto}
+.result-stars-c{position:fixed;inset:0;pointer-events:none;z-index:0}
+.result-content{position:relative;z-index:1;text-align:center;max-width:560px;width:100%;padding:clamp(1.5rem,4vw,2.5rem) clamp(1rem,3vw,2rem) 4rem}
+.result-label{font-family:'Cinzel',serif;font-size:clamp(0.56rem,1.8vw,0.65rem);letter-spacing:0.22em;color:var(--gold);text-transform:uppercase;margin-bottom:0.8rem}
+.result-island{font-family:'Cinzel',serif;font-size:clamp(1.6rem,6vw,2.5rem);color:var(--star-white);margin-bottom:0.4rem}
+.result-accuracy{font-size:clamp(0.86rem,2.5vw,1rem);color:var(--text-muted);font-style:italic;font-weight:300;margin-bottom:1.2rem}
+.result-reveal{background:rgba(200,151,58,0.06);border:1px solid var(--ui-border);padding:0.8rem 1rem;text-align:left;margin-bottom:0.9rem}
+.result-reveal-label{font-family:'Cinzel',serif;font-size:0.54rem;letter-spacing:0.15em;color:var(--gold);text-transform:uppercase;margin-bottom:0.35rem}
+.result-reveal-text{font-size:clamp(0.8rem,2.2vw,0.88rem);line-height:1.6;color:var(--text-muted);font-style:italic}
+.result-feedback{background:rgba(200,151,58,0.05);border:1px solid var(--ui-border);padding:0.9rem 1.1rem;text-align:left;margin-bottom:1.4rem;backdrop-filter:blur(4px)}
+.result-feedback-name{font-family:'Cinzel',serif;font-size:0.54rem;letter-spacing:0.17em;color:var(--gold);text-transform:uppercase;margin-bottom:0.4rem}
+.result-feedback-text{font-size:clamp(0.82rem,2.2vw,0.92rem);line-height:1.7;color:var(--text-primary);font-weight:300;font-style:italic}
+.result-buttons{display:flex;gap:0.8rem;justify-content:center;flex-wrap:wrap}
+
+/* ════════════════════════════════
+   MOBILE ≤ 768px
+   Sky ALWAYS full-screen.
+   All UI is overlaid or in a drawer.
+════════════════════════════════ */
+@media(max-width:768px){
+
+  /* Game: sky fills full viewport */
+  #screen-game{flex-direction:column}
+  .sky-canvas-wrap{width:100%;flex:1}
+
+  /* Mentor panel: fixed bottom drawer */
+  .mentor-panel{
+    position:fixed;
+    bottom:0;left:0;right:0;
+    width:100%;height:75vh;
+    min-width:unset;
+    border-left:none;
+    border-top:1px solid var(--ui-border);
+    border-radius:18px 18px 0 0;
+    transform:translateY(100%);
+    transition:transform 0.36s cubic-bezier(0.32,0.72,0,1);
+    z-index:100;
+    background:rgba(4,8,20,0.98);
+    backdrop-filter:blur(20px);
+    -webkit-backdrop-filter:blur(20px);
+  }
+  .mentor-panel.open{transform:translateY(0)}
+
+  /* Drag pill at top of drawer */
+  .mentor-header::before{
+    content:'';display:block;
+    width:36px;height:4px;
+    background:rgba(200,151,58,0.3);border-radius:2px;
+    margin:0.2rem auto 0.6rem;
+  }
+
+  /* Close button inside drawer */
+  .panel-close-btn{
+    display:flex;position:absolute;top:0.55rem;right:0.8rem;
+    width:32px;height:32px;
+    align-items:center;justify-content:center;
+    font-size:1rem;color:var(--text-muted);
+    background:rgba(200,151,58,0.08);
+    border:1px solid var(--ui-border);border-radius:50%;
+    cursor:pointer;font-family:sans-serif;line-height:1;z-index:10;
+  }
+  .panel-close-btn:active{color:var(--gold);border-color:var(--gold)}
+
+  /* Backdrop */
+  .drawer-backdrop{
+    display:block;
+    position:fixed;inset:0;z-index:99;
+    background:rgba(0,0,5,0.6);
+    opacity:0;pointer-events:none;
+    transition:opacity 0.3s;
+  }
+  .drawer-backdrop.visible{opacity:1;pointer-events:auto}
+
+  /* Guide toggle pill — bottom-left corner */
+  .drawer-toggle{
+    display:flex;align-items:center;gap:0.4rem;
+    position:absolute;bottom:1rem;left:1rem;
+    z-index:20;
+    font-family:'Cinzel',serif;font-size:0.56rem;
+    letter-spacing:0.12em;text-transform:uppercase;
+    padding:0.45rem 0.85rem;
+    background:rgba(4,10,22,0.92);
+    border:1px solid rgba(200,151,58,0.5);
+    color:var(--gold);cursor:pointer;
+    backdrop-filter:blur(8px);
+    min-height:42px;white-space:nowrap;border-radius:4px;
+  }
+  .drawer-toggle-dot{width:5px;height:5px;border-radius:50%;background:var(--gold);flex-shrink:0;box-shadow:0 0 5px var(--gold)}
+
+  /* HUD bottom: Commit + Reset stacked in bottom-right */
+  .hud-bottom{
+    flex-direction:row;align-items:flex-end;
+    justify-content:flex-end;
+    padding:0 0.8rem 0.9rem;gap:0.4rem;
+  }
+  .heading-indicator{display:none}
+  /* V1 only: show compact heading in bottom-right corner */
+  .heading-indicator.show-mobile{
+    display:block;
+    position:absolute;bottom:5.5rem;right:0.8rem;
+    padding:0.3rem 0.7rem;pointer-events:none;
+  }
+  .heading-indicator.show-mobile .heading-value{font-size:1rem}
+  .hud-actions{flex-direction:column;gap:0.4rem;pointer-events:auto}
+  .btn-action{font-size:0.55rem;letter-spacing:0.1em;padding:0.45rem 0.85rem;min-height:40px}
+  .btn-action.confirm{padding:0.55rem 1rem}
+
+  /* Sky feedback */
+  .sky-feedback{white-space:normal;text-align:center;width:78vw;bottom:90px;font-size:0.74rem}
+
+  /* HUD top */
+  .hud-top{padding:0.55rem 0.65rem}
+
+  /* Tooltip — above drawer toggle, bottom-left */
+  .sg-tooltip{
+    position:absolute;bottom:4.2rem;left:0.8rem;
+    right:auto;transform:none;
+    flex-direction:column;align-items:flex-start;gap:0.25rem;
+  }
+  .sg-tooltip-bubble{max-width:205px}
+  .sg-tooltip-bubble::before{
+    left:16px;right:auto;bottom:-8px;top:auto;
+    border:5px solid transparent;border-top-color:var(--gold);border-left-color:transparent;
+  }
+  .sg-tooltip-arrow{display:none}
+
+  /* Result / complete */
+  #screen-result,#screen-complete{align-items:flex-start;justify-content:flex-start}
+  .result-content{padding:1.4rem 1rem 5rem;width:100%}
+  .result-buttons{flex-direction:column;align-items:center;gap:0.6rem}
+  .result-buttons .btn-action{width:100%;max-width:300px;font-size:0.62rem;padding:0.65rem 1rem}
+
+  /* Title */
+  .title-divider{margin:0.7rem auto}
+  .canoe-sil{max-width:80vw;bottom:20%}
+  .credits{font-size:0.54rem}
+
+  /* Music button: move to bottom-right on mobile so it doesn't clash with Guide toggle (bottom-left) */
+  .music-toggle{bottom:0.8rem;left:auto;right:0.8rem;font-size:0.52rem;padding:0.38rem 0.65rem;min-height:34px}
+}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+</style>
+
+</head>
+<body>
+
+<!-- TITLE -->
+<div id="screen-title" class="screen active">
+  <canvas class="title-stars-c" id="titleStarsCanvas"></canvas>
+  <div class="title-ocean"></div>
+  <div class="title-content">
+    <div class="title-eyebrow">A Celestial Navigation Journey</div>
+    <div class="title-main">Wayfinder</div>
+    <div class="title-sub">Sail by stars. Find your way home.</div>
+    <div class="title-divider"></div>
+    <div class="title-desc">Learn the ancient art of Polynesian celestial navigation. Read the stars, align with the horizon, and guide your canoe across the Pacific Ocean.</div>
+    <button class="btn-primary" onclick="startMusicOnInteraction();startGame()"><span>Begin Your Voyage</span></button>
+  </div>
+  <svg class="canoe-sil" width="320" height="60" viewBox="0 0 320 60">
+    <g style="animation:float 4s ease-in-out infinite">
+      <path d="M20,45 Q80,30 160,32 Q240,30 300,45 Q240,52 160,50 Q80,52 20,45Z" fill="rgba(5,20,40,0.9)" stroke="rgba(200,151,58,0.3)" stroke-width="0.5"/>
+      <line x1="160" y1="32" x2="160" y2="5" stroke="rgba(200,151,58,0.4)" stroke-width="1"/>
+      <path d="M160,5 L185,28 L135,28Z" fill="rgba(200,151,58,0.12)" stroke="rgba(200,151,58,0.3)" stroke-width="0.5"/>
+    </g>
+    <line x1="0" y1="52" x2="320" y2="52" stroke="rgba(200,151,58,0.15)" stroke-width="1"/>
+  </svg>
+  <div class="credits"><a href="https://instagram.com/curiominds.inc" target="_blank">Mr Lau Chin Hang · @curiominds.inc</a></div>
+</div>
+
+<!-- GAME -->
+<div id="screen-game" class="screen">
+  <div class="sky-canvas-wrap" id="skyWrap">
+    <canvas id="skyCanvas"></canvas>
+    <div class="drag-hint" id="dragHint">
+      <div class="drag-hint-icon">✦</div>
+      <div class="drag-hint-text">Drag to explore the sky</div>
+    </div>
+
+    <div class="sky-feedback" id="skyFeedback"></div>
+    <div class="hud-top">
+      <div class="hud-voyage">
+        <div class="hud-voyage-label">Sailing to</div>
+        <div class="hud-voyage-dest" id="destDisplay">—</div>
+      </div>
+      <div class="hud-steps" id="stepDots"></div>
+    </div>
+    <div class="hud-bottom">
+      <div class="heading-indicator" id="headingIndicator">
+        <div class="heading-label">Your Heading</div>
+        <div class="heading-value" id="headingDisplay">—</div>
+      </div>
+      <div class="hud-actions">
+        <button class="btn-action" onclick="resetHeading()"><span>Reset View</span></button>
+        <button class="btn-action confirm" onclick="confirmHeading()"><span>Commit Heading &amp; Sail</span></button>
+      </div>
+    </div>
+    <!-- Mobile-only drawer toggle — sits above hud-bottom -->
+    <button class="drawer-toggle" id="drawerToggle" onclick="toggleDrawer()">
+      <div class="drawer-toggle-dot"></div>
+      <span id="drawerToggleLabel">Kaimana · Star Guide</span>
+    </button>
+  </div>
+  <div class="mentor-panel" id="mentorPanel">
+    <div class="mentor-header">
+      <button class="panel-close-btn" onclick="closeDrawer()" aria-label="Close guide">✕</button>
+      <div class="mentor-avatar">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="8" r="3.5" stroke="rgba(200,151,58,0.7)" stroke-width="1.2"/>
+          <path d="M5,20 Q5,14 12,14 Q19,14 19,20" stroke="rgba(200,151,58,0.7)" stroke-width="1.2" fill="none"/>
+          <circle cx="12" cy="2" r="1" fill="rgba(200,151,58,0.5)"/>
+          <circle cx="17" cy="4" r="0.7" fill="rgba(200,151,58,0.3)"/>
+          <circle cx="7" cy="4" r="0.7" fill="rgba(200,151,58,0.3)"/>
+        </svg>
+      </div>
+      <div class="mentor-name">Kaimana</div>
+      <div class="mentor-title">Elder Wayfinder</div>
+    </div>
+    <div class="mentor-body" id="mentorBody"></div>
+    <div class="reveal-btn-zone" id="revealBtnZone" style="display:none;padding:0.6rem 0.9rem;border-top:1px solid var(--ui-border);flex-shrink:0;background:var(--ui-bg)"></div>
+    <div class="constellation-key">
+      <div class="const-key-title">Star Guide</div>
+      <div class="const-key-list" id="constKeyList"></div>
+    </div>
+  </div>
+  <!-- Drawer backdrop (mobile only) -->
+  <div class="drawer-backdrop" id="drawerBackdrop" onclick="toggleDrawer()"></div>
+  <!-- Star Guide onboarding tooltip -->
+  <div class="sg-tooltip" id="sgTooltip">
+    <div class="sg-tooltip-bubble">
+      <div class="sg-tooltip-title">✦ Star Guide</div>
+      <div class="sg-tooltip-text">Tap any constellation name to highlight it in the sky. Start with the Southern Cross.</div>
+      <span class="sg-tooltip-dismiss" onclick="dismissSgTooltip()">Got it →</span>
+    </div>
+    <div class="sg-tooltip-arrow">
+      <div class="sg-arrow-line"></div>
+      <div class="sg-arrow-head"></div>
+    </div>
+  </div>
+  <div class="credits"><a href="https://instagram.com/curiominds.inc" target="_blank">Mr Lau Chin Hang · @curiominds.inc</a></div>
+</div>
+<div id="screen-voyage" class="screen">
+  <canvas id="voyageCanvas"></canvas>
+  <div class="voyage-overlay">
+    <div class="voyage-title" id="voyageTitle">Setting Sail…</div>
+    <div class="voyage-subtitle" id="voyageSubtitle">The stars guide your path</div>
+  </div>
+  <div class="credits"><a href="https://instagram.com/curiominds.inc" target="_blank">Mr Lau Chin Hang · @curiominds.inc</a></div>
+</div>
+
+<!-- RESULT -->
+<div id="screen-result" class="screen">
+  <canvas class="result-stars-c" id="resultStarsCanvas"></canvas>
+  <div class="result-content">
+    <div class="result-label">Voyage Complete</div>
+    <div class="result-island" id="resultIsland">—</div>
+    <div class="result-accuracy" id="resultAccuracy"></div>
+    <div class="result-reveal" id="resultReveal">
+      <div class="result-reveal-label">What the stars were showing you</div>
+      <div class="result-reveal-text" id="resultRevealText"></div>
+    </div>
+    <div class="result-feedback">
+      <div class="result-feedback-name">Kaimana speaks</div>
+      <div class="result-feedback-text" id="resultFeedback"></div>
+    </div>
+    <div class="result-buttons">
+      <button class="btn-action confirm" id="resultNextBtn"><span id="resultNextLabel">Next Voyage</span></button>
+      <button class="btn-action" onclick="showTitle()"><span>Return to Shore</span></button>
+    </div>
+  </div>
+  <div class="credits"><a href="https://instagram.com/curiominds.inc" target="_blank">Mr Lau Chin Hang · @curiominds.inc</a></div>
+</div>
+
+<!-- COMPLETION -->
+<div id="screen-complete" class="screen">
+  <canvas class="result-stars-c" id="completeStarsCanvas"></canvas>
+  <div class="result-content" style="position:relative;z-index:2;text-align:center;max-width:580px;padding:2rem">
+    <div class="result-label" style="letter-spacing:0.3em">The Voyage Ends</div>
+    <div class="result-island" style="font-size:2rem;margin-bottom:0.6rem">Wayfinder</div>
+    <div style="width:100px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:1.2rem auto"></div>
+    <div class="result-accuracy" style="margin-bottom:1.5rem;font-size:1rem">You have sailed all five voyages across the Pacific — guided only by the stars.</div>
+    <div class="result-feedback" style="text-align:left;margin-bottom:1.8rem">
+      <div class="result-feedback-name">Kaimana's final words</div>
+      <div class="result-feedback-text">You came to me unable to read even the simplest star. Now you have crossed the ocean five times — by observation alone. The sky has not changed. Only your eyes have. That is the whole of wayfinding.</div>
+    </div>
+    <div style="display:flex;gap:1rem;justify-content:center">
+      <button class="btn-action confirm" onclick="startGame()"><span>Sail Again</span></button>
+      <button class="btn-action" onclick="showTitle()"><span>Return to Shore</span></button>
+    </div>
+  </div>
+  <div class="credits"><a href="https://instagram.com/curiominds.inc" target="_blank">Mr Lau Chin Hang · @curiominds.inc</a></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// CONSTELLATION DATA
+// ═══════════════════════════════════════════════════════
+const CONSTELLATIONS = [
+  {
+    id:'southern-cross',name:'Southern Cross',color:'#a8d4ff',
+    navNote:'Its long arm (Acrux to Gacrux) points toward the south celestial pole.',
+    stars:[
+      {name:'Acrux',ra:186.6,dec:-63.1,mag:0.77,navName:'The Foot'},
+      {name:'Mimosa',ra:191.9,dec:-59.7,mag:1.25},
+      {name:'Gacrux',ra:187.8,dec:-57.1,mag:1.59,navName:'The Head'},
+      {name:'Delta Crucis',ra:183.8,dec:-58.7,mag:2.79},
+      {name:'Epsilon Crucis',ra:185.3,dec:-60.4,mag:3.59}
+    ],
+    lines:[[0,2],[1,3]]
+  },
+  {
+    id:'scorpius',name:'Scorpius',color:'#ffb090',
+    navNote:'Antares, its bright red heart, rises in the east — a reliable eastern beacon.',
+    stars:[
+      {name:'Antares',ra:247.4,dec:-26.4,mag:1.09,navName:'Heart of Scorpius (Antares)'},
+      {name:'Shaula',ra:263.4,dec:-37.1,mag:1.62},
+      {name:'Sargas',ra:264.3,dec:-42.9,mag:1.86},
+      {name:'Dschubba',ra:240.1,dec:-22.6,mag:2.29},
+      {name:'Acrab',ra:241.4,dec:-19.8,mag:2.62},
+      {name:'Lesath',ra:262.7,dec:-37.3,mag:2.69},
+      {name:'Eta Sco',ra:258.8,dec:-43.2,mag:3.32}
+    ],
+    lines:[[0,3],[3,4],[0,1],[1,2],[1,5],[5,6]]
+  },
+  {
+    id:'centaurus',name:'Centaurus',color:'#c0ffb8',
+    navNote:'Alpha and Beta Centauri are the Pointers — they always point toward the Southern Cross.',
+    stars:[
+      {name:'Alpha Centauri',ra:219.9,dec:-60.8,mag:-0.27,navName:'Southern Pointer'},
+      {name:'Beta Centauri',ra:210.9,dec:-60.4,mag:0.60,navName:'Northern Pointer'},
+      {name:'Theta Cen',ra:211.6,dec:-36.4,mag:2.05},
+      {name:'Eta Cen',ra:204.9,dec:-53.5,mag:2.29},
+      {name:'Zeta Cen',ra:203.7,dec:-47.3,mag:2.55}
+    ],
+    lines:[[0,1],[1,3],[3,4],[3,2]]
+  },
+  {
+    id:'orion',name:'Orion',color:'#e8e0ff',
+    navNote:"Orion's Belt rises due east and sets due west — nature's most accurate east-west line.",
+    stars:[
+      {name:'Rigel',ra:78.6,dec:-8.2,mag:0.12,navName:'Western Foot'},
+      {name:'Betelgeuse',ra:88.8,dec:7.4,mag:0.42,navName:'Red Shoulder'},
+      {name:'Bellatrix',ra:81.3,dec:6.3,mag:1.64},
+      {name:'Alnilam',ra:84.1,dec:-1.2,mag:1.65,navName:'Belt Centre'},
+      {name:'Alnitak',ra:85.2,dec:-1.9,mag:1.74},
+      {name:'Mintaka',ra:83.0,dec:-0.3,mag:2.21,navName:'Belt West'},
+      {name:'Saiph',ra:86.9,dec:-9.7,mag:2.07},
+      {name:'Meissa',ra:83.8,dec:9.9,mag:3.33}
+    ],
+    lines:[[0,4],[4,3],[3,5],[1,2],[1,7],[0,6],[1,3]]
+  },
+  {
+    id:'canopus',name:'Canopus',color:'#fff8c0',
+    navNote:'The second brightest star — brilliant white, never rising high. A southern depth-marker.',
+    stars:[{name:'Canopus',ra:95.9,dec:-52.7,mag:-0.74,navName:'The South Star'}],
+    lines:[]
+  }
+];
+
+// ═══════════════════════════════════════════════════════
+// ISLANDS — each has step-by-step observational clues
+// targetBearing: what the student is trying to find
+// clues: sequential sky-observation instructions (no degrees given)
+// correctSkyDescription: shown post-result as "what you should have seen"
+// ═══════════════════════════════════════════════════════
+const ISLANDS = [
+  {
+    name:'Motu Nui',
+    targetBearing:185,
+    lstOffset:0,
+    clues:[
+      {n:'Step 1 — Find the Southern Cross',text:'Drag the sky until the Southern Cross appears directly in front of you — centred in your view above the canoe\'s bow.',sub:'The Southern Cross is a compact kite of four bright stars. Its long arm (from The Foot at the bottom to The Head at the top) should point nearly straight down toward the horizon.'},
+      {n:'Step 2 — Check the Pointers',text:'With the Cross centred, look to the left side of your view. The Southern Pointer and Northern Pointer should appear there, slightly left of the Cross.',sub:'The Pointers always sit to the east of the Cross. When you face south, east is to your left — so the Pointers appearing on the left confirms you are facing south.'},
+      {n:'Step 3 — Read your heading',text:'The heading shown below should now read close to 185°. If it does, you have read the sky correctly. Commit your heading.',sub:''}
+    ],
+    correctSkyDescription:'The Southern Cross should have been directly ahead, centred in your view with its long arm pointing downward. The two Pointers (Southern Pointer and Northern Pointer) would have appeared to your left.'
+  },
+  {
+    name:'Rapa',
+    targetBearing:220,
+    lstOffset:0,
+    clues:[
+      {n:'Clue 1 — Find the Southern Cross',text:'Drag the sky until the Southern Cross comes into view. Look for the compact kite of four bright stars with its long arm pointing downward.',sub:'The two Pointers — Southern Pointer and Northern Pointer — will appear just to the left of the Cross. Use them to confirm you have found the right stars.'},
+      {n:'Clue 2 — Slide the Cross to the right',text:'Now drag the sky so the Southern Cross moves to the right of centre — not at the edge, but clearly right of the canoe\'s bow.',sub:'Imagine the Cross at the two-o\'clock position. Its long arm should still tilt downward toward the horizon.'},
+      {n:'Clue 3 — Check the Pointers',text:'With the Cross to the right, look just left of it — the Southern Pointer and Northern Pointer should appear very close to the centre of your view, or just left of centre.',sub:'The Pointers sit to the east of the Cross. When the Cross has moved right, the Pointers end up near the centre — they become your forward reference star pair.'},
+      {n:'Clue 4 — Confirm the balance',text:'Cross to the right, Pointers near centre, open darker sky to the left. When this arrangement feels steady, commit your heading.',sub:'This is the balance of a south-southwest heading. The Cross is off to your south-right, the Pointers guide you forward, and emptiness opens to the east on your left.'}
+    ],
+    correctSkyDescription:'The Southern Cross should have been to the right of centre. The Pointers (Southern Pointer and Northern Pointer) should have appeared near the centre of your view — your forward star pair. Open sky lay to the left.'
+  },
+  {
+    name:"Tū'i Tonga",
+    targetBearing:270,
+    lstOffset:-155,
+    startAzimuth:300,
+    clues:[
+      {n:'Clue 1 — Find Orion on the right',text:'Drag the sky until you spot Orion on the right side of your view. Look for three bright stars in a neat, evenly spaced row — this is the Belt.',sub:'The Belt stars — Belt West and Belt Centre — are the easiest to identify: three stars in a perfectly straight line. They should appear on the right side of your sky, fairly high up.'},
+      {n:'Clue 2 — Centre Orion on the right',text:'Drag until Orion\'s Belt is clearly on the right half of your view, roughly at the two or three-o\'clock position.',sub:'Orion sits in the west as it sets. Facing west, it appears to your right — the north side of west. If the Belt is on the right and high, your heading is near west.'},
+      {n:'Clue 3 — Find the Southern Cross to the left',text:'Now look to the left side of your view. The Southern Cross should appear there — lower than Orion. The Pointers will be just to the left of the Cross.',sub:'Facing west, the south is to your left. The Cross and Pointers, being southern stars, will appear on the left side. Cross on the left, Orion on the right — you face west.'},
+      {n:'Clue 4 — Canopus glows at the centre',text:'Look near the centre of your view, fairly high up. You should see Canopus — a brilliant, steady white star — sitting near the middle of the sky.',sub:'Canopus sits nearly due south when you face west, placing it near the centre of your view. Cross left, Orion right, Canopus centre: this triangle confirms due west. Commit your course.'}
+    ],
+    correctSkyDescription:"Orion's Belt should have appeared to your right, high up in the west. The Southern Cross and Pointers would have been to your left, in the south. Canopus glowed near the centre. Open sky lay ahead — due west."
+  },
+  {
+    name:"Hiva 'Oa",
+    targetBearing:310,
+    lstOffset:-30,
+    startAzimuth:280,
+    clues:[
+      {n:'Clue 1 — Find the Southern Cross to the right',text:'Drag the sky until the Southern Cross appears on the right side of your view — lower than usual, close to the horizon. The Pointers will be just above it, also to the right.',sub:'Facing northwest, the entire southern sky — Cross and Pointers — shifts to the right. The Cross will be lower on the horizon than you have seen it before. The Pointers sit above and slightly left of it.'},
+      {n:'Clue 2 — Find Antares further to the right',text:'Look further right, higher in the sky. You should see Antares — a very bright, slightly reddish star — sitting well to the right, above the Cross.',sub:'Antares is the heart of Scorpius and one of the most vivid stars in the sky. Its warm orange-red colour sets it apart from its neighbours. Facing northwest, it sits in the southwest — to your far right, high up.'},
+      {n:'Clue 3 — Open sky ahead and to the left',text:'Look straight ahead and to the left. The sky becomes quieter here — fewer bright stars, darker patches. This emptiness is the northwest passage.',sub:'Northwest in the Pacific night sky is a relatively open corridor. All the bright stars — Cross, Pointers, Antares — are clustered to your right. The darkness ahead means you are pointed into open ocean.'},
+      {n:'Clue 4 — All brightness to the right, darkness ahead',text:'Cross low-right, Pointers above it, Antares high-right. Left and ahead is dark. This imbalance — all brightness to the right, emptiness to the left — is your heading toward Hiva \'Oa.',sub:'When all familiar southern stars crowd to the right and you face into darker sky, you are heading northwest. Trust the darkness ahead and commit your course.'}
+    ],
+    correctSkyDescription:"The Southern Cross and Pointers should have been to your right, low in the south. Antares (heart of Scorpius) would have been further right, higher and distinctly reddish. Open, quieter sky lay ahead and to the left — the northwest passage toward Hiva 'Oa."
+  },
+  {
+    name:'Nuku Hiva',
+    targetBearing:345,
+    lstOffset:-200,
+    startAzimuth:320,
+    clues:[
+      {n:'Clue 1 — Find the Southern Cross to the left',text:'Drag the sky until the Southern Cross appears on the left side of your view. The Pointers will be just to the left of it, also on the left.',sub:'Facing north, the southern sky is now to your left. Both the Cross and the Pointers will appear on the left side of your view — lower than you might expect, as they are to the south-southwest.'},
+      {n:'Clue 2 — Find Orion to the right',text:'Now look to the right side of your view. Orion\'s Belt — three evenly spaced stars in a tight row — should appear clearly to the right.',sub:'Facing north, east is to your right. Orion rises in the east, so it appears on the right side of your sky. The Belt stars (Belt West, Belt Centre) will be clearly visible on the right.'},
+      {n:'Clue 3 — Balance the sky',text:'Cross and Pointers to the left, Orion\'s Belt to the right. The sky should feel evenly divided between these two groups of stars.',sub:'When both sides of the sky are equally bright — the Cross group on the left, Orion on the right — you are facing nearly due north. This symmetry is your signal.'},
+      {n:'Clue 4 — Lean very slightly right',text:'Nuku Hiva is at 345° — just a touch west of due north. Drag the sky very slightly to the left so the Cross group shifts just a little further left and Orion moves slightly further right.',sub:'A tiny adjustment is all you need. The Cross drops a little more to the left, Orion drifts further right, and ahead the sky is dark and open — that slight lean west of north is your final course.'}
+    ],
+    correctSkyDescription:"The Southern Cross and the Pointers should have been to your left, in the southwest. Orion's Belt would have appeared to your right, rising in the east. Open northern sky lay ahead — with a slight lean west of north."
+  }
+];
+
+const MENTOR_LINES = {
+  good:[
+    "Your eyes are learning to read what the sky writes. That is the beginning of all wayfinding.",
+    "The stars did not move — you did. And you moved correctly. Remember the feel of that alignment.",
+    "A true wayfinder does not guess. You observed, you interpreted, you acted. Well done.",
+    "The ocean between islands is long. Every degree matters. Tonight, you chose the right degrees."
+  ],
+  close:[
+    "You were close — the sky was pointing you there. With time, your eyes will sharpen further.",
+    "The difference between close and exact is the length of the voyage. A day at sea amplifies every small error.",
+    "Your instinct was right. Your alignment needed a little more patience. Study the clues again before next time.",
+    "Good navigators are not born — they are made through many nights of practice. You are on that path."
+  ],
+  off:[
+    "The stars were there. The path was there. Perhaps you moved too quickly — slow down and read each clue fully.",
+    "Even great navigators spent years learning to read the sky. The ocean is patient. Be patient with yourself.",
+    "You chose with courage, but the stars disagreed with you tonight. Go back through the clues and see what you missed.",
+    "Wayfinding is not about certainty — it is about careful observation. Try again. The sky does not change."
+  ]
+};
+
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+let state = {
+  voyageIndex:0, step:0,
+  heading:null, skyAzimuth:0, skyAltitude:20,
+  dragging:false, dragStart:{x:0,y:0}, azStart:0, altStart:0,
+  activeConst:null, clueIndex:0, feedbackTimeout:null,
+  skyRAF:null
+};
+
+// ═══════════════════════════════════════════════════════
+// MOBILE DRAWER
+// ═══════════════════════════════════════════════════════
+function toggleDrawer(){
+  const panel=document.getElementById('mentorPanel');
+  const backdrop=document.getElementById('drawerBackdrop');
+  const label=document.getElementById('drawerToggleLabel');
+  if(!panel)return;
+  const isOpen=panel.classList.contains('open');
+  if(isOpen){
+    panel.classList.remove('open');
+    backdrop.classList.remove('visible');
+    if(label)label.textContent='Kaimana · Star Guide';
+  } else {
+    panel.classList.add('open');
+    backdrop.classList.add('visible');
+    if(label)label.textContent='Close Guide ✕';
+  }
+}
+function closeDrawer(){
+  const panel=document.getElementById('mentorPanel');
+  const backdrop=document.getElementById('drawerBackdrop');
+  const label=document.getElementById('drawerToggleLabel');
+  if(panel)panel.classList.remove('open');
+  if(backdrop)backdrop.classList.remove('visible');
+  if(label)label.textContent='Kaimana · Star Guide';
+}
+
+// ═══════════════════════════════════════════════════════
+// STAR GUIDE TOOLTIP
+// ═══════════════════════════════════════════════════════
+let sgTooltipShown=false;
+function dismissSgTooltip(){
+  const t=document.getElementById('sgTooltip');
+  if(t)t.classList.add('hidden');
+}
+function showSgTooltip(){
+  // Only show once per session
+  if(sgTooltipShown)return;
+  sgTooltipShown=true;
+  const t=document.getElementById('sgTooltip');
+  if(!t)return;
+  t.classList.remove('hidden');
+  // Auto-dismiss after 9 seconds
+  setTimeout(()=>t.classList.add('hidden'),9000);
+}
+
+// ═══════════════════════════════════════════════════════
+// SCREEN MANAGEMENT
+// ═══════════════════════════════════════════════════════
+let titleRAF=null;
+let resultRAF=null;
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  // Always close drawer when switching screens
+  closeDrawer();
+}
+function showTitle(){
+  // Cancel any running title RAF before restarting
+  if(titleRAF){cancelAnimationFrame(titleRAF);titleRAF=null;}
+  showScreen('screen-title');
+  initTitleStars();
+}
+function startGame(){
+  state.voyageIndex=0;state.step=0;
+  showScreen('screen-game');setupGame();
+}
+function nextVoyage(){
+  // Guard: if already on last island, go to completion screen instead
+  if(state.voyageIndex>=ISLANDS.length-1){
+    showCompletion();return;
+  }
+  state.voyageIndex++;
+  state.step=state.voyageIndex;
+  showScreen('screen-game');setupGame();
+}
+function showCompletion(){
+  showScreen('screen-complete');
+  initCompleteStars();
+}
+
+// ═══════════════════════════════════════════════════════
+// TITLE STARS
+// ═══════════════════════════════════════════════════════
+function initTitleStars(){
+  const c=document.getElementById('titleStarsCanvas');
+  if(!c)return;
+  const ctx=c.getContext('2d');
+  c.width=window.innerWidth;c.height=window.innerHeight;
+  const stars=[];
+  for(let i=0;i<300;i++)stars.push({x:Math.random()*c.width,y:Math.random()*c.height*0.72,r:Math.random()*1.5+0.3,phase:Math.random()*Math.PI*2,speed:0.5+Math.random()*1.5});
+  function draw(t){
+    if(!document.getElementById('screen-title').classList.contains('active')){titleRAF=null;return;}
+    ctx.clearRect(0,0,c.width,c.height);
+    stars.forEach(s=>{
+      const a=0.25+0.65*(0.5+0.5*Math.sin(t*0.001*s.speed+s.phase));
+      ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(248,244,232,${a})`;ctx.fill();
+    });
+    titleRAF=requestAnimationFrame(draw);
+  }
+  titleRAF=requestAnimationFrame(draw);
+}
+
+// ═══════════════════════════════════════════════════════
+// GAME SETUP
+// ═══════════════════════════════════════════════════════
+function setupGame(){
+  const island=ISLANDS[state.voyageIndex];
+  const isFirstVoyage=state.voyageIndex===0;
+  state.heading=0; state.skyAzimuth=island.startAzimuth||0; state.skyAltitude=20; state.clueIndex=0; state.activeConst=null;
+
+  document.getElementById('destDisplay').textContent=island.name;
+
+  // Step dots
+  const dots=document.getElementById('stepDots');dots.innerHTML='';
+  ISLANDS.forEach((_,i)=>{
+    const d=document.createElement('div');
+    d.className='step-dot'+(i<state.voyageIndex?' done':i===state.voyageIndex?' active':'');
+    dots.appendChild(d);
+  });
+
+  // Show/hide heading display — desktop always on V1; mobile uses show-mobile
+  const hi=document.getElementById('headingIndicator');
+  if(isFirstVoyage){
+    hi.classList.remove('hidden');
+    hi.classList.add('show-mobile');
+    const dirs=['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+    const initH=island.startAzimuth||0;
+    document.getElementById('headingDisplay').textContent=`${initH}° ${dirs[Math.round(initH/22.5)%16]}`;
+  } else {
+    hi.classList.add('hidden');
+    hi.classList.remove('show-mobile');
+  }
+
+  // Build mentor panel
+  buildMentorPanel(island, isFirstVoyage);
+  buildConstKey();
+
+  // Drag hint
+  const hint=document.getElementById('dragHint');
+  hint.classList.remove('hidden');
+  setTimeout(()=>hint.classList.add('hidden'),4000);
+
+  // Star Guide tooltip (first visit only)
+  setTimeout(showSgTooltip, 1800);
+
+  // Sky
+  if(state.skyRAF){cancelAnimationFrame(state.skyRAF);state.skyRAF=null;}
+  initSkyCanvas();
+}
+
+// ═══════════════════════════════════════════════════════
+// MENTOR PANEL BUILDER
+// ═══════════════════════════════════════════════════════
+function buildMentorPanel(island, isFirstVoyage){
+  const body=document.getElementById('mentorBody');
+  body.innerHTML='';
+
+  function addBubble(text,type=''){
+    const b=document.createElement('div');
+    b.className='mentor-bubble'+(type?' '+type:'');
+    b.textContent=text;body.appendChild(b);
+  }
+
+  if(isFirstVoyage){
+    // Voyage 1: full hand-holding with explanation of the mechanic
+    const zone=document.getElementById('revealBtnZone');if(zone)zone.style.display='none';
+    addBubble('Welcome, young navigator. The ocean has no roads — only the stars above know the way.');
+    addBubble('Drag the sky to look around you. The stars rise in the east and set in the west, just as your ancestors learned.');
+    addBubble('On this first voyage, I will show you both the heading number and the star clues — so you can understand how they connect. From the next voyage onward, you will have only the stars to guide you.');
+    addBubble(`Your destination: ${island.name}. Follow the steps below.`,'system');
+    // Show all clues for voyage 1 (fully visible)
+    island.clues.forEach(cl=>{
+      const card=document.createElement('div');card.className='clue-card active';
+      card.innerHTML=`<div class="clue-number">${cl.n}</div><div class="clue-text">${cl.text}</div>${cl.sub?`<div class="clue-subtext">${cl.sub}</div>`:''}`;
+      body.appendChild(card);
+    });
+  } else {
+    // Voyage 2+: no degrees, sequential clue reveal
+    addBubble('Put away your numbers. The sky is your only guide tonight. Read each clue carefully, move the sky, and trust what you observe.');
+    addBubble(`Destination: ${island.name}.`,'system');
+
+    const totalClues=island.clues.length;
+    // Render all clue slots; locked ones are blurred
+    island.clues.forEach((cl,i)=>{
+      const card=document.createElement('div');
+      card.className='clue-card'+(i===0?' active':' locked');
+      card.id=`clue-${i}`;
+      card.innerHTML=`<div class="clue-number">${cl.n}</div><div class="clue-text">${cl.text}</div>${cl.sub?`<div class="clue-subtext">${cl.sub}</div>`:''}`;
+      body.appendChild(card);
+    });
+
+    // Final reminder
+    addBubble('When the sky matches what the clues describe, commit your heading. There is no number to chase — only the stars.','system');
+
+    // Reveal button — pinned in sticky zone above constellation key
+    const zone=document.getElementById('revealBtnZone');
+    zone.style.display='block';zone.innerHTML='';
+    const revBtn=document.createElement('button');
+    revBtn.className='clue-reveal-btn';revBtn.id='revealBtn';
+    revBtn.style.cssText='width:100%;font-size:0.7rem;padding:0.7rem 1rem;border-color:var(--gold);color:var(--gold-light);background:rgba(200,151,58,0.08);min-height:48px;';
+    revBtn.textContent=`✦ Reveal next clue (2 of ${totalClues})`;
+    revBtn.onclick=()=>revealNextClue(island);
+    zone.appendChild(revBtn);
+  }
+
+  body.scrollTop=0;
+}
+
+function revealNextClue(island){
+  state.clueIndex=Math.min(state.clueIndex+1,island.clues.length-1);
+  const nextCard=document.getElementById(`clue-${state.clueIndex}`);
+  if(nextCard){
+    nextCard.classList.remove('locked');nextCard.classList.add('active');
+    nextCard.scrollIntoView({behavior:'smooth',block:'nearest'});
+  }
+  const btn=document.getElementById('revealBtn');
+  const zone=document.getElementById('revealBtnZone');
+  if(btn){
+    if(state.clueIndex>=island.clues.length-1){
+      // All revealed — hide the button zone
+      if(zone)zone.style.display='none';
+    } else {
+      btn.textContent=`✦ Reveal next clue (${state.clueIndex+2} of ${island.clues.length})`;
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// CONSTELLATION KEY
+// ═══════════════════════════════════════════════════════
+function buildConstKey(){
+  const list=document.getElementById('constKeyList');list.innerHTML='';
+  CONSTELLATIONS.forEach(c=>{
+    const item=document.createElement('div');
+    item.className='const-key-item'+(state.activeConst===c.id?' active':'');
+    item.innerHTML=`<div class="const-dot" style="background:${c.color}"></div><span>${c.name}</span>`;
+    item.onclick=()=>{state.activeConst=state.activeConst===c.id?null:c.id;buildConstKey();dismissSgTooltip();};
+    list.appendChild(item);
+    const info=document.createElement('div');
+    info.className='star-info-inline';info.textContent=c.navNote;
+    list.appendChild(info);
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// SKY CANVAS
+// ═══════════════════════════════════════════════════════
+function initSkyCanvas(){
+  const wrap=document.getElementById('skyWrap');
+  const c=document.getElementById('skyCanvas');
+  if(!c||!wrap)return;
+  c.width=wrap.clientWidth;c.height=wrap.clientHeight;
+  const ctx=c.getContext('2d');
+  const island=ISLANDS[state.voyageIndex];
+
+  // Background stars
+  const bgStars=[];
+  for(let i=0;i<380;i++)bgStars.push({x:Math.random()*360,y:-85+Math.random()*170,r:Math.random()*0.7+0.2,phase:Math.random()*Math.PI*2});
+
+  // ── Drag handlers ──
+  function startDrag(x,y){state.dragging=true;state.dragStart={x,y};state.azStart=state.skyAzimuth;state.altStart=state.skyAltitude;wrap.classList.add('dragging')}
+  function moveDrag(x,y){
+    if(!state.dragging)return;
+    const dx=x-state.dragStart.x,dy=y-state.dragStart.y;
+    state.skyAzimuth=(state.azStart-dx*0.45+360)%360;
+    state.skyAltitude=Math.max(0,Math.min(70,state.altStart+dy*0.14));
+    const h=Math.round(state.skyAzimuth)%360;
+    state.heading=h;
+    if(state.voyageIndex===0){
+      const dirs=['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+      document.getElementById('headingDisplay').textContent=`${h}° ${dirs[Math.round(h/22.5)%16]}`;
+    }
+    updateSkyFeedback(h,island);
+  }
+  function endDrag(){state.dragging=false;wrap.classList.remove('dragging')}
+
+  wrap.onmousedown=e=>startDrag(e.clientX,e.clientY);
+  wrap.onmousemove=e=>moveDrag(e.clientX,e.clientY);
+  wrap.onmouseup=endDrag;wrap.onmouseleave=endDrag;
+  wrap.ontouchstart=e=>{const t=e.touches[0];startDrag(t.clientX,t.clientY)};
+  wrap.ontouchmove=e=>{e.preventDefault();const t=e.touches[0];moveDrag(t.clientX,t.clientY)};
+  wrap.ontouchend=endDrag;
+
+  // ── Projection ──
+  function project(raDeg,decDeg){
+    const ra=raDeg*Math.PI/180,dec=decDeg*Math.PI/180;
+    const lat=-20*Math.PI/180;
+    const lstOffset=island.lstOffset||0;
+    const lst=((state.skyAzimuth+lstOffset)*Math.PI/180);
+    const ha=lst-ra;
+    const sinAlt=Math.sin(dec)*Math.sin(lat)+Math.cos(dec)*Math.cos(lat)*Math.cos(ha);
+    const alt=Math.asin(Math.max(-1,Math.min(1,sinAlt)));
+    const cosAz=(Math.sin(dec)-Math.sin(alt)*Math.sin(lat))/(Math.cos(alt)*Math.cos(lat));
+    const sinAz=-Math.cos(dec)*Math.sin(ha)/Math.cos(alt);
+    let az=(Math.atan2(sinAz,cosAz)*180/Math.PI+360)%360;
+    const horizY=c.height*0.72;
+    const altDeg=alt*180/Math.PI;
+    const tAlt=altDeg-state.skyAltitude;
+    const px=c.width/2+(az-180)*(c.width/220)*1.0;
+    const py=horizY-tAlt*(c.height*0.68)/90;
+    return{x:px,y:py,alt:altDeg,az};
+  }
+
+  function magR(mag){return Math.max(0.8,3.6-mag*0.9)}
+  function magA(mag){return Math.max(0.3,1-mag*0.12)}
+
+  // ── Draw loop ──
+  function draw(t){
+    if(!document.getElementById('screen-game').classList.contains('active'))return;
+    ctx.clearRect(0,0,c.width,c.height);
+    const horizY=c.height*0.72;
+
+    // Sky bg
+    const sg=ctx.createLinearGradient(0,0,0,horizY);
+    sg.addColorStop(0,'#02040c');sg.addColorStop(0.75,'#04101e');sg.addColorStop(1,'#081828');
+    ctx.fillStyle=sg;ctx.fillRect(0,0,c.width,horizY);
+
+    // Ocean
+    const og=ctx.createLinearGradient(0,horizY,0,c.height);
+    og.addColorStop(0,'#061828');og.addColorStop(1,'#020710');
+    ctx.fillStyle=og;ctx.fillRect(0,horizY,c.width,c.height-horizY);
+
+    // Horizon
+    ctx.beginPath();ctx.moveTo(0,horizY);ctx.lineTo(c.width,horizY);
+    ctx.strokeStyle='rgba(200,151,58,0.18)';ctx.lineWidth=1;ctx.stroke();
+
+    // Ocean shimmer
+    for(let i=0;i<5;i++){
+      const wy=horizY+15+i*18;
+      ctx.beginPath();ctx.moveTo(0,wy);ctx.lineTo(c.width,wy);
+      ctx.strokeStyle=`rgba(200,151,58,${0.025+0.01*Math.sin(t*0.0004+i)})`;ctx.lineWidth=1;ctx.stroke();
+    }
+
+    // Canoe back-view PNG
+    if(window._backImg && window._backImg.complete){
+      const imgW=140,imgH=Math.round(140*(window._backImg.naturalHeight/window._backImg.naturalWidth));
+      ctx.save();ctx.translate(c.width/2,horizY);
+      ctx.drawImage(window._backImg,-imgW/2,-imgH+Math.round(imgH*0.25),imgW,imgH);
+      ctx.restore();
+    }
+
+    // Clip above horizon
+    ctx.save();ctx.beginPath();ctx.rect(0,0,c.width,horizY);ctx.clip();
+
+    // Background stars
+    bgStars.forEach(s=>{
+      const pos=project(s.x,s.y);
+      if(pos.y>horizY||pos.x<-40||pos.x>c.width+40)return;
+      const tw=0.5+0.5*Math.sin(t*0.0009+s.phase);
+      ctx.beginPath();ctx.arc(pos.x,pos.y,s.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(248,244,232,${0.15+0.25*tw})`;ctx.fill();
+    });
+
+    // ── Named constellations — always labelled, highlighted when active ──
+    CONSTELLATIONS.forEach(con=>{
+      const isActive=state.activeConst===con.id;
+      const col=con.color;
+      const proj=con.stars.map(s=>({...s,...project(s.ra,s.dec)}));
+      // Visibility: always show at base alpha, boost when active
+      const lineAlpha=isActive?'88':'40';
+      const starAlphaScale=isActive?1.0:0.78;
+      const glowAlpha=isActive?'55':'20';
+
+      // ── Constellation lines ──
+      ctx.save();
+      ctx.strokeStyle=col+lineAlpha;ctx.lineWidth=isActive?1.3:0.7;ctx.setLineDash([3,5]);
+      con.lines.forEach(([a,b])=>{
+        const pa=proj[a],pb=proj[b];
+        if(pa.alt>-5&&pb.alt>-5){ctx.beginPath();ctx.moveTo(pa.x,pa.y);ctx.lineTo(pb.x,pb.y);ctx.stroke();}
+      });
+      ctx.setLineDash([]);ctx.restore();
+
+      // ── Special: draw Pointer arrow from Beta → Alpha Centauri ──
+      if(con.id==='centaurus'&&proj[0].alt>-5&&proj[1].alt>-5){
+        const ax=proj[0].x,ay=proj[0].y; // Alpha (target)
+        const bx=proj[1].x,by=proj[1].y; // Beta (origin of arrow)
+        const ang=Math.atan2(ay-by,ax-bx);
+        const arrowLen=Math.hypot(ax-bx,ay-by)*0.6;
+        const midX=bx+Math.cos(ang)*arrowLen*0.5;
+        const midY=by+Math.sin(ang)*arrowLen*0.5;
+        ctx.save();
+        ctx.strokeStyle=col+(isActive?'90':'45');ctx.lineWidth=isActive?1.5:0.9;
+        ctx.setLineDash([4,3]);
+        ctx.beginPath();ctx.moveTo(bx,by);ctx.lineTo(ax,ay);ctx.stroke();
+        ctx.setLineDash([]);
+        // Arrowhead at Alpha end
+        const hw=isActive?5:3.5;
+        ctx.fillStyle=col+(isActive?'cc':'70');
+        ctx.beginPath();
+        ctx.moveTo(ax,ay);
+        ctx.lineTo(ax-Math.cos(ang-0.4)*hw*2,ay-Math.sin(ang-0.4)*hw*2);
+        ctx.lineTo(ax-Math.cos(ang+0.4)*hw*2,ay-Math.sin(ang+0.4)*hw*2);
+        ctx.closePath();ctx.fill();
+        // "Pointers" label at midpoint
+        if(isActive){
+          ctx.font='italic 9px Crimson Pro,serif';ctx.fillStyle=col+'cc';ctx.textAlign='center';
+          ctx.fillText('Pointers →',midX,midY-6);
+          ctx.textAlign='left';
+        }
+        ctx.restore();
+      }
+
+      // ── Stars ──
+      proj.forEach((s,si)=>{
+        if(s.alt<-6)return;
+        const r=magR(s.mag);
+        const alpha=magA(s.mag)*starAlphaScale;
+
+        // Binary star marker for Alpha Centauri (two overlapping circles)
+        if(con.id==='centaurus'&&si===0){
+          ctx.save();ctx.globalAlpha=alpha;
+          ctx.beginPath();ctx.arc(s.x-r*0.4,s.y,r*0.8,0,Math.PI*2);
+          ctx.fillStyle=col;ctx.fill();
+          ctx.beginPath();ctx.arc(s.x+r*0.4,s.y,r*0.7,0,Math.PI*2);
+          ctx.fillStyle='#ffffff';ctx.fill();
+          ctx.globalAlpha=1;
+          // Always show the navName label above the star
+          const lAlpha=isActive?'ee':'88';
+          ctx.font=`500 ${isActive?'10px':'9px'} Cinzel,serif`;
+          ctx.fillStyle=col+lAlpha;ctx.textAlign='left';
+          ctx.fillText(s.navName||'Alpha Cen',s.x+r+5,s.y-r-2);
+          if(isActive){ctx.font='italic 8px Crimson Pro,serif';ctx.fillStyle=col+'88';ctx.fillText('(binary)',s.x+r+5,s.y+r+8);}
+          ctx.restore();
+        } else {
+          // Normal star glow + dot
+          if(s.mag<2){
+            const grd=ctx.createRadialGradient(s.x,s.y,0,s.x,s.y,r*(isActive?8:5));
+            grd.addColorStop(0,col+glowAlpha);grd.addColorStop(1,'transparent');
+            ctx.beginPath();ctx.arc(s.x,s.y,r*(isActive?8:5),0,Math.PI*2);ctx.fillStyle=grd;ctx.fill();
+          }
+          ctx.beginPath();ctx.arc(s.x,s.y,r,0,Math.PI*2);
+          ctx.fillStyle=col;ctx.globalAlpha=alpha;ctx.fill();ctx.globalAlpha=1;
+        }
+
+        // ── Star labels — ALWAYS shown for navName stars, brighter when active ──
+        if(s.navName){
+          const labelAlpha=isActive?'ee':'80';
+          const fontSize=isActive?'500 10px':'400 9px';
+          ctx.font=`${fontSize} Cinzel,serif`;
+          ctx.fillStyle=col+labelAlpha;ctx.textAlign='left';
+          ctx.fillText(s.navName,s.x+r+5,s.y-r-2);
+        }
+      });
+
+      // ── Constellation name label — always shown near brightest star ──
+      const brightStar=proj.filter(s=>s.alt>0).sort((a,b)=>a.mag-b.mag)[0];
+      if(brightStar){
+        const labelAlpha=isActive?'ff':'60';
+        ctx.font=`${isActive?'600':'500'} ${isActive?'11px':'9px'} Cinzel,serif`;
+        ctx.fillStyle=col+labelAlpha;ctx.textAlign='center';
+        // Position label above the star
+        ctx.fillText(con.name,brightStar.x,brightStar.y-(magR(brightStar.mag)+isActive?16:12));
+        ctx.textAlign='left';
+      }
+    });
+
+    // Cardinal labels on horizon
+    [{dir:'N',off:0},{dir:'E',off:90},{dir:'S',off:180},{dir:'W',off:270}].forEach(({dir,off})=>{
+      const relAz=(off-state.skyAzimuth+360)%360;
+      const hx=c.width/2+(relAz-180)*(c.width/220)*1.0;
+      if(hx>30&&hx<c.width-30){
+        ctx.font='500 9px Cinzel,serif';ctx.fillStyle='rgba(200,151,58,0.35)';ctx.textAlign='center';
+        ctx.fillText(dir,hx,horizY-7);
+      }
+    });
+    ctx.textAlign='left';
+
+    // Forward heading line from canoe bow
+    if(state.heading!==null){
+      ctx.save();ctx.beginPath();ctx.moveTo(c.width/2,horizY-3);ctx.lineTo(c.width/2,horizY-45);
+      ctx.strokeStyle='rgba(200,151,58,0.6)';ctx.lineWidth=1.5;ctx.setLineDash([3,4]);ctx.stroke();ctx.setLineDash([]);ctx.restore();
+    }
+
+    // BOW / AHEAD centre marker — prominent heading arrow
+    ctx.save();
+    // Dashed centre line from horizon up
+    ctx.beginPath();ctx.moveTo(c.width/2,horizY-2);ctx.lineTo(c.width/2,horizY-80);
+    ctx.strokeStyle='rgba(200,151,58,0.5)';ctx.lineWidth=1.5;ctx.setLineDash([3,5]);ctx.stroke();ctx.setLineDash([]);
+    // Large arrowhead pointing up
+    const ax=c.width/2,ay=horizY-90;
+    ctx.beginPath();
+    ctx.moveTo(ax,ay-22);       // tip
+    ctx.lineTo(ax-12,ay+4);     // bottom-left
+    ctx.lineTo(ax-5,ay+4);
+    ctx.lineTo(ax-5,ay+18);     // inner left stem
+    ctx.lineTo(ax+5,ay+18);
+    ctx.lineTo(ax+5,ay+4);      // inner right stem
+    ctx.lineTo(ax+12,ay+4);     // bottom-right
+    ctx.closePath();
+    ctx.fillStyle='rgba(200,151,58,0.85)';ctx.fill();
+    ctx.strokeStyle='rgba(255,210,100,0.5)';ctx.lineWidth=1;ctx.stroke();
+    // Glow
+    ctx.shadowColor='rgba(200,151,58,0.6)';ctx.shadowBlur=12;
+    ctx.fillStyle='rgba(200,151,58,0.4)';ctx.fill();
+    ctx.shadowBlur=0;
+    // Label
+    ctx.font='600 9px Cinzel,serif';ctx.fillStyle='rgba(220,170,60,0.9)';ctx.textAlign='center';
+    ctx.fillText('AHEAD',ax,ay+32);
+    ctx.restore();
+
+    ctx.restore();
+    state.skyRAF=requestAnimationFrame(draw);
+  }
+  state.skyRAF=requestAnimationFrame(draw);
+}
+
+// ═══════════════════════════════════════════════════════
+// LIVE SKY FEEDBACK  (voyage 2+ only)
+// Reads current heading vs target and gives a directional whisper
+// ═══════════════════════════════════════════════════════
+function updateSkyFeedback(heading,island){
+  // Voyage 0 has the degree readout — no whisper needed
+  if(state.voyageIndex===0)return;
+  const el=document.getElementById('skyFeedback');
+  const diff=((heading-island.targetBearing)+540)%360-180; // signed −180..180
+  const absDiff=Math.abs(diff);
+
+  // Feedback references the constellation named in the current active clue
+  const clue=island.clues[Math.min(state.clueIndex,island.clues.length-1)];
+  // Extract first constellation name mentioned in clue text for personalised feedback
+  const constellationHint=
+    clue.text.includes('Southern Cross')||clue.text.includes('Cross')?'the Cross':
+    clue.text.includes('Orion')||clue.text.includes('Belt')?'the Belt':
+    clue.text.includes('Scorpius')||clue.text.includes('Antares')?'Scorpius':
+    clue.text.includes('Canopus')?'Canopus':
+    clue.text.includes('Pointer')||clue.text.includes('Centauri')?'the Pointers':
+    'the stars';
+
+  let msg='',cls='';
+  if(absDiff<=8){
+    msg=`${constellationHint.charAt(0).toUpperCase()+constellationHint.slice(1)} is where it should be — this feels right.`;cls='good';
+  } else if(absDiff<=18){
+    msg=diff>0?`Almost there. Ease the sky a little further left.`:`Almost there. Ease the sky a little further right.`;cls='warn';
+  } else if(absDiff<=45){
+    msg=diff>0?`Keep turning left — watch where ${constellationHint} settles.`:`Keep turning right — watch where ${constellationHint} settles.`;cls='warn';
+  } else if(absDiff<=90){
+    msg=diff>0?`You are facing too far east. Turn left to bring ${constellationHint} into position.`:`You are facing too far west. Turn right to bring ${constellationHint} into position.`;cls='off';
+  } else {
+    msg=`${constellationHint.charAt(0).toUpperCase()+constellationHint.slice(1)} is far off to one side — keep turning until you find it.`;cls='off';
+  }
+
+  el.textContent=msg;
+  el.className='sky-feedback visible '+cls;
+  if(state.feedbackTimeout)clearTimeout(state.feedbackTimeout);
+  state.feedbackTimeout=setTimeout(()=>{el.classList.remove('visible');},3500);
+}
+
+// ═══════════════════════════════════════════════════════
+// HEADING CONTROLS
+// ═══════════════════════════════════════════════════════
+function resetHeading(){
+  state.skyAzimuth=0;state.skyAltitude=20;state.heading=null;
+  if(state.voyageIndex===0)document.getElementById('headingDisplay').textContent='—';
+  document.getElementById('skyFeedback').className='sky-feedback';
+}
+
+function confirmHeading(){
+  if(state.heading===null){
+    if(state.voyageIndex===0)document.getElementById('headingDisplay').textContent='Drag the sky first';
+    else{
+      const el=document.getElementById('skyFeedback');
+      el.textContent='Drag the sky to set a direction before committing.';
+      el.className='sky-feedback visible warn';
+    }
+    return;
+  }
+  closeDrawer();
+  if(state.skyRAF){cancelAnimationFrame(state.skyRAF);state.skyRAF=null;}
+  showVoyage();
+}
+
+// ═══════════════════════════════════════════════════════
+// VOYAGE CUTSCENE
+// ═══════════════════════════════════════════════════════
+function showVoyage(){
+  showScreen('screen-voyage');
+  const island=ISLANDS[state.voyageIndex];
+  const titleEl=document.getElementById('voyageTitle');
+  const subEl=document.getElementById('voyageSubtitle');
+  titleEl.style.opacity=0;subEl.style.opacity=0;
+  titleEl.textContent=`Sailing to ${island.name}…`;
+  subEl.textContent='The stars guide your canoe across the open water';
+
+  const c=document.getElementById('voyageCanvas');
+  const ctx=c.getContext('2d');
+  c.width=window.innerWidth;c.height=window.innerHeight;
+
+  const stars=[];
+  for(let i=0;i<250;i++)stars.push({x:Math.random()*c.width,y:Math.random()*c.height*0.65,r:Math.random()*1.2+0.2,phase:Math.random()*Math.PI*2});
+
+  let start=null;const dur=4000;
+  function drawV(t){
+    if(!start)start=t;
+    const p=Math.min((t-start)/dur,1);
+    ctx.clearRect(0,0,c.width,c.height);
+    const hy=c.height*0.62;
+    ctx.fillStyle='#020709';ctx.fillRect(0,0,c.width,hy);
+    const og=ctx.createLinearGradient(0,hy,0,c.height);
+    og.addColorStop(0,'#051520');og.addColorStop(1,'#020810');
+    ctx.fillStyle=og;ctx.fillRect(0,hy,c.width,c.height-hy);
+
+    stars.forEach(s=>{
+      const tw=0.4+0.6*(0.5+0.5*Math.sin(t*0.001+s.phase));
+      ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(248,244,232,${tw*0.65})`;ctx.fill();
+    });
+    // Moon
+    ctx.beginPath();ctx.arc(c.width*0.8,c.height*0.14,16,0,Math.PI*2);
+    ctx.fillStyle='rgba(248,240,200,0.55)';ctx.fill();
+
+    // Waves
+    for(let i=0;i<7;i++){
+      const wy=hy+18+i*16;
+      ctx.beginPath();ctx.moveTo(0,wy);
+      for(let x=0;x<=c.width;x+=25)ctx.lineTo(x,wy+Math.sin((x+t*0.45)/75)*4);
+      ctx.strokeStyle=`rgba(8,45,85,${0.28+i*0.025})`;ctx.lineWidth=1;ctx.stroke();
+    }
+
+    // Canoe side-view PNG
+    const cx2=c.width*0.12+p*c.width*0.74;
+    if(window._sideImg && window._sideImg.complete){
+      const imgW=160,imgH=Math.round(160*(window._sideImg.naturalHeight/window._sideImg.naturalWidth));
+      ctx.save();ctx.translate(cx2,hy+6);ctx.rotate(Math.sin(t*0.0018)*0.04);
+      ctx.drawImage(window._sideImg,-imgW/2,-imgH+Math.round(imgH*0.25),imgW,imgH);
+      ctx.restore();
+    }
+
+    // Wake
+    ctx.beginPath();ctx.moveTo(cx2-4,hy+8);
+    ctx.bezierCurveTo(cx2-50,hy+16,cx2-130,hy+10,cx2-190,hy+5);
+    ctx.strokeStyle='rgba(8,55,95,0.35)';ctx.lineWidth=2;ctx.stroke();
+
+    // Trail line
+    if(p>0.18){
+      ctx.save();ctx.globalAlpha=Math.min(1,(p-0.18)/0.4);
+      ctx.beginPath();ctx.moveTo(c.width*0.12,hy);ctx.lineTo(cx2,hy);
+      ctx.strokeStyle='rgba(200,151,58,0.18)';ctx.lineWidth=1;ctx.setLineDash([3,8]);ctx.stroke();
+      ctx.setLineDash([]);ctx.restore();
+    }
+    if(p>0.28&&titleEl.style.opacity==='0'){titleEl.style.opacity=1;subEl.style.opacity=1;}
+    if(p<1)requestAnimationFrame(drawV);
+    else setTimeout(()=>showResult(),700);
+  }
+  requestAnimationFrame(drawV);
+}
+
+// ═══════════════════════════════════════════════════════
+// RESULT
+// ═══════════════════════════════════════════════════════
+function showResult(){
+  // Cancel any previous result star RAF
+  if(resultRAF){cancelAnimationFrame(resultRAF);resultRAF=null;}
+  showScreen('screen-result');
+  const island=ISLANDS[state.voyageIndex];
+  const diff=Math.abs(((state.heading-island.targetBearing)+540)%360-180);
+  let grade,accuracy;
+  if(diff<=10){grade='good';accuracy=`You landed within ${Math.round(diff)}° of the correct course — an accurate star reading.`}
+  else if(diff<=25){grade='close';accuracy=`You were ${Math.round(diff)}° off course. Across the ocean, that gap grows with every wave.`}
+  else{grade='off';accuracy=`You were ${Math.round(diff)}° off course. The correct bearing was ${island.targetBearing}°.`}
+
+  document.getElementById('resultIsland').textContent=island.name;
+  document.getElementById('resultAccuracy').textContent=accuracy;
+
+  // "What the stars were showing you" — only meaningful from voyage 2 onward
+  // On voyage 1 the student had the number, so hide this panel
+  const revealBlock=document.getElementById('resultReveal');
+  if(state.voyageIndex===0){
+    revealBlock.style.display='none';
+  } else {
+    revealBlock.style.display='';
+    document.getElementById('resultRevealText').textContent=island.correctSkyDescription;
+  }
+
+  document.getElementById('resultFeedback').textContent=
+    MENTOR_LINES[grade][Math.floor(Math.random()*MENTOR_LINES[grade].length)];
+
+  // Wire the Next button correctly
+  const nextBtn=document.getElementById('resultNextBtn');
+  const nextLabel=document.getElementById('resultNextLabel');
+  const isLast=state.voyageIndex>=ISLANDS.length-1;
+  nextLabel.textContent=isLast?'Complete the Journey':'Next Voyage';
+  nextBtn.onclick=isLast?showCompletion:nextVoyage;
+
+  initResultStars();
+}
+
+function initResultStars(){
+  const c=document.getElementById('resultStarsCanvas');
+  const ctx=c.getContext('2d');
+  c.width=window.innerWidth;c.height=window.innerHeight;
+  const stars=[];
+  for(let i=0;i<200;i++)stars.push({x:Math.random()*c.width,y:Math.random()*c.height,r:Math.random()*1.3+0.2,phase:Math.random()*Math.PI*2,speed:0.5+Math.random()});
+  function draw(t){
+    if(!document.getElementById('screen-result').classList.contains('active')){resultRAF=null;return;}
+    ctx.clearRect(0,0,c.width,c.height);
+    stars.forEach(s=>{
+      const a=0.15+0.55*(0.5+0.5*Math.sin(t*0.001*s.speed+s.phase));
+      ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(248,244,232,${a})`;ctx.fill();
+    });
+    resultRAF=requestAnimationFrame(draw);
+  }
+  resultRAF=requestAnimationFrame(draw);
+}
+
+function initCompleteStars(){
+  const c=document.getElementById('completeStarsCanvas');
+  const ctx=c.getContext('2d');
+  c.width=window.innerWidth;c.height=window.innerHeight;
+  // Denser, slower, more golden for the finale
+  const stars=[];
+  for(let i=0;i<280;i++)stars.push({
+    x:Math.random()*c.width,y:Math.random()*c.height,
+    r:Math.random()*1.6+0.3,phase:Math.random()*Math.PI*2,
+    speed:0.3+Math.random()*0.8,
+    gold:Math.random()<0.15 // ~15% slightly gold-tinted
+  });
+  function draw(t){
+    if(!document.getElementById('screen-complete').classList.contains('active'))return;
+    ctx.clearRect(0,0,c.width,c.height);
+    stars.forEach(s=>{
+      const a=0.2+0.6*(0.5+0.5*Math.sin(t*0.001*s.speed+s.phase));
+      ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+      ctx.fillStyle=s.gold?`rgba(232,191,106,${a})`:`rgba(248,244,232,${a})`;ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+  requestAnimationFrame(draw);
+}
+
+// ═══════════════════════════════════════════════════════
+// RESIZE
+// ═══════════════════════════════════════════════════════
+window.addEventListener('resize',()=>{
+  const c=document.getElementById('skyCanvas');const wrap=document.getElementById('skyWrap');
+  if(c&&wrap&&document.getElementById('screen-game').classList.contains('active')){c.width=wrap.clientWidth;c.height=wrap.clientHeight;}
+});
+
+// START
+initTitleStars();
+</script>
+
+<script>
+// Preload canoe PNGs
+window._backImg = new Image();
+window._backImg.src = 'back.png';
+window._sideImg = new Image();
+window._sideImg.src = 'side.png';
+</script>
+<button class="music-toggle" id="musicToggle" onclick="toggleMusic()">&#9834; Music Off</button>
+
+<script>
+(function(){
+  const audio = new Audio('whale_song.mp3');
+  audio.loop = true;
+  audio.volume = 0.35;
+  let playing = false;
+  const btn = document.getElementById('musicToggle');
+
+  function updateBtn(){
+    btn.textContent = playing ? '\u266a Music On' : '\u266a Music Off';
+    btn.classList.toggle('playing', playing);
+  }
+
+  // Called directly from the Begin Your Voyage button — guaranteed user gesture
+  window.startMusicOnInteraction = function(){
+    if(playing) return;
+    audio.play().then(function(){
+      playing = true;
+      updateBtn();
+    }).catch(function(){});
+  };
+
+  window.toggleMusic = function(){
+    if(playing){
+      audio.pause();
+      playing = false;
+      updateBtn();
+    } else {
+      audio.play().then(function(){
+        playing = true;
+        updateBtn();
+      }).catch(function(){});
+    }
+  };
+
+  updateBtn();
+})();
+</script>
+</body>
+</html>
