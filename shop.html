@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CurioMinds.inc — Shop</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Nunito+Sans:wght@400;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #0D1B3E;
+      --navy:    #1B2F5E;
+      --red:     #D94F6B;
+      --navy-lt: #2B4A8A;
+      --purple:  #6B3FA0;
+      --white:   #FFFFFF;
+      --cream:   #F0EDE8;
+      --card:    #1A2B52;
+      --gold:    #F5C842;
+      --card-shadow: 0 4px 18px rgba(0,0,0,0.30);
+      --card-shadow-hover: 0 10px 32px rgba(0,0,0,0.50);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Nunito Sans', sans-serif;
+      background: var(--bg);
+      color: var(--white);
+      min-height: 100vh;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      background: var(--navy);
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      height: 54px;
+      box-shadow: 0 2px 12px rgba(27,47,94,0.25);
+    }
+
+    nav .nav-logo {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 900;
+      font-size: 1.05rem;
+      color: var(--white);
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+      margin-right: auto;
+      text-decoration: none;
+    }
+
+    nav .nav-logo span { color: var(--red); }
+
+    nav a {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      font-size: 0.82rem;
+      color: rgba(255,255,255,0.75);
+      text-decoration: none;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      transition: color 0.2s;
+      white-space: nowrap;
+    }
+
+    nav a:hover { color: var(--red); }
+    nav a.active { color: var(--red); }
+
+    /* ── FILTER BAR ── */
+    .filter-bar {
+      position: sticky;
+      top: 54px;
+      z-index: 100;
+      background: var(--card);
+      border-bottom: 1.5px solid rgba(255,255,255,0.08);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.20);
+      padding: 0 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .filter-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.55rem 0;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .filter-row::-webkit-scrollbar { display: none; }
+
+    .filter-row + .filter-row {
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .filter-label {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 0.68rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.40);
+      white-space: nowrap;
+      min-width: 52px;
+    }
+
+    .filter-btn {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      font-size: 0.75rem;
+      letter-spacing: 0.04em;
+      padding: 0.28rem 0.75rem;
+      border-radius: 20px;
+      border: 1.5px solid rgba(255,255,255,0.20);
+      background: transparent;
+      color: rgba(255,255,255,0.85);
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .filter-btn:hover {
+      border-color: var(--red);
+      color: var(--red);
+    }
+
+    .filter-btn.active {
+      background: var(--red);
+      border-color: var(--red);
+      color: var(--white);
+    }
+
+    /* ── MAIN ── */
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2.5rem 1.5rem 5rem;
+    }
+
+    .results-info {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.45);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 1.25rem;
+    }
+
+    /* ── GRID ── */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.2rem;
+    }
+
+    /* ── PRODUCT CARD ── */
+    .product-card {
+      background: var(--card);
+      border-radius: 16px;
+      box-shadow: var(--card-shadow);
+      border: 1.5px solid rgba(255,255,255,0.08);
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      animation: fadeUp 0.45s ease forwards;
+      opacity: 0;
+    }
+
+    .product-card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--card-shadow-hover);
+      border-color: rgba(217,79,107,0.25);
+    }
+
+    @keyframes fadeUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* staggered delays */
+    .product-card:nth-child(1) { animation-delay: 0.05s; }
+    .product-card:nth-child(2) { animation-delay: 0.1s; }
+    .product-card:nth-child(3) { animation-delay: 0.15s; }
+    .product-card:nth-child(4) { animation-delay: 0.2s; }
+    .product-card:nth-child(5) { animation-delay: 0.25s; }
+    .product-card:nth-child(6) { animation-delay: 0.3s; }
+
+    /* thumbnail */
+    .card-thumb {
+      width: 100%;
+      aspect-ratio: 16/9;
+      background: var(--navy);
+      overflow: hidden;
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .card-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .card-thumb .thumb-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, var(--navy) 0%, var(--navy-lt) 100%);
+      font-size: 2.5rem;
+    }
+
+    .play-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(27,47,94,0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .play-overlay svg {
+      width: 52px;
+      height: 52px;
+      filter: drop-shadow(0 2px 8px rgba(0,0,0,0.4));
+    }
+
+    .product-card:hover .play-overlay { opacity: 1; }
+
+    /* badges */
+    .badges {
+      position: absolute;
+      top: 0.6rem;
+      left: 0.6rem;
+      display: flex;
+      gap: 0.3rem;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 0.65rem;
+      letter-spacing: 0.06em;
+      padding: 0.2rem 0.5rem;
+      border-radius: 12px;
+      text-transform: uppercase;
+    }
+
+    .badge-free     { background: #22c55e; color: #fff; }
+    .badge-paid     { background: var(--navy); color: #fff; }
+    .badge-bundle   { background: #8b5cf6; color: #fff; }
+    .badge-new      { background: var(--red); color: #fff; }
+    .badge-popular  { background: #f59e0b; color: #fff; }
+
+    /* card body */
+    .card-body {
+      padding: 1.1rem 1.25rem 1.2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+      flex: 1;
+    }
+
+    .card-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .card-subject {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      font-size: 0.68rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--red);
+    }
+
+    .card-dot {
+      width: 3px; height: 3px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.25);
+      flex-shrink: 0;
+    }
+
+    .card-type {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      font-size: 0.68rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.45);
+    }
+
+    .card-title {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 1rem;
+      color: var(--white);
+      line-height: 1.3;
+    }
+
+    .card-desc {
+      font-size: 0.83rem;
+      color: rgba(255,255,255,0.60);
+      line-height: 1.6;
+      flex: 1;
+    }
+
+    .card-cta {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.40);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-top: 0.2rem;
+    }
+
+    /* hidden marker */
+    .product-card[data-hidden="true"] { display: none; }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      background: rgba(15,25,55,0.75);
+      backdrop-filter: blur(4px);
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: #162344;
+      border-radius: 20px;
+      max-width: 680px;
+      width: 100%;
+      overflow: hidden;
+      box-shadow: 0 24px 64px rgba(27,47,94,0.3);
+      position: relative;
+      animation: modalIn 0.28s cubic-bezier(0.34,1.56,0.64,1) forwards;
+    }
+
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.92) translateY(12px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 0.9rem;
+      right: 0.9rem;
+      z-index: 10;
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.12);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+
+    .modal-close:hover { background: rgba(217,79,107,0.15); }
+    .modal-close svg { width: 14px; height: 14px; stroke: var(--white); }
+
+    /* video embed */
+    .modal-video {
+      width: 100%;
+      aspect-ratio: 16/9;
+      background: var(--navy);
+      position: relative;
+    }
+
+    .modal-video iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block;
+    }
+
+    .modal-video .no-video {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      background: linear-gradient(135deg, #1B2F5E 0%, #2B4A8A 100%);
+      color: rgba(255,255,255,0.5);
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-align: center;
+    }
+
+    .modal-video .no-video span { font-size: 2rem; }
+
+    .modal-body {
+      padding: 1.5rem 1.75rem 1.75rem;
+    }
+
+    .modal-badges {
+      display: flex;
+      gap: 0.35rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.75rem;
+    }
+
+    .modal-title {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 900;
+      font-size: 1.25rem;
+      color: var(--white);
+      line-height: 1.25;
+      margin-bottom: 0.4rem;
+    }
+
+    .modal-meta {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--red);
+      margin-bottom: 0.85rem;
+    }
+
+    .modal-desc {
+      font-size: 0.88rem;
+      color: rgba(255,255,255,0.65);
+      line-height: 1.65;
+      margin-bottom: 1.25rem;
+    }
+
+    .modal-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--navy);
+      color: var(--white);
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 0.88rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      text-decoration: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 50px;
+      transition: background 0.2s, transform 0.18s;
+    }
+
+    .modal-cta:hover {
+      background: var(--red);
+      transform: translateY(-2px);
+    }
+
+    .modal-cta.free { background: #16a34a; }
+    .modal-cta.free:hover { background: #15803d; }
+
+    .modal-cta svg { width: 14px; height: 14px; fill: currentColor; }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--navy);
+      text-align: center;
+      padding: 2rem;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      font-size: 0.82rem;
+      color: rgba(255,255,255,0.45);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    footer span { color: var(--red); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 600px) {
+      nav a { display: none; }
+      nav a:nth-child(-n+3) { display: block; }
+      .cards-grid { grid-template-columns: 1fr; }
+      .modal-body { padding: 1.2rem 1.25rem 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="index.html" class="nav-logo">Curio<span>Minds</span>.inc</a>
+  <a href="index.html">Simulations</a>
+  <a href="shop.html" class="active">Shop</a>
+  <a href="about.html">About</a>
+</nav>
+
+<!-- STICKY FILTER BAR -->
+<div class="filter-bar">
+  <div class="filter-row">
+    <span class="filter-label">Subject</span>
+    <button class="filter-btn active" data-subject="all">All</button>
+    <button class="filter-btn" data-subject="Biology">Biology</button>
+    <button class="filter-btn" data-subject="Chemistry">Chemistry</button>
+    <button class="filter-btn" data-subject="Physics">Physics</button>
+    <button class="filter-btn" data-subject="Earth Science">Earth Science</button>
+    <button class="filter-btn" data-subject="Astronomy">Astronomy</button>
+  </div>
+  <div class="filter-row">
+    <span class="filter-label">Type</span>
+    <button class="filter-btn active" data-type="all">All</button>
+    <button class="filter-btn" data-type="Simulator">Simulator</button>
+    <button class="filter-btn" data-type="STEM Activity">STEM Activity</button>
+    <button class="filter-btn" data-type="Bundle">Bundle</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<main>
+  <div class="results-info" id="results-info">Showing all products</div>
+
+  <div class="cards-grid" id="cards-grid">
+
+    <!-- ══ PRODUCT 1 ══ -->
+    <div class="product-card"
+         data-subject="Biology"
+         data-type="Simulator"
+         data-title="[Free] Enzyme Simulation + Worksheets"
+         data-desc="Interactive enzyme activity simulation with accompanying worksheets that help students investigate how factors such as temperature, pH, and concentration affect enzyme reactions. Designed for inquiry-based biology learning."
+         data-gumroad="https://curiomindsinc.gumroad.com/l/free-enzyme-simulation-and-worksheets"
+         data-youtube="https://www.youtube.com/watch?v=4Hf3adr3pjw"
+         data-badges="free"
+         data-price="free">
+
+      <div class="card-thumb">
+        <img src="shop/enzymes.png" alt="Enzyme Simulation thumbnail" />
+        <div class="play-overlay">
+          <svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="26" cy="26" r="26" fill="rgba(255,255,255,0.2)"/>
+            <polygon points="20,16 38,26 20,36" fill="white"/>
+          </svg>
+        </div>
+        <div class="badges">
+          <span class="badge badge-free">🆓 Free</span>
+        </div>
+      </div>
+
+      <div class="card-body">
+        <div class="card-meta">
+          <span class="card-subject">Biology</span>
+          <span class="card-dot"></span>
+          <span class="card-type">Simulator</span>
+        </div>
+        <div class="card-title">[Free] Enzyme Simulation + Worksheets</div>
+        <div class="card-desc">Interactive enzyme activity simulation with accompanying worksheets — explore temperature, pH, and concentration effects.</div>
+        <div class="card-cta">Preview &amp; Get →</div>
+      </div>
+    </div>
+
+    <!-- ══ PRODUCT 2 ══ -->
+    <div class="product-card"
+         data-subject="Biology"
+         data-type="Simulator"
+         data-title="Mitosis Simulator + Worksheets"
+         data-desc="Interactive simulation that allows students to explore and visualize the stages of mitosis, helping them understand chromosome movement and cell division through hands-on learning."
+         data-gumroad="https://curiomindsinc.gumroad.com/l/mitosissimulator"
+         data-youtube=""
+         data-badges="new"
+         data-price="paid">
+
+      <div class="card-thumb">
+        <img src="shop/mitosis.png" alt="Mitosis Simulator thumbnail" />
+        <div class="play-overlay">
+          <svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="26" cy="26" r="26" fill="rgba(255,255,255,0.2)"/>
+            <polygon points="20,16 38,26 20,36" fill="white"/>
+          </svg>
+        </div>
+        <div class="badges">
+          <span class="badge badge-new">✨ New</span>
+          <span class="badge badge-paid">Paid</span>
+        </div>
+      </div>
+
+      <div class="card-body">
+        <div class="card-meta">
+          <span class="card-subject">Biology</span>
+          <span class="card-dot"></span>
+          <span class="card-type">Simulator</span>
+        </div>
+        <div class="card-title">Mitosis Simulator + Worksheets</div>
+        <div class="card-desc">Explore and visualize the stages of mitosis — chromosome movement and cell division through hands-on interactive learning.</div>
+        <div class="card-cta">Preview &amp; Get →</div>
+      </div>
+    </div>
+
+  </div><!-- /.cards-grid -->
+</main>
+
+<footer>
+  © 2026 <span>CurioMinds.inc</span> &nbsp;·&nbsp; Where concepts click.
+</footer>
+
+<!-- ══ MODAL ══ -->
+<div class="modal-overlay" id="modal" role="dialog" aria-modal="true">
+  <div class="modal" id="modal-box">
+    <button class="modal-close" id="modal-close" aria-label="Close">
+      <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <line x1="1" y1="1" x2="13" y2="13" stroke-width="2" stroke-linecap="round"/>
+        <line x1="13" y1="1" x2="1" y2="13" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </button>
+
+    <div class="modal-video" id="modal-video">
+      <div class="no-video" id="modal-no-video">
+        <span>🎬</span>
+        Demo video coming soon
+      </div>
+      <iframe id="modal-iframe" src="" allowfullscreen style="display:none;"></iframe>
+    </div>
+
+    <div class="modal-body">
+      <div class="modal-badges" id="modal-badges"></div>
+      <div class="modal-title" id="modal-title"></div>
+      <div class="modal-meta" id="modal-meta"></div>
+      <div class="modal-desc" id="modal-desc"></div>
+      <a href="#" id="modal-cta" class="modal-cta" target="_blank" rel="noopener">
+        <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+          <path d="M8 1L8 11M8 11L4 7M8 11L12 7" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          <path d="M2 14H14" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+        <span id="modal-cta-text">Get on Gumroad</span>
+      </a>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── FILTER LOGIC ──
+  let activeSubject = 'all';
+  let activeType = 'all';
+
+  function applyFilters() {
+    const cards = document.querySelectorAll('.product-card');
+    let visible = 0;
+    cards.forEach(card => {
+      const matchSub = activeSubject === 'all' || card.dataset.subject === activeSubject;
+      const matchType = activeType === 'all' || card.dataset.type === activeType;
+      const show = matchSub && matchType;
+      card.dataset.hidden = show ? 'false' : 'true';
+      if (show) visible++;
+    });
+
+    const info = document.getElementById('results-info');
+    if (activeSubject === 'all' && activeType === 'all') {
+      info.textContent = 'Showing all products';
+    } else {
+      const parts = [];
+      if (activeSubject !== 'all') parts.push(activeSubject);
+      if (activeType !== 'all') parts.push(activeType);
+      info.textContent = `${visible} product${visible !== 1 ? 's' : ''} — ${parts.join(' · ')}`;
+    }
+  }
+
+  document.querySelectorAll('.filter-btn[data-subject]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-btn[data-subject]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeSubject = btn.dataset.subject;
+      applyFilters();
+    });
+  });
+
+  document.querySelectorAll('.filter-btn[data-type]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-btn[data-type]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeType = btn.dataset.type;
+      applyFilters();
+    });
+  });
+
+  // ── MODAL LOGIC ──
+  const modal = document.getElementById('modal');
+  const modalClose = document.getElementById('modal-close');
+  const modalIframe = document.getElementById('modal-iframe');
+  const modalNoVideo = document.getElementById('modal-no-video');
+
+  function getYouTubeEmbedId(url) {
+    if (!url) return null;
+    const patterns = [
+      /youtu\.be\/([^?&]+)/,
+      /youtube\.com\/watch\?v=([^&]+)/,
+      /youtube\.com\/embed\/([^?&]+)/
+    ];
+    for (const p of patterns) {
+      const m = url.match(p);
+      if (m) return m[1];
+    }
+    return null;
+  }
+
+  function badgeHTML(badgesStr) {
+    const map = {
+      free: '<span class="badge badge-free">🆓 Free</span>',
+      paid: '<span class="badge badge-paid">Paid</span>',
+      bundle: '<span class="badge badge-bundle">📦 Bundle</span>',
+      new: '<span class="badge badge-new">✨ New</span>',
+      popular: '<span class="badge badge-popular">🔥 Popular</span>',
+    };
+    return (badgesStr || '').split(',').map(b => map[b.trim()] || '').join(' ');
+  }
+
+  document.querySelectorAll('.product-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const { title, desc, gumroad, youtube, badges, price, subject, type } = card.dataset;
+
+      document.getElementById('modal-title').textContent = title;
+      document.getElementById('modal-meta').textContent = `${subject} · ${type}`;
+      document.getElementById('modal-desc').textContent = desc;
+      document.getElementById('modal-badges').innerHTML = badgeHTML(badges);
+
+      const ctaEl = document.getElementById('modal-cta');
+      const ctaText = document.getElementById('modal-cta-text');
+      ctaEl.href = gumroad || '#';
+      if (price === 'free') {
+        ctaEl.className = 'modal-cta free';
+        ctaText.textContent = 'Get for Free on Gumroad';
+      } else {
+        ctaEl.className = 'modal-cta';
+        ctaText.textContent = 'Get on Gumroad';
+      }
+
+      const vid = getYouTubeEmbedId(youtube);
+      if (vid) {
+        modalIframe.src = `https://www.youtube.com/embed/${vid}?rel=0`;
+        modalIframe.style.display = 'block';
+        modalNoVideo.style.display = 'none';
+      } else {
+        modalIframe.src = '';
+        modalIframe.style.display = 'none';
+        modalNoVideo.style.display = 'flex';
+      }
+
+      modal.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    });
+  });
+
+  function closeModal() {
+    modal.classList.remove('open');
+    modalIframe.src = '';
+    document.body.style.overflow = '';
+  }
+
+  modalClose.addEventListener('click', closeModal);
+  modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+</script>
+</body>
+</html>
