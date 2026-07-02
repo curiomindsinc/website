@@ -1,0 +1,1557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Onogoro: Spear of the Living Earth</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400&family=Cinzel:wght@300;400&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'Cinzel',serif}
+
+/* ── TITLE SCREEN ── */
+#title-screen{position:fixed;inset:0;z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#000;transition:opacity 1.5s ease;}
+#title-screen.hide{opacity:0;pointer-events:none}
+#title-canvas{position:absolute;inset:0;width:100%;height:100%}
+#title-content{position:relative;z-index:2;text-align:center;pointer-events:none}
+#title-main{font-family:'Cinzel',serif;font-weight:300;font-size:clamp(2rem,6vw,4.5rem);letter-spacing:0.18em;text-transform:uppercase;color:rgba(255,235,180,0.95);text-shadow:0 0 60px rgba(255,180,60,0.5),0 0 120px rgba(255,100,0,0.2);margin-bottom:0.3em;}
+#title-sub{font-family:'Noto Serif JP',serif;font-weight:300;font-size:clamp(0.9rem,2.2vw,1.5rem);letter-spacing:0.5em;color:rgba(255,220,140,0.55);margin-bottom:2.5em;}
+#title-hint{font-family:'Cinzel',serif;font-size:clamp(0.85rem,2vw,1.1rem);letter-spacing:0.4em;text-transform:uppercase;color:rgba(255,220,140,0.8);text-shadow:0 2px 6px rgba(0,0,0,0.9),0 0 12px rgba(255,160,50,0.5);animation:hint-pulse 2.6s ease-in-out infinite;cursor:pointer;pointer-events:all;}
+
+/* ── STAGE ── */
+#stage{position:fixed;inset:0;cursor:pointer;background-color:#000;}
+#bg-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 1.5s ease;user-select:none;pointer-events:none;z-index:1;}
+#sim-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:5;opacity:0;transition:opacity 1.5s ease;}
+#sim-canvas.visible{opacity:1;}
+
+/* ── SUBDUCTION STEP OVERLAY ── */
+#sub-step{
+  position:fixed;bottom:2.5em;left:50%;transform:translateX(-50%);
+  z-index:30;text-align:center;pointer-events:none;
+  transition:opacity 0.5s ease;
+  width:90vw;max-width:680px;
+}
+#sub-step-label{
+  font-family:'Cinzel',serif;font-size:clamp(0.7rem,1.8vw,1.1rem);
+  letter-spacing:0.25em;text-transform:uppercase;
+  color:rgba(255,240,190,0.9);
+  text-shadow:0 0 20px rgba(255,160,40,0.5),0 2px 6px rgba(0,0,0,0.9);
+  margin-bottom:0.3em;
+}
+#sub-step-desc{
+  font-family:'Noto Serif JP',serif;font-size:clamp(0.6rem,1.3vw,0.8rem);
+  color:rgba(220,200,160,0.65);letter-spacing:0.05em;
+  text-shadow:0 1px 4px rgba(0,0,0,0.9);
+}
+#sub-step-dots{margin-top:0.7em;display:flex;gap:6px;justify-content:center;}
+.sub-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,200,100,0.25);transition:background 0.4s;}
+.sub-dot.active{background:rgba(255,200,100,0.8);}
+#sub-next-hint{
+  margin-top:0.8em;
+  font-family:'Cinzel',serif;font-size:clamp(0.8rem,1.6vw,1rem);
+  letter-spacing:0.35em;text-transform:uppercase;
+  color:rgba(255,220,140,0.8);
+  text-shadow:0 2px 6px rgba(0,0,0,0.9),0 0 12px rgba(255,160,50,0.5);
+  animation:hint-pulse 2.5s ease-in-out infinite;
+}
+
+/* ── CHAPTER CARD ── */
+#chapter-card{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);opacity:0;pointer-events:none;transition:opacity 0.6s ease;}
+#chapter-card.visible{opacity:1;pointer-events:all}
+#card-box{position:relative;max-width:520px;width:88vw;border:1px solid rgba(255,200,100,0.25);background:rgba(5,3,0,0.88);padding:3em 3.5em 2.5em;text-align:center;}
+#card-num{font-family:'Cinzel',serif;font-size:0.7rem;letter-spacing:0.5em;text-transform:uppercase;color:rgba(255,180,60,0.5);margin-bottom:1em;}
+#card-title{font-family:'Cinzel',serif;font-weight:300;font-size:clamp(1.1rem,3vw,1.8rem);letter-spacing:0.2em;text-transform:uppercase;color:rgba(255,240,200,0.92);text-shadow:0 0 30px rgba(255,160,40,0.35);margin-bottom:0.8em;}
+#card-body{font-family:'Noto Serif JP',serif;font-weight:300;font-size:clamp(0.75rem,1.6vw,0.95rem);line-height:1.9;letter-spacing:0.05em;color:rgba(220,205,175,0.7);margin-bottom:2em;}
+#card-close{font-family:'Cinzel',serif;font-size:0.72rem;letter-spacing:0.35em;text-transform:uppercase;color:rgba(255,240,200,0.65);border:1px solid rgba(255,200,100,0.3);background:transparent;padding:0.65em 2em;cursor:pointer;transition:all 0.35s ease;}
+#card-close:hover{color:rgba(255,240,200,1);border-color:rgba(255,200,100,0.7);background:rgba(255,140,20,0.08);box-shadow:0 0 18px rgba(255,140,20,0.15);}
+#card-corner{position:absolute;top:10px;right:10px;width:28px;height:28px;font-size:1rem;line-height:28px;text-align:center;color:rgba(255,200,100,0.35);cursor:pointer;transition:color 0.25s;font-family:monospace;}
+#card-corner:hover{color:rgba(255,200,100,0.8)}
+
+/* ── SIM HINT ── */
+#sim-hint{position:fixed;bottom:2em;right:2em;z-index:20;font-family:'Cinzel',serif;font-size:clamp(0.8rem,1.8vw,1.1rem);letter-spacing:0.35em;text-transform:uppercase;color:rgba(255,240,200,0.8);text-shadow:0 2px 6px rgba(0,0,0,0.9),0 0 12px rgba(255,160,50,0.6);animation:hint-pulse 3s ease-in-out infinite;pointer-events:none;}
+
+/* ── TRANSITIONS ── */
+#veil{position:fixed;inset:0;background:#000;z-index:60;opacity:0;pointer-events:none;transition:opacity 0.65s ease;}
+#veil.on{opacity:1}
+
+/* ── END SCREEN ── */
+#end-screen{position:fixed;inset:0;background:radial-gradient(ellipse at 50% 65%,#12080a 0%,#000 70%);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:200;opacity:0;pointer-events:none;transition:opacity 2s ease;}
+#end-screen.visible{opacity:1;pointer-events:all}
+#end-canvas{position:absolute;inset:0;width:100%;height:100%}
+#end-content{position:relative;z-index:2;text-align:center}
+#end-title{font-family:'Cinzel',serif;font-weight:300;font-size:clamp(1.4rem,5vw,3.2rem);letter-spacing:0.3em;text-transform:uppercase;color:rgba(255,220,140,0.95);text-shadow:0 0 60px rgba(255,160,30,0.45);margin-bottom:0.4em;}
+#end-kanji{font-family:'Noto Serif JP',serif;font-size:clamp(1rem,3.5vw,2.2rem);color:rgba(255,200,100,0.5);letter-spacing:0.6em;margin-bottom:3em;}
+#restart-btn{font-family:'Cinzel',serif;font-size:0.8rem;letter-spacing:0.3em;text-transform:uppercase;color:rgba(255,240,200,0.65);border:1px solid rgba(255,200,100,0.3);background:transparent;padding:0.75em 2.2em;cursor:pointer;transition:all 0.4s ease;}
+#restart-btn:hover{color:#fff;border-color:rgba(255,200,100,0.75);background:rgba(255,140,20,0.1);}
+
+@keyframes hint-pulse{0%,100%{opacity:.5}50%{opacity:1}}
+</style>
+</head>
+<body>
+
+<div id="title-screen">
+  <canvas id="title-canvas"></canvas>
+  <div id="title-content">
+    <div id="title-main">Onogoro</div>
+    <div id="title-sub">矛の国 · Spear of the Living Earth</div>
+    <div id="title-hint">— Click anywhere to begin —</div>
+  </div>
+</div>
+
+<div id="stage">
+  <img id="bg-img" src="" alt="">
+  <canvas id="sim-canvas"></canvas>
+</div>
+
+<!-- Subduction step-through overlay -->
+<div id="sub-step" style="opacity:0">
+  <div id="sub-step-label">Plate Convergence</div>
+  <div id="sub-step-desc">The Pacific Plate approaches the continental margin</div>
+  <div id="sub-step-dots"></div>
+  <div id="sub-next-hint">Click to advance</div>
+</div>
+
+<div id="sim-hint">Click to advance</div>
+
+<div id="chapter-card">
+  <div id="card-box">
+    <div id="card-corner">✕</div>
+    <div id="card-num">Chapter I</div>
+    <div id="card-title">The Primordial Sea</div>
+    <div id="card-body">…</div>
+    <button id="card-close">Begin Simulation</button>
+  </div>
+</div>
+
+<div id="veil"></div>
+
+<div id="end-screen">
+  <canvas id="end-canvas"></canvas>
+  <div id="end-content">
+    <div id="end-title">Japan is Born</div>
+    <div id="end-kanji">日本誕生</div>
+    <button id="restart-btn">Experience Again</button>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════
+   ONOGORO — SPEAR OF THE LIVING EARTH  v3
+   ══════════════════════════════════════════════════════ */
+
+// ── AUDIO ──────────────────────────────────────────────
+const bgm = new Audio('bgm.mp3'); bgm.loop=true; bgm.volume=0.5;
+const narration = new Audio(); narration.loop=false; 
+let bgmGo=false;
+function kickAudio(){if(!bgmGo){bgm.play().catch(()=>{});bgmGo=true;}}
+
+// ── SCENES DATA ────────────────────────────────────────
+const SCENES=[
+  null,
+  {img:'intro.png', audio:'intro.mp3',
+   card:{num:'Prologue',title:'The Divine Spear',body:'In the beginning, the gods Izanagi and Izanami stood upon the Floating Bridge of Heaven. They thrust the Jewelled Spear — Onogoro — into the primordial brine and stirred. From the brine that dripped from its tip, the islands of Japan were born.'},
+   sim:'none'},
+  {img:'chap1.png', audio:'chap1.mp3',
+   card:{num:'Chapter I',title:'The Primordial Sea',body:'Four billion years ago, a vast primordial ocean covered Earth. No land existed — only churning water, volcanic gases, and relentless lightning storms as the atmosphere crackled with raw energy.'},
+   sim:'ocean'},
+  {img:'chap2.png', audio:'chap2.mp3',
+   card:{num:'Chapter II',title:'Subduction',body:'The dense Pacific Plate collides with the lighter Eurasian continental plate. Driven by mantle convection, the oceanic plate dives beneath — subducting at nearly 8 cm per year. Follow each stage of this process as the plates interact.'},
+   sim:'subduction'},
+  {img:'chap3.png', audio:'chap3.mp3',
+   card:{num:'Chapter III',title:'Pressure Buildup',body:'As the subducting slab descends, pressure and heat build catastrophically beneath the crust. The rock above groans and fractures under immense compressional stress — the crust is about to break.'},
+   sim:'pressure'},
+  {img:'chap4.png', audio:'chap4.mp3',
+   card:{num:'Chapter IV',title:'Magma Ascent',body:'Buoyant magma, generated by flux melting in the mantle wedge, forces its way upward through fracture zones. As it rises, pressure drops and dissolved gases expand — priming the earth for violent eruption.'},
+   sim:'magma'},
+  {img:'chap5.png', audio:'chap5.mp3',
+   card:{num:'Chapter V',title:'Volcanic Birth',body:'Magma breaches the surface. Watch a stratovolcano grow from the seabed — and when it reaches critical height, erupt with explosive force.'},
+   sim:'volcano'},
+  {img:'chap6.png', audio:'chap6.mp3',
+   card:{num:'Chapter VI',title:'The Islands of Japan',body:'Over millions of years, repeated volcanism and tectonic uplift raised the Japanese archipelago from the sea. Hokkaido, Honshu, Shikoku, Kyushu, and the Ryukyu chain — born of fire, shaped by water.'},
+   sim:'japan'},
+];
+
+// ── STATE ──────────────────────────────────────────────
+let phase='title';
+let sceneIdx=0;
+let busy=false;
+let raf=null;
+
+// ── DOM ────────────────────────────────────────────────
+const titleScreen=document.getElementById('title-screen');
+const titleCanvas=document.getElementById('title-canvas');
+const bgImg=document.getElementById('bg-img');
+const simCanvas=document.getElementById('sim-canvas');
+const simCtx=simCanvas.getContext('2d');
+const chapCard=document.getElementById('chapter-card');
+const cardNum=document.getElementById('card-num');
+const cardTitle=document.getElementById('card-title');
+const cardBody=document.getElementById('card-body');
+const cardClose=document.getElementById('card-close');
+const cardCorner=document.getElementById('card-corner');
+const simHint=document.getElementById('sim-hint');
+const veil=document.getElementById('veil');
+const endScreen=document.getElementById('end-screen');
+const endCanvas=document.getElementById('end-canvas');
+const endCtx=endCanvas.getContext('2d');
+const subStepEl=document.getElementById('sub-step');
+const subStepLabel=document.getElementById('sub-step-label');
+const subStepDesc=document.getElementById('sub-step-desc');
+const subStepDots=document.getElementById('sub-step-dots');
+const subNextHint=document.getElementById('sub-next-hint');
+
+function resizeAll(){
+  [simCanvas,titleCanvas,endCanvas].forEach(c=>{c.width=window.innerWidth;c.height=window.innerHeight;});
+}
+window.addEventListener('resize',resizeAll);
+resizeAll();
+
+/* ════════════════════════════════════════
+   TITLE SCREEN
+   ════════════════════════════════════════ */
+let titleRaf=null;
+const titleCtx=titleCanvas.getContext('2d');
+const titleStars=[];
+for(let i=0;i<200;i++) titleStars.push({x:Math.random(),y:Math.random(),r:Math.random()*1.3+0.2,tw:Math.random()*Math.PI*2,sp:Math.random()*0.022+0.005});
+function drawTitle(){
+  const W=titleCanvas.width,H=titleCanvas.height,t=Date.now()/1000;
+  titleCtx.clearRect(0,0,W,H);
+  const bg=titleCtx.createRadialGradient(W*.5,H*.6,0,W*.5,H*.5,W*.8);
+  bg.addColorStop(0,'rgba(18,8,2,1)');bg.addColorStop(0.5,'rgba(8,4,12,1)');bg.addColorStop(1,'rgba(0,0,0,1)');
+  titleCtx.fillStyle=bg;titleCtx.fillRect(0,0,W,H);
+  titleStars.forEach(s=>{s.tw+=s.sp;const a=(Math.sin(s.tw)+1)/2*0.7+0.1;titleCtx.beginPath();titleCtx.arc(s.x*W,s.y*H,s.r,0,Math.PI*2);titleCtx.fillStyle=`rgba(255,240,210,${a})`;titleCtx.fill();});
+  for(let i=0;i<4;i++){const nx=W*(0.2+i*0.2),ny=H*(0.3+Math.sin(t*0.08+i)*0.15),nr=W*(0.12+i*0.03),ng=titleCtx.createRadialGradient(nx,ny,0,nx,ny,nr);ng.addColorStop(0,`hsla(${i%2?260:20},70%,40%,0.04)`);ng.addColorStop(1,'rgba(0,0,0,0)');titleCtx.fillStyle=ng;titleCtx.fillRect(0,0,W,H);}
+  const pulse=(Math.sin(t*0.7)+1)/2;
+  const cg=titleCtx.createRadialGradient(W*.5,H*.45,0,W*.5,H*.45,W*.28);cg.addColorStop(0,`rgba(255,160,40,${0.04+pulse*0.04})`);cg.addColorStop(1,'rgba(0,0,0,0)');titleCtx.fillStyle=cg;titleCtx.fillRect(0,0,W,H);
+  titleCtx.save();titleCtx.strokeStyle=`rgba(255,200,100,${0.18+pulse*0.12})`;titleCtx.lineWidth=0.5;titleCtx.beginPath();titleCtx.moveTo(W*.28,H*0.62);titleCtx.lineTo(W*.72,H*0.62);titleCtx.stroke();titleCtx.restore();
+  titleRaf=requestAnimationFrame(drawTitle);
+}
+drawTitle();
+
+/* ════════════════════════════════════════
+   OCEAN SIM — rough, chaotic, heavy lightning + Gods
+   ════════════════════════════════════════ */
+let lightningBolts=[];
+let lightningTimer=0;
+const godsImg = new Image();
+godsImg.src = 'gods.png';
+
+function spawnLightning(W,H){
+  const lx=W*(0.05+Math.random()*0.9);
+  const segs=[];let cx=lx,cy=0;
+  while(cy<H*0.65){cy+=Math.random()*28+8;cx+=(Math.random()-.5)*40;segs.push([cx,cy]);}
+  const branches=[];
+  if(segs.length>3){
+    const bi=Math.floor(segs.length*0.3+Math.random()*segs.length*0.4);
+    let bx=segs[bi][0],by=segs[bi][1];
+    const bsegs=[[bx,by]];
+    for(let s=0;s<4;s++){bx+=(Math.random()-.5)*50;by+=Math.random()*30+10;bsegs.push([bx,by]);}
+    branches.push(bsegs);
+    if(Math.random()<0.4){
+      let bx2=segs[bi][0],by2=segs[bi][1];
+      const bs2=[[bx2,by2]];
+      for(let s=0;s<3;s++){bx2+=(Math.random()-.5)*40;by2+=Math.random()*25+8;bs2.push([bx2,by2]);}
+      branches.push(bs2);
+    }
+  }
+  lightningBolts.push({x:lx,segs,branches,life:1,maxLife:0.18+Math.random()*0.25,bright:Math.random()<0.3});
+}
+
+function drawOcean(){
+  const W=simCanvas.width,H=simCanvas.height;
+  simCtx.clearRect(0,0,W,H);
+  const t=Date.now()/1000;
+  const stormPulse=(Math.sin(t*3.1)+1)/2;
+
+  // Sky & Water Gradients
+  const sky=simCtx.createLinearGradient(0,0,0,H*0.5);
+  sky.addColorStop(0,'rgba(2,4,15,0.82)');
+  sky.addColorStop(0.5,'rgba(5,10,30,0.5)');
+  sky.addColorStop(1,'rgba(0,5,20,0)');
+  simCtx.fillStyle=sky;simCtx.fillRect(0,0,W,H*0.5);
+
+  const dw=simCtx.createLinearGradient(0,0,0,H);
+  dw.addColorStop(0,'rgba(0,8,25,0.55)');
+  dw.addColorStop(0.4,'rgba(0,18,50,0.3)');
+  dw.addColorStop(1,'rgba(0,8,22,0.6)');
+  simCtx.fillStyle=dw;simCtx.fillRect(0,0,W,H);
+
+  // Storm Waves
+  for(let i=0;i<22;i++){
+    const y=H*(0.03+i*0.046);
+    const amp=8+i*3.2;
+    const freq=0.007-i*0.00008;
+    const s1=t*(1.2+i*0.18);
+    const s2=t*(0.7+i*0.11);
+    simCtx.beginPath();
+    for(let x=0;x<=W;x+=3){
+      const wy=y+Math.sin(x*freq+s1)*amp+Math.cos(x*freq*1.9-s2)*(amp*0.55)+Math.sin(x*freq*3.1+s1*1.4)*(amp*0.2);
+      x===0?simCtx.moveTo(x,wy):simCtx.lineTo(x,wy);
+    }
+    const blue=Math.min(255,100+i*7);
+    const alpha=0.04+i*0.018+stormPulse*0.02;
+    simCtx.strokeStyle=`rgba(30,${blue},220,${alpha})`;
+    simCtx.lineWidth=1.4+(i>15?1:0);
+    simCtx.stroke();
+  }
+
+  // Wave Foam
+  for(let i=0;i<8;i++){
+    const y=H*(0.03+i*0.06);
+    simCtx.beginPath();
+    for(let x=0;x<=W;x+=3){
+      const wy=y+Math.sin(x*0.012+t*(1.4+i*0.15))*6;
+      x===0?simCtx.moveTo(x,wy):simCtx.lineTo(x,wy);
+    }
+    simCtx.strokeStyle=`rgba(220,235,255,${0.06+i*0.012+stormPulse*0.04})`;
+    simCtx.lineWidth=0.9;
+    simCtx.stroke();
+  }
+
+  // Lightning Processing
+  lightningTimer++;
+  if(lightningTimer%4===0 && lightningBolts.length<8) spawnLightning(W,H);
+  if(lightningTimer%7===0 && lightningBolts.length<12) spawnLightning(W,H);
+
+  lightningBolts.forEach(b=>{
+    if(b.life>0.85 && b.bright){
+      simCtx.save();
+      simCtx.fillStyle=`rgba(200,220,255,${(b.life-0.85)*0.6})`;
+      simCtx.fillRect(0,0,W,H);
+      simCtx.restore();
+    }
+  });
+
+  lightningBolts=lightningBolts.filter(b=>b.life>0);
+  lightningBolts.forEach(b=>{
+    b.life-=0.028;
+    const alpha=Math.min(1,b.life/b.maxLife);
+    simCtx.save();
+    simCtx.shadowColor=b.bright?'rgba(180,220,255,1)':'rgba(100,160,255,0.9)';
+    simCtx.shadowBlur=b.bright?35:18;
+    simCtx.strokeStyle=`rgba(230,245,255,${alpha*0.95})`;
+    simCtx.lineWidth=b.bright?2.5:1.5;
+    simCtx.beginPath();simCtx.moveTo(b.x,0);
+    b.segs.forEach(([sx,sy])=>simCtx.lineTo(sx,sy));
+    simCtx.stroke();
+    simCtx.strokeStyle=`rgba(150,200,255,${alpha*0.45})`;
+    simCtx.lineWidth=b.bright?6:3.5;
+    simCtx.beginPath();simCtx.moveTo(b.x,0);
+    b.segs.forEach(([sx,sy])=>simCtx.lineTo(sx,sy));
+    simCtx.stroke();
+    b.branches.forEach(br=>{
+      simCtx.lineWidth=b.bright?1.2:0.8;
+      simCtx.strokeStyle=`rgba(200,230,255,${alpha*0.7})`;
+      simCtx.beginPath();simCtx.moveTo(br[0][0],br[0][1]);
+      br.slice(1).forEach(([sx,sy])=>simCtx.lineTo(sx,sy));
+      simCtx.stroke();
+    });
+    simCtx.restore();
+  });
+
+  // Vignette overlay
+  const vg=simCtx.createRadialGradient(W/2,H/2,W*0.15,W/2,H/2,W*0.8);
+  vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,3,15,0.6)');
+  simCtx.fillStyle=vg;simCtx.fillRect(0,0,W,H);
+
+  // ── Draw SVG Clouds & Gods Image (Top Right) ──
+  simCtx.save();
+  // Lowered cloud base so tall images don't get cropped by top window border
+  const cloudX = W * 0.72;
+  const cloudY = H * 0.45 + Math.sin(t * 1.5) * 12; // Floating effect (lower down)
+  const cloudScale = Math.max(0.65, Math.min(1.2, W * 0.001)); 
+  
+  simCtx.translate(cloudX, cloudY);
+  simCtx.scale(cloudScale, cloudScale);
+
+  // Back cloud structure
+  simCtx.fillStyle = 'rgba(240, 245, 255, 0.95)';
+  simCtx.shadowColor = 'rgba(255, 255, 255, 0.8)';
+  simCtx.shadowBlur = 30;
+  simCtx.beginPath();
+  simCtx.arc(-80, 20, 50, 0, Math.PI*2);
+  simCtx.arc(-20, -15, 75, 0, Math.PI*2);
+  simCtx.arc(50, -5, 65, 0, Math.PI*2);
+  simCtx.arc(100, 25, 40, 0, Math.PI*2);
+  simCtx.rect(-80, 20, 180, 45); // Flatten bottom
+  simCtx.fill();
+
+  // Draw Gods Image
+  if (godsImg.complete && godsImg.naturalWidth) {
+      const gw = 260; // Slightly smaller to ensure fit
+      const gh = gw * (godsImg.naturalHeight / godsImg.naturalWidth);
+      // Pushed image down into the clouds (y offset +65 instead of +30)
+      simCtx.drawImage(godsImg, -gw/2 - 10, -gh + 65, gw, gh);
+  }
+
+  // Front cloud puffs to overlap Gods feet beautifully
+  simCtx.fillStyle = 'rgba(255, 255, 255, 1)';
+  simCtx.shadowBlur = 15;
+  simCtx.beginPath();
+  simCtx.arc(-40, 40, 50, 0, Math.PI*2);
+  simCtx.arc(30, 45, 55, 0, Math.PI*2);
+  simCtx.arc(90, 55, 35, 0, Math.PI*2);
+  simCtx.fill();
+
+  simCtx.restore();
+}
+
+/* ════════════════════════════════════════
+   SUBDUCTION — DYNAMIC & IMPACTFUL
+   ════════════════════════════════════════ */
+const SUB_STEPS=[
+  {label:'Step 1: Plate Convergence',desc:'The dense oceanic Pacific Plate converges toward the lighter continental plate at 8 cm/year, driven by mantle convection currents below.',highlight:'convergence'},
+  {label:'Step 2: Trench Formation',desc:'As the plates meet, the ocean floor bends downward violently forming a deep oceanic trench under immense stress.',highlight:'trench'},
+  {label:'Step 3: Slab Subduction',desc:'The denser oceanic plate plunges deep into the mantle. Intense friction against the continental plate generates massive heat and megathrust earthquakes.',highlight:'slab'},
+  {label:'Step 4: Dehydration & Melt',desc:'Water expelled from the descending slab rises into the mantle wedge, lowering its melting point and generating glowing buoyant magma.',highlight:'melt'},
+  {label:'Step 5: Volcanic Arc',desc:'Buoyant magma ascends through the overlying crust, erupting at the surface to form a chain of arc volcanoes — the birth of island Japan.',highlight:'arc'},
+];
+let subStep=0;
+let subAnim = { trenchD: 0, slabL: 0, dip: Math.PI/8, melt: 0, arc: 0, tremor: 0 };
+let subParticles = [];
+
+function initSubduction(){
+  subStep=0;
+  updateSubStepUI();
+  subAnim = { trenchD: 0, slabL: 0, dip: Math.PI/8, melt: 0, arc: 0, tremor: 0 };
+  subParticles = [];
+}
+
+function updateSubStepUI(){
+  subStepLabel.textContent=SUB_STEPS[subStep].label;
+  subStepDesc.textContent=SUB_STEPS[subStep].desc;
+  subStepDots.innerHTML='';
+  SUB_STEPS.forEach((_,i)=>{
+    const d=document.createElement('div');
+    d.className='sub-dot'+(i===subStep?' active':'');
+    subStepDots.appendChild(d);
+  });
+  subNextHint.textContent=subStep<SUB_STEPS.length-1?'Click to next step':'Click to continue story';
+  subStepEl.style.opacity='1';
+}
+
+function advanceSubStep(){
+  if(subStep<SUB_STEPS.length-1){subStep++;updateSubStepUI();return false;}
+  return true;
+}
+
+function drawSubduction(){
+  const W=simCanvas.width, H=simCanvas.height;
+  simCtx.clearRect(0,0,W,H);
+  const t = Date.now() / 1000;
+  const hl = SUB_STEPS[subStep].highlight;
+
+  // Set visual targets based on the current step
+  const targetTrenchD = subStep >= 1 ? H * 0.12 : 0;
+  const targetSlabL = subStep >= 2 ? W * 0.85 : (subStep >= 1 ? W * 0.15 : 0);
+  const targetDip = subStep >= 2 ? Math.PI / 5.5 : Math.PI / 8;
+  const targetMelt = subStep >= 3 ? 1 : 0;
+  const targetArc = subStep >= 4 ? 1 : 0;
+
+  // Smooth interpolations for real-time morphing
+  subAnim.trenchD += (targetTrenchD - subAnim.trenchD) * 0.04;
+  subAnim.slabL += (targetSlabL - subAnim.slabL) * 0.035;
+  subAnim.dip += (targetDip - subAnim.dip) * 0.03;
+  subAnim.melt += (targetMelt - subAnim.melt) * 0.04;
+  subAnim.arc += (targetArc - subAnim.arc) * 0.03;
+
+  // Tremors & Earthquakes logic
+  if (subStep >= 1 && subStep <= 3) {
+      if (Math.random() < 0.015) subAnim.tremor = 1.0; // Megathrust quake
+      else if (Math.random() < 0.08) subAnim.tremor += 0.15; // Grinding
+  }
+  if (subStep >= 4 && Math.random() < 0.05) subAnim.tremor += 0.1; // Volcanic tremors
+  
+  subAnim.tremor *= 0.88; // Friction decay
+  const shakeX = (Math.random() - 0.5) * subAnim.tremor * 18;
+  const shakeY = (Math.random() - 0.5) * subAnim.tremor * 18;
+  simCanvas.style.transform = `translate(${shakeX}px, ${shakeY}px)`;
+
+  // Core Geometry Constants
+  const seaY = H * 0.22;
+  const trenchX = W * 0.40;
+  const PT = H * 0.065; // Plate Thickness
+  const dipCos = Math.cos(subAnim.dip);
+  const dipSin = Math.sin(subAnim.dip);
+
+  // Subduction Path Nodes
+  const hingeX = trenchX - W * 0.12;
+  const trenchY = seaY + subAnim.trenchD;
+  const p4x = trenchX + subAnim.slabL * dipCos;
+  const p4y = trenchY + subAnim.slabL * dipSin;
+  const nx = -dipSin * PT; // Normal X
+  const ny = dipCos * PT;  // Normal Y
+
+  // ── Mantle / asthenosphere background
+  const astBg=simCtx.createLinearGradient(0,0,0,H);
+  astBg.addColorStop(0,'rgba(0,0,0,0)');
+  astBg.addColorStop(0.3,'rgba(60,15,3,0.5)');
+  astBg.addColorStop(0.65,'rgba(110,28,5,0.7)');
+  astBg.addColorStop(1,'rgba(80,12,3,0.9)');
+  simCtx.fillStyle=astBg;simCtx.fillRect(0,0,W,H);
+
+  // ── Asthenosphere convection glow
+  if(subStep >= 2){
+    const convT=t*0.045;
+    for(let c=0;c<3;c++){
+      const cx=W*(0.12+c*0.28),cy=H*0.78,cr=W*0.14;
+      const convG=simCtx.createRadialGradient(cx,cy,0,cx,cy,cr);
+      convG.addColorStop(0,`rgba(255,90,15,${0.15+Math.sin(convT+c)*0.08})`);
+      convG.addColorStop(1,'rgba(0,0,0,0)');
+      simCtx.fillStyle=convG;simCtx.fillRect(0,0,W,H);
+    }
+  }
+
+  // ── Ocean water
+  const seaG=simCtx.createLinearGradient(0,0,0,seaY);
+  seaG.addColorStop(0,'rgba(0,18,55,0.78)');seaG.addColorStop(1,'rgba(0,28,75,0.18)');
+  simCtx.fillStyle=seaG;simCtx.fillRect(0,0,W,seaY);
+  for(let i=0;i<5;i++){
+    simCtx.beginPath();
+    for(let x=0;x<=W;x+=3){const wy=seaY-10+i*5+Math.sin(x*0.011+t*(0.5+i*0.1))*3;x===0?simCtx.moveTo(x,wy):simCtx.lineTo(x,wy);}
+    simCtx.strokeStyle=`rgba(60,140,220,${0.2-i*0.03})`;simCtx.lineWidth=1.2;simCtx.stroke();
+  }
+
+  // ── OCEANIC PLATE (Dynamic Conveyor Belt)
+  simCtx.save();
+  simCtx.beginPath();
+  simCtx.moveTo(0, seaY);
+  simCtx.lineTo(hingeX, seaY);
+  simCtx.lineTo(trenchX, trenchY);
+  simCtx.lineTo(p4x, p4y);
+  simCtx.lineTo(p4x + nx, p4y + ny);
+  simCtx.lineTo(trenchX + nx, trenchY + ny);
+  simCtx.lineTo(hingeX, seaY + PT);
+  simCtx.lineTo(0, seaY + PT);
+  simCtx.closePath();
+
+  // Solid fill
+  const slabG=simCtx.createLinearGradient(0, seaY, p4x, p4y);
+  slabG.addColorStop(0,'rgba(30,22,16,0.92)');
+  slabG.addColorStop(0.3,'rgba(60,30,12,0.88)');
+  slabG.addColorStop(0.6,'rgba(120,50,10,0.85)');
+  slabG.addColorStop(1,'rgba(180,70,10,0.80)');
+  simCtx.fillStyle=slabG; simCtx.fill();
+
+  // Clip to path for moving lithosphere texture
+  simCtx.clip();
+  
+  // Moving Faults / Stripes 
+  simCtx.strokeStyle = 'rgba(0,0,0,0.35)'; // Dark rocky cracks
+  simCtx.lineWidth = 4;
+  const stripeGap = 35;
+  const flowSpeed = subStep >= 2 ? 65 : (subStep >= 1 ? 30 : 15);
+  const flowOffset = (t * flowSpeed) % stripeGap;
+
+  const l1 = hingeX; 
+  const l2 = Math.hypot(trenchX - hingeX, trenchY - seaY); 
+  const l3 = subAnim.slabL + 100; // extend a bit past to cover edges
+
+  for (let d = -flowOffset; d < l1 + l2 + l3; d += stripeGap) {
+      let px, py, pAngle;
+      if (d < l1) { 
+          px = d; py = seaY; pAngle = 0;
+      } else if (d < l1 + l2) { 
+          const frac = (d - l1) / l2;
+          px = hingeX + frac * (trenchX - hingeX);
+          py = seaY + frac * (trenchY - seaY);
+          pAngle = Math.atan2(trenchY - seaY, trenchX - hingeX);
+      } else { 
+          const sd = d - l1 - l2;
+          px = trenchX + sd * dipCos;
+          py = trenchY + sd * dipSin;
+          pAngle = subAnim.dip;
+      }
+      
+      const vnx = -Math.sin(pAngle) * PT * 1.5;
+      const vny = Math.cos(pAngle) * PT * 1.5;
+      
+      simCtx.beginPath();
+      simCtx.moveTo(px, py);
+      simCtx.lineTo(px + vnx, py + vny);
+      simCtx.stroke();
+  }
+  simCtx.restore();
+
+  // Highlight convergence forces in Step 0
+  if (subStep === 0) {
+      simCtx.fillStyle = `rgba(255, 100, 30, ${0.1 + Math.sin(t*6)*0.1})`;
+      simCtx.beginPath(); simCtx.arc(trenchX, seaY, W*0.04, 0, Math.PI*2); simCtx.fill();
+  }
+
+  // ── CONTINENTAL PLATE
+  simCtx.save();
+  simCtx.beginPath();
+  const contactL = subAnim.slabL * (subStep >= 2 ? 0.35 : 0.1); 
+  const contBotX = trenchX + contactL * dipCos;
+  const contBotY = trenchY + contactL * dipSin;
+
+  simCtx.moveTo(trenchX - W*0.02, seaY); 
+  simCtx.lineTo(trenchX, trenchY); // Follow trench down
+  simCtx.lineTo(contBotX, contBotY); // Grind along slab
+  simCtx.lineTo(contBotX + W*0.15, contBotY + H*0.08); // Moho curve
+  simCtx.lineTo(W, H*0.56);
+  simCtx.lineTo(W, seaY);
+  simCtx.closePath();
+
+  const contG=simCtx.createLinearGradient(trenchX, seaY, W, H*0.60);
+  contG.addColorStop(0,'rgba(135,105,70,0.9)');
+  contG.addColorStop(0.5,'rgba(105,78,52,0.85)');
+  contG.addColorStop(1,'rgba(75,48,28,0.75)');
+  simCtx.fillStyle=contG; simCtx.fill();
+  simCtx.strokeStyle='rgba(195,170,125,0.45)'; simCtx.lineWidth=2;
+  simCtx.beginPath(); simCtx.moveTo(trenchX - W*0.02, seaY); simCtx.lineTo(W, seaY); simCtx.stroke();
+  simCtx.restore();
+
+  // ── INTENSE FRICTION & GRINDING (Step 2+)
+  if (subStep >= 2) {
+      simCtx.save();
+      simCtx.beginPath();
+      simCtx.moveTo(trenchX, trenchY);
+      simCtx.lineTo(contBotX, contBotY);
+      simCtx.strokeStyle = `rgba(255, 80, 0, ${0.5 + Math.random()*0.4})`;
+      simCtx.lineWidth = 4 + Math.random()*4;
+      simCtx.lineCap = 'round';
+      simCtx.shadowColor = 'rgba(255, 50, 0, 1)'; 
+      simCtx.shadowBlur = 20;
+      simCtx.stroke();
+      simCtx.restore();
+
+      // Heavy sparks escaping
+      if (Math.random() < 0.7) {
+          const dist = Math.random() * contactL;
+          subParticles.push({
+              x: trenchX + dist * dipCos,
+              y: trenchY + dist * dipSin,
+              vx: (Math.random() - 0.5) * 5 + 1, // Push rightwards mostly
+              vy: Math.random() * 6 - 3,
+              life: 1.0, type: 'spark', size: Math.random() * 3 + 2
+          });
+      }
+  }
+
+  // Grinding dust at the trench (Step 1+)
+  if (subStep >= 1) {
+      if (Math.random() < 0.5) {
+          subParticles.push({
+              x: trenchX + (Math.random()-0.5)*15,
+              y: trenchY + (Math.random()-0.5)*15,
+              vx: (Math.random()-0.5) * 2,
+              vy: -Math.random() * 3 - 1,
+              life: 1.0, type: 'dust', size: Math.random() * 6 + 3
+          });
+      }
+  }
+
+  // ── MANTLE WEDGE MELT (Step 3+)
+  let meltY = 0;
+  if (subAnim.melt > 0.01) {
+      const meltX = trenchX + W*0.18;
+      meltY = trenchY + W*0.10;
+      
+      const mp = (Math.sin(t*2.4) + 1)/2; // Throb
+      const meltRadius = W*0.18 * subAnim.melt * (1 + mp*0.08);
+
+      const meltGlow = simCtx.createRadialGradient(meltX, meltY, 0, meltX, meltY, meltRadius);
+      meltGlow.addColorStop(0, `rgba(255, 140, 20, ${0.6 * subAnim.melt + mp*0.2})`);
+      meltGlow.addColorStop(0.3, `rgba(255, 60, 5, ${0.4 * subAnim.melt})`);
+      meltGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      simCtx.fillStyle = meltGlow;
+      simCtx.beginPath(); simCtx.arc(meltX, meltY, meltRadius, 0, Math.PI*2); simCtx.fill();
+
+      // Rising fluid bubbles from the slab
+      if (Math.random() < 0.6 * subAnim.melt) {
+          const dist = W*0.12 + Math.random() * W*0.25;
+          subParticles.push({
+              x: trenchX + dist * dipCos,
+              y: trenchY + dist * dipSin,
+              vx: (Math.random()-0.5) * 1.5,
+              vy: -Math.random() * 3 - 2,
+              life: 1.0, type: 'fluid', size: Math.random() * 4 + 2
+          });
+      }
+  }
+
+  // ── VOLCANIC ARC ERUPTION (Step 4+)
+  if (subAnim.arc > 0.01) {
+      const vx = trenchX + W*0.22;
+      const vy = seaY;
+      const vHeight = H*0.16 * subAnim.arc;
+      const vWidth = W*0.14 * subAnim.arc;
+
+      // Volcano body
+      simCtx.save();
+      simCtx.beginPath();
+      simCtx.moveTo(vx - vWidth/2, vy);
+      simCtx.lineTo(vx, vy - vHeight);
+      simCtx.lineTo(vx + vWidth/2, vy);
+      simCtx.closePath();
+      const vg = simCtx.createLinearGradient(vx, vy, vx, vy - vHeight);
+      vg.addColorStop(0, 'rgba(60, 40, 25, 1)');
+      vg.addColorStop(1, 'rgba(30, 20, 10, 1)');
+      simCtx.fillStyle = vg;
+      simCtx.fill();
+      
+      // Magma conduit pushing up
+      simCtx.beginPath();
+      simCtx.moveTo(vx, meltY);
+      simCtx.lineTo(vx, vy - vHeight);
+      simCtx.strokeStyle = `rgba(255, 120, 0, ${0.85 * subAnim.arc})`;
+      simCtx.lineWidth = 8 * subAnim.arc;
+      simCtx.shadowColor = 'rgba(255, 100, 0, 1)';
+      simCtx.shadowBlur = 15;
+      simCtx.stroke();
+      simCtx.restore();
+
+      // Eruptive Ash
+      if (subAnim.arc > 0.8 && Math.random() < 0.7) {
+          subParticles.push({
+              x: vx + (Math.random()-0.5)*15,
+              y: vy - vHeight,
+              vx: (Math.random()-0.5) * 6,
+              vy: -Math.random() * 8 - 4,
+              life: 1.0, type: 'ash', size: Math.random() * 8 + 4
+          });
+      }
+  }
+
+  // ── Update and Draw Particles
+  subParticles = subParticles.filter(p => p.life > 0);
+  subParticles.forEach(p => {
+      p.x += p.vx; 
+      p.y += p.vy;
+      p.life -= (p.type === 'ash' ? 0.015 : 0.025);
+      
+      if (p.type === 'spark') {
+          simCtx.fillStyle = `rgba(255, ${150 + p.life*100}, 50, ${p.life})`;
+          simCtx.shadowColor = 'rgba(255, 100, 0, 0.8)'; simCtx.shadowBlur = 8;
+          simCtx.fillRect(p.x, p.y, p.size, p.size);
+          simCtx.shadowBlur = 0;
+      } else if (p.type === 'fluid') {
+          simCtx.fillStyle = `rgba(120, 220, 255, ${p.life * 0.8})`;
+          simCtx.shadowColor = 'rgba(100, 200, 255, 0.9)'; simCtx.shadowBlur = 10;
+          simCtx.beginPath(); simCtx.arc(p.x, p.y, p.size, 0, Math.PI*2); simCtx.fill();
+          simCtx.shadowBlur = 0;
+      } else if (p.type === 'ash') {
+          p.vy += 0.15; // Gravity affects ash falling
+          p.size *= 1.01; // Ash clouds expand
+          simCtx.fillStyle = `rgba(40, 30, 25, ${p.life * 0.7})`;
+          simCtx.beginPath(); simCtx.arc(p.x, p.y, p.size, 0, Math.PI*2); simCtx.fill();
+      } else if (p.type === 'dust') {
+          p.vx *= 0.95; p.vy *= 0.95;
+          simCtx.fillStyle = `rgba(100, 150, 200, ${p.life * 0.4})`; // underwater dust
+          simCtx.beginPath(); simCtx.arc(p.x, p.y, p.size, 0, Math.PI*2); simCtx.fill();
+      }
+  });
+
+  // ── DYNAMIC LABELS
+  function lbl(txt,x,y,active){
+    simCtx.save();
+    simCtx.font=`${Math.max(10,W*0.012)}px Cinzel,serif`;
+    simCtx.textAlign='center';
+    if(active){
+      simCtx.fillStyle='rgba(255,240,150,0.95)';
+      simCtx.shadowColor='rgba(255,200,50,0.7)';simCtx.shadowBlur=12;
+    } else {
+      simCtx.fillStyle='rgba(255,225,170,0.35)';
+    }
+    simCtx.fillText(txt,x,y);simCtx.shadowBlur=0;simCtx.restore();
+  }
+  
+  lbl('OCEANIC PLATE', W*0.16, seaY - 15, hl==='convergence'||hl==='slab');
+  lbl('CONTINENTAL PLATE', W*0.75, seaY - 15, hl==='convergence');
+  lbl('TRENCH', trenchX, trenchY + 35, hl==='trench');
+  if(subStep >= 3) lbl('MANTLE WEDGE', trenchX + W*0.18, meltY + W*0.08, hl==='melt');
+  lbl('ASTHENOSPHERE', W*0.24, H*0.82, hl==='slab'||hl==='melt');
+  if(subStep >= 4) lbl('VOLCANIC ARC', trenchX + W*0.22, seaY - H*0.20, hl==='arc');
+
+  // Depth scale
+  simCtx.save();
+  simCtx.font=`${Math.max(9,W*0.009)}px Cinzel,serif`;
+  simCtx.fillStyle='rgba(255,220,160,0.22)';
+  simCtx.textAlign='right';
+  simCtx.fillText('0 km',W*0.97,seaY+4);
+  simCtx.fillText('~700 km',W*0.97,H*0.92);
+  simCtx.restore();
+}
+
+/* ════════════════════════════════════════
+   PRESSURE — thick growing cracks + magma veins
+   ════════════════════════════════════════ */
+let crackNet=[];
+let pressureStartT=0;
+function initPressure(){
+  pressureStartT=Date.now()/1000;
+  crackNet=[];
+  for(let i=0;i<10;i++){
+    const x=0.05+Math.random()*0.9;
+    const segs=[];let cx=x*1000,cy=1000;
+    for(let s=0;s<16;s++){cx+=(Math.random()-.5)*35;cy-=Math.random()*52+18;segs.push([cx/1000,cy/1000]);}
+    const branches=[];
+    const bi=4+Math.floor(Math.random()*5);
+    let bx=segs[bi][0]*1000,by=segs[bi][1]*1000;
+    const bsegs=[[bx/1000,by/1000]];
+    for(let s=0;s<5;s++){bx+=(Math.random()-.5)*45;by-=Math.random()*40+12;bsegs.push([bx/1000,by/1000]);}
+    branches.push(bsegs);
+    crackNet.push({x,segs,branches,delay:Math.random()*4});
+  }
+}
+initPressure();
+
+function drawPressure(){
+  const W=simCanvas.width,H=simCanvas.height;
+  simCtx.clearRect(0,0,W,H);
+  const t=Date.now()/1000;
+  const elapsed=t-pressureStartT;
+  const intensity=Math.min(1,elapsed/12); // grows over 12s
+  const pulse=(Math.sin(t*2.2)+1)/2;
+  const fastPulse=(Math.sin(t*6)+1)/2;
+
+  // Deep rock background
+  const bg=simCtx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'rgba(8,4,2,0.9)');bg.addColorStop(0.5,'rgba(15,6,3,0.85)');bg.addColorStop(1,'rgba(25,10,4,0.88)');
+  simCtx.fillStyle=bg;simCtx.fillRect(0,0,W,H);
+
+  // Rock texture strata
+  for(let i=0;i<8;i++){
+    simCtx.beginPath();
+    for(let x=0;x<=W;x+=6){
+      const sy=H*(0.12+i*0.11)+Math.sin(x*0.005+i*1.2)*12;
+      x===0?simCtx.moveTo(x,sy):simCtx.lineTo(x,sy);
+    }
+    simCtx.strokeStyle=`rgba(${40+i*4},${20+i*2},${10+i*1},0.2)`;
+    simCtx.lineWidth=1;simCtx.stroke();
+  }
+
+  // Pulsing edge heat glow (grows with intensity)
+  const eg=simCtx.createRadialGradient(W/2,H,0,W/2,H/2,W);
+  eg.addColorStop(0,'rgba(0,0,0,0)');
+  eg.addColorStop(0.55,`rgba(180,25,3,${intensity*(0.06+pulse*0.1)})`);
+  eg.addColorStop(0.8,`rgba(220,40,5,${intensity*(0.12+pulse*0.15)})`);
+  eg.addColorStop(1,`rgba(160,15,0,${intensity*(0.2+pulse*0.22)})`);
+  simCtx.fillStyle=eg;simCtx.fillRect(0,0,W,H);
+
+  // Screen flash on hard pulse when intense
+  if(intensity>0.7 && fastPulse>0.92){
+    simCtx.fillStyle=`rgba(255,80,0,${(fastPulse-0.92)*0.3})`;
+    simCtx.fillRect(0,0,W,H);
+  }
+
+  // Growing crack network — cracks appear progressively
+  crackNet.forEach((ck,ci)=>{
+    if(elapsed<ck.delay) return;
+    const ckAge=Math.min(1,(elapsed-ck.delay)/8);
+    const visSegs=Math.floor(ckAge*ck.segs.length);
+    if(visSegs<1) return;
+
+    // Magma glow in crack — thickness grows
+    const baseThick=2+ckAge*6+pulse*2;
+    const magmaAlpha=0.15+ckAge*0.45+pulse*0.2;
+    simCtx.save();
+    simCtx.shadowColor='rgba(255,100,0,0.9)';simCtx.shadowBlur=20+ckAge*15;
+    // Outer glow
+    simCtx.beginPath();simCtx.moveTo(ck.x*W,H);
+    ck.segs.slice(0,visSegs).forEach(([sx,sy])=>simCtx.lineTo(sx*W,sy*H));
+    simCtx.strokeStyle=`rgba(255,${60+ckAge*100|0},0,${magmaAlpha*0.5})`;
+    simCtx.lineWidth=baseThick*2.2;simCtx.lineCap='round';simCtx.stroke();
+    // Core bright magma
+    simCtx.beginPath();simCtx.moveTo(ck.x*W,H);
+    ck.segs.slice(0,visSegs).forEach(([sx,sy])=>simCtx.lineTo(sx*W,sy*H));
+    simCtx.strokeStyle=`rgba(255,${140+pulse*80|0},${20+pulse*60|0},${magmaAlpha})`;
+    simCtx.lineWidth=baseThick;simCtx.stroke();
+    // Hot white core
+    simCtx.beginPath();simCtx.moveTo(ck.x*W,H);
+    ck.segs.slice(0,Math.max(1,visSegs-2)).forEach(([sx,sy])=>simCtx.lineTo(sx*W,sy*H));
+    simCtx.strokeStyle=`rgba(255,240,180,${magmaAlpha*0.6})`;
+    simCtx.lineWidth=Math.max(0.5,baseThick*0.35);simCtx.stroke();
+    simCtx.shadowBlur=0;
+
+    // Branch
+    if(ckAge>0.4 && ck.branches.length>0){
+      const br=ck.branches[0];
+      const brAge=Math.min(1,(ckAge-0.4)/0.6);
+      const brVis=Math.floor(brAge*br.length);
+      if(brVis>1){
+        simCtx.shadowColor='rgba(255,100,0,0.7)';simCtx.shadowBlur=12;
+        simCtx.beginPath();simCtx.moveTo(br[0][0]*W,br[0][1]*H);
+        br.slice(1,brVis).forEach(([sx,sy])=>simCtx.lineTo(sx*W,sy*H));
+        simCtx.strokeStyle=`rgba(255,120,0,${magmaAlpha*0.7})`;
+        simCtx.lineWidth=baseThick*0.65;simCtx.stroke();
+        simCtx.shadowBlur=0;
+      }
+    }
+    simCtx.restore();
+  });
+
+  // Heat shimmer horizontal bands
+  for(let i=0;i<5;i++){
+    const hy=H*(0.55+i*0.08)+Math.sin(t*3.5+i)*4;
+    simCtx.beginPath();
+    for(let x=0;x<=W;x+=4){const dy=hy+Math.sin(x*0.05+t*(2.5+i*0.4))*(3+intensity*4+pulse*3);x===0?simCtx.moveTo(x,dy):simCtx.lineTo(x,dy);}
+    simCtx.strokeStyle=`rgba(220,70,0,${0.03+intensity*0.06+pulse*0.04})`;
+    simCtx.lineWidth=1;simCtx.stroke();
+  }
+
+  // Shake canvas harder as intensity grows
+  const shakeAmt=intensity*8*(0.5+fastPulse*0.5);
+  simCanvas.style.transform=`translate(${(Math.random()-.5)*shakeAmt}px,${(Math.random()-.5)*shakeAmt*0.7}px)`;
+}
+
+/* ════════════════════════════════════════
+   MAGMA ASCENT — dramatic channels, growing
+   ════════════════════════════════════════ */
+let magmaStartT=0;
+const MAGMA_CHANNELS=[
+  {x:0.22,delay:0,width:1.0},
+  {x:0.41,delay:1.5,width:1.3},
+  {x:0.60,delay:0.8,width:1.1},
+  {x:0.78,delay:2.2,width:0.9},
+];
+function initMagma(){magmaStartT=Date.now()/1000;}
+
+function drawMagma(){
+  const W=simCanvas.width,H=simCanvas.height;
+  simCtx.clearRect(0,0,W,H);
+  const t=Date.now()/1000;
+  const elapsed=t-magmaStartT;
+  const intensity=Math.min(1,elapsed/10);
+  const pulse=(Math.sin(t*2.8)+1)/2;
+  const fastP=(Math.sin(t*7)+1)/2;
+
+  // Deep crust background
+  const bg=simCtx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'rgba(5,2,1,0.92)');
+  bg.addColorStop(0.4,'rgba(12,5,2,0.88)');
+  bg.addColorStop(0.7,'rgba(30,12,3,0.82)');
+  bg.addColorStop(1,'rgba(60,20,5,0.75)');
+  simCtx.fillStyle=bg;simCtx.fillRect(0,0,W,H);
+
+  // Strata / crust layers
+  for(let i=0;i<7;i++){
+    const sy=H*(0.08+i*0.13);
+    simCtx.beginPath();
+    for(let x=0;x<=W;x+=5){const wy=sy+Math.sin(x*0.004+i*0.8)*15;x===0?simCtx.moveTo(x,wy):simCtx.lineTo(x,wy);}
+    simCtx.strokeStyle=`rgba(${50+i*6},${25+i*3},${12+i*2},0.25)`;
+    simCtx.lineWidth=2+i*0.3;simCtx.stroke();
+  }
+
+  // Magma chamber at bottom — pulsing
+  const camR=W*0.28+pulse*W*0.04;
+  const camG=simCtx.createRadialGradient(W*.5,H*0.96,0,W*.5,H*0.96,camR);
+  camG.addColorStop(0,`rgba(255,220,60,${0.7+pulse*0.2})`);
+  camG.addColorStop(0.25,`rgba(255,120,0,${0.55+pulse*0.2})`);
+  camG.addColorStop(0.6,`rgba(200,50,0,${0.3+pulse*0.15})`);
+  camG.addColorStop(1,'rgba(0,0,0,0)');
+  simCtx.fillStyle=camG;simCtx.fillRect(0,0,W,H);
+
+  // Each channel grows upward over time
+  MAGMA_CHANNELS.forEach(ch=>{
+    if(elapsed<ch.delay) return;
+    const chAge=Math.min(1,(elapsed-ch.delay)/6);
+    const cx=ch.x*W;
+    const topY=H-(H*0.88*chAge); // how high it's risen
+    const baseW=(W*0.04+W*0.025*chAge)*ch.width;
+    const pulsedW=baseW*(1+pulse*0.18);
+
+    // Outer heat glow
+    simCtx.save();
+    simCtx.shadowColor='rgba(255,80,0,0.9)';simCtx.shadowBlur=30+chAge*20;
+    const mg=simCtx.createLinearGradient(cx,H,cx,topY);
+    mg.addColorStop(0,`rgba(255,230,50,${0.8+pulse*0.15})`);
+    mg.addColorStop(0.15,`rgba(255,140,10,${0.7+pulse*0.15})`);
+    mg.addColorStop(0.6,`rgba(220,60,0,${0.5+pulse*0.15})`);
+    mg.addColorStop(0.85,`rgba(180,35,0,${0.25})`);
+    mg.addColorStop(1,'rgba(0,0,0,0)');
+    simCtx.fillStyle=mg;
+
+    // Draw as tapered shape
+    simCtx.beginPath();
+    const tipW=pulsedW*0.2;
+    simCtx.moveTo(cx-pulsedW/2,H);
+    // left edge with slight wobble
+    for(let y=H;y>=topY;y-=H/30){
+      const frac=(H-y)/(H-topY);
+      const xoff=Math.sin(y*0.02+t*(1.5+ch.delay))*4;
+      const w=pulsedW/2*(1-frac)+tipW/2*frac;
+      simCtx.lineTo(cx-w+xoff,y);
+    }
+    simCtx.lineTo(cx,topY-10);
+    for(let y=topY;y<=H;y+=H/30){
+      const frac=(H-y)/(H-topY);
+      const xoff=Math.sin(y*0.02+t*(1.5+ch.delay))*4;
+      const w=pulsedW/2*(1-frac)+tipW/2*frac;
+      simCtx.lineTo(cx+w+xoff,y);
+    }
+    simCtx.closePath();
+    simCtx.fillStyle=mg;simCtx.fill();
+
+    // Bright hot core
+    const coreG=simCtx.createLinearGradient(cx,H,cx,topY);
+    coreG.addColorStop(0,'rgba(255,255,200,0.7)');
+    coreG.addColorStop(0.3,'rgba(255,200,50,0.4)');
+    coreG.addColorStop(1,'rgba(255,100,0,0)');
+    simCtx.fillStyle=coreG;
+    const cw=pulsedW*0.2;
+    simCtx.fillRect(cx-cw/2,topY,cw,H-topY);
+
+    simCtx.shadowBlur=0;simCtx.restore();
+
+    // Tip explosion — bubbling head
+    if(chAge>0.05){
+      const bp=(Math.sin(t*4+ch.delay)+1)/2;
+      const headG=simCtx.createRadialGradient(cx,topY,0,cx,topY,pulsedW*(1.2+bp*0.4));
+      headG.addColorStop(0,`rgba(255,230,60,${0.8+bp*0.15})`);
+      headG.addColorStop(0.3,`rgba(255,100,0,${0.5+bp*0.1})`);
+      headG.addColorStop(1,'rgba(0,0,0,0)');
+      simCtx.fillStyle=headG;
+      simCtx.beginPath();simCtx.arc(cx,topY,pulsedW*(1.2+bp*0.4),0,Math.PI*2);simCtx.fill();
+    }
+
+    // Rising bubbles in channel
+    for(let b=0;b<4;b++){
+      const bp=((t*0.18+b/4+ch.delay*0.1)%1);
+      const bx=cx+(Math.random()-.5)*pulsedW*0.5;
+      const by=H-(H-topY)*bp-20;
+      if(by>topY){
+        simCtx.beginPath();simCtx.arc(bx,by,3+bp*5,0,Math.PI*2);
+        simCtx.strokeStyle=`rgba(255,200,80,${0.5*(1-bp)})`;simCtx.lineWidth=1.5;simCtx.stroke();
+      }
+    }
+  });
+
+  // Global heat haze overlay
+  const hg=simCtx.createLinearGradient(0,H,0,0);
+  hg.addColorStop(0,`rgba(255,70,0,${0.35+intensity*0.2+pulse*0.12})`);
+  hg.addColorStop(0.3,`rgba(200,50,0,${0.15+intensity*0.1})`);
+  hg.addColorStop(0.7,'rgba(100,20,0,0.04)');
+  hg.addColorStop(1,'rgba(0,0,0,0)');
+  simCtx.fillStyle=hg;simCtx.fillRect(0,0,W,H);
+
+  // Heavy screen shake
+  const sk=4+intensity*9;
+  simCanvas.style.transform=`translate(${(Math.random()-.5)*sk}px,${(Math.random()-.5)*sk*0.7}px)`;
+}
+
+/* ════════════════════════════════════════
+   VOLCANO — grows, then erupts violently
+   ════════════════════════════════════════ */
+let volStartT=0;
+let lavaParts=[];let ashParts=[];let pyroParts=[];
+const VOL_GROW_DUR=12; // seconds to reach full height
+const VOL_ERUPT_AT=0.72; // fraction of growth that triggers eruption
+
+function initVolcano(){lavaParts=[];ashParts=[];pyroParts=[];volStartT=Date.now()/1000;}
+
+function spawnLavaBomb(cx,ventY,intense){
+  const spread=intense?Math.PI*0.7:Math.PI*0.45;
+  const angle=-Math.PI/2+(Math.random()-.5)*spread;
+  const spd=(intense?8:4)+Math.random()*(intense?10:5);
+  lavaParts.push({x:cx+(Math.random()-.5)*18,y:ventY,vx:Math.cos(angle)*spd,vy:Math.sin(angle)*spd,r:Math.random()*(intense?7:4)+2,life:1,decay:0.005+Math.random()*0.007,hue:Math.random()*40,grav:0.09+Math.random()*0.04});
+}
+function spawnAsh(cx,ventY,intense){
+  ashParts.push({x:cx+(Math.random()-.5)*40,y:ventY,vx:(Math.random()-.5)*(intense?4:2),vy:-(Math.random()*(intense?6:3)+2),r:Math.random()*(intense?18:10)+4,life:1,decay:0.002+Math.random()*0.003,drift:(Math.random()-.5)*0.1});
+}
+function spawnPyro(cx,ventY){
+  const angle=-Math.PI/2+(Math.random()-.5)*Math.PI*0.5;
+  const spd=7+Math.random()*12;
+  pyroParts.push({x:cx+(Math.random()-.5)*25,y:ventY,vx:Math.cos(angle)*spd,vy:Math.sin(angle)*spd,r:Math.random()*2.5+1,life:1,decay:0.004+Math.random()*0.005,hue:25+Math.random()*25,grav:0.07});
+}
+
+function drawVolcano(){
+  const W=simCanvas.width,H=simCanvas.height;
+  simCtx.clearRect(0,0,W,H);
+  const t=Date.now()/1000;
+  const elapsed=t-volStartT;
+  const growFrac=Math.min(1,elapsed/VOL_GROW_DUR);
+  const erupting=growFrac>=VOL_ERUPT_AT;
+  const eruptIntensity=erupting?Math.min(1,(growFrac-VOL_ERUPT_AT)/(1-VOL_ERUPT_AT)):0;
+  const pulse=(Math.sin(t*(erupting?4:1.8))+1)/2;
+
+  // ── Ocean / sea floor
+  const seaBg=simCtx.createLinearGradient(0,0,0,H);
+  seaBg.addColorStop(0,'rgba(0,8,28,0.92)');
+  seaBg.addColorStop(0.35,'rgba(0,15,45,0.75)');
+  seaBg.addColorStop(0.65,'rgba(5,20,50,0.5)');
+  seaBg.addColorStop(1,'rgba(10,25,55,0.3)');
+  simCtx.fillStyle=seaBg;simCtx.fillRect(0,0,W,H);
+
+  // Sea surface
+  const seaSurfY=H*0.38;
+  for(let i=0;i<6;i++){
+    simCtx.beginPath();
+    for(let x=0;x<=W;x+=4){const wy=seaSurfY+i*8+Math.sin(x*0.008+t*(0.4+i*0.06))*5;x===0?simCtx.moveTo(x,wy):simCtx.lineTo(x,wy);}
+    simCtx.strokeStyle=`rgba(50,130,200,${0.12-i*0.015})`;simCtx.lineWidth=1;simCtx.stroke();
+  }
+
+  // Sea bed
+  simCtx.fillStyle='rgba(20,15,8,0.9)';
+  simCtx.fillRect(0,H*0.85,W,H*0.15);
+
+  // ── Volcano cone — grows from sea bed upward
+  const vcx=W*0.5;
+  const maxPeakY=H*0.05; // final peak height (above surface)
+  const startPeakY=H*0.88; // starts at sea floor
+  const peakY=startPeakY+(maxPeakY-startPeakY)*growFrac;
+  const vBaseY=H*1.02;
+  const maxBaseW=W*0.58;
+  const baseW=W*0.08+maxBaseW*growFrac;
+  const craterW=baseW*0.12;
+
+  // Cone shadow / glow in water around it
+  if(peakY>H*0.35){
+    const coneGlow=simCtx.createRadialGradient(vcx,H*0.6,0,vcx,H*0.6,baseW*0.7);
+    coneGlow.addColorStop(0,`rgba(80,40,10,${0.3+pulse*0.1})`);coneGlow.addColorStop(1,'rgba(0,0,0,0)');
+    simCtx.fillStyle=coneGlow;simCtx.fillRect(0,0,W,H);
+  }
+
+  // Cone body
+  simCtx.save();
+  simCtx.beginPath();
+  simCtx.moveTo(vcx-baseW/2,vBaseY);
+  simCtx.lineTo(vcx-craterW/2,peakY);
+  simCtx.lineTo(vcx+craterW/2,peakY);
+  simCtx.lineTo(vcx+baseW/2,vBaseY);
+  simCtx.closePath();
+  const coneG=simCtx.createLinearGradient(vcx-baseW/2,vBaseY,vcx,peakY);
+  coneG.addColorStop(0,'rgba(25,12,6,0.95)');
+  coneG.addColorStop(0.4,'rgba(45,22,10,0.92)');
+  coneG.addColorStop(0.7,'rgba(65,32,14,0.88)');
+  coneG.addColorStop(1,'rgba(40,18,8,0.85)');
+  simCtx.fillStyle=coneG;simCtx.fill();
+  // Slope highlight
+  simCtx.beginPath();
+  simCtx.moveTo(vcx-baseW/2,vBaseY);simCtx.lineTo(vcx-craterW/2,peakY);
+  simCtx.strokeStyle='rgba(80,50,25,0.35)';simCtx.lineWidth=2;simCtx.stroke();
+  simCtx.restore();
+
+  // Lava flows down flanks (only if erupting or near full)
+  if(growFrac>0.5){
+    const numFlows=erupting?5:2;
+    for(let f=0;f<numFlows;f++){
+      const fx=vcx+(f-(numFlows-1)/2)*baseW*0.18;
+      const flowLen=H*(0.08+f*0.04+(erupting?eruptIntensity*0.18:0)+pulse*0.02);
+      const flowW=8+f*4+(erupting?eruptIntensity*12:0);
+      const fg=simCtx.createLinearGradient(fx,peakY,fx,peakY+flowLen);
+      fg.addColorStop(0,'rgba(255,150,0,0.9)');fg.addColorStop(0.4,'rgba(220,60,0,0.6)');fg.addColorStop(1,'rgba(100,20,0,0)');
+      simCtx.save();
+      simCtx.beginPath();
+      simCtx.moveTo(fx-flowW/2,peakY);
+      // follow slope
+      const slopeX=fx>vcx?(baseW/2-craterW/2)/(vBaseY-peakY)*(flowLen):-(baseW/2-craterW/2)/(vBaseY-peakY)*(flowLen);
+      simCtx.lineTo(fx+slopeX+flowW/2,peakY+flowLen);simCtx.lineTo(fx+slopeX-flowW/2,peakY+flowLen);simCtx.closePath();
+      simCtx.fillStyle=fg;simCtx.fill();simCtx.restore();
+    }
+  }
+
+  // Crater glow — brightens when erupting
+  const craterPulse=erupting?pulse:growFrac*pulse*0.5;
+  const craGlow=simCtx.createRadialGradient(vcx,peakY,0,vcx,peakY,craterW*(2+craterPulse*2));
+  craGlow.addColorStop(0,`rgba(255,210,50,${0.55+craterPulse*0.4})`);
+  craGlow.addColorStop(0.3,`rgba(255,80,0,${0.3+craterPulse*0.3})`);
+  craGlow.addColorStop(1,'rgba(0,0,0,0)');
+  simCtx.fillStyle=craGlow;simCtx.beginPath();simCtx.arc(vcx,peakY,craterW*(2+craterPulse*2),0,Math.PI*2);simCtx.fill();
+
+  // Growth progress label (before eruption)
+  if(!erupting && growFrac<0.98){
+    simCtx.save();
+    simCtx.font=`${Math.max(10,W*0.012)}px Cinzel,serif`;
+    simCtx.fillStyle='rgba(255,220,140,0.5)';simCtx.textAlign='center';
+    simCtx.fillText(`Volcano growing… ${Math.floor(growFrac/VOL_ERUPT_AT*100)}%`,vcx,peakY-30);
+    simCtx.restore();
+  }
+  if(erupting && eruptIntensity<0.15){
+    simCtx.save();
+    simCtx.font=`bold ${Math.max(12,W*0.016)}px Cinzel,serif`;
+    simCtx.fillStyle='rgba(255,120,30,0.9)';simCtx.textAlign='center';
+    simCtx.shadowColor='rgba(255,80,0,0.8)';simCtx.shadowBlur=20;
+    simCtx.fillText('ERUPTION',vcx,peakY-50);
+    simCtx.shadowBlur=0;simCtx.restore();
+  }
+
+  // ── PARTICLES (erupting)
+  if(erupting){
+    const rate=eruptIntensity;
+    for(let i=0;i<Math.floor(rate*8);i++) spawnLavaBomb(vcx,peakY,true);
+    for(let i=0;i<Math.floor(rate*4);i++) spawnAsh(vcx,peakY,true);
+    for(let i=0;i<Math.floor(rate*5);i++) spawnPyro(vcx,peakY);
+  } else if(growFrac>0.5){
+    if(Math.random()<0.3) spawnLavaBomb(vcx,peakY,false);
+    if(Math.random()<0.15) spawnAsh(vcx,peakY,false);
+  }
+
+  // Ash
+  ashParts=ashParts.filter(p=>p.life>0);
+  ashParts.forEach(p=>{
+    p.x+=p.vx+p.drift;p.y+=p.vy;p.vy*=0.992;p.vx*=0.995;p.life-=p.decay;
+    simCtx.beginPath();simCtx.arc(p.x,p.y,p.r*(1.5+1-p.life),0,Math.PI*2);
+    simCtx.fillStyle=`rgba(45,28,18,${p.life*0.4})`;simCtx.fill();
+  });
+
+  // Lava bombs
+  lavaParts=lavaParts.filter(p=>p.life>0);
+  lavaParts.forEach(p=>{
+    p.x+=p.vx;p.y+=p.vy;p.vy+=p.grav;p.life-=p.decay;
+    simCtx.save();
+    simCtx.shadowColor=`hsla(${p.hue},100%,55%,${p.life})`;simCtx.shadowBlur=16;
+    simCtx.beginPath();simCtx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    simCtx.fillStyle=`hsla(${p.hue},100%,${50+p.life*22}%,${p.life})`;simCtx.fill();
+    simCtx.restore();
+    simCtx.beginPath();simCtx.arc(p.x-p.vx*1.5,p.y-p.vy*1.5,p.r*0.45,0,Math.PI*2);
+    simCtx.fillStyle=`hsla(${p.hue+10},100%,38%,${p.life*0.38})`;simCtx.fill();
+  });
+
+  // Pyroclastic
+  pyroParts=pyroParts.filter(p=>p.life>0);
+  pyroParts.forEach(p=>{
+    p.x+=p.vx;p.y+=p.vy;p.vy+=p.grav;p.vx*=0.992;p.life-=p.decay;
+    simCtx.save();simCtx.shadowColor=`hsla(${p.hue},100%,80%,1)`;simCtx.shadowBlur=10;
+    simCtx.beginPath();simCtx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    simCtx.fillStyle=`hsla(${p.hue},100%,80%,${p.life*0.85})`;simCtx.fill();
+    simCtx.restore();
+  });
+
+  // Eruption column
+  if(erupting){
+    const colW=craterW*(2+eruptIntensity*4);
+    const colH=H*(0.3+eruptIntensity*0.45);
+    for(let i=0;i<6;i++){
+      const frac=i/6;
+      const colG=simCtx.createRadialGradient(vcx,peakY-colH*frac,0,vcx,peakY-colH*frac,colW*(1+frac*1.5));
+      colG.addColorStop(0,`rgba(${80-frac*40|0},${35-frac*20|0},${15-frac*10|0},${0.3*(1-frac)*eruptIntensity})`);
+      colG.addColorStop(1,'rgba(0,0,0,0)');
+      simCtx.fillStyle=colG;simCtx.fillRect(0,0,W,H);
+    }
+    // Lightning in ash cloud
+    if(Math.random()<0.04){
+      simCtx.save();simCtx.strokeStyle='rgba(220,240,255,0.9)';simCtx.lineWidth=1.5;
+      simCtx.shadowColor='rgba(180,210,255,1)';simCtx.shadowBlur=22;
+      let lx=vcx+(Math.random()-.5)*W*0.3,ly=peakY-H*0.12;
+      simCtx.beginPath();simCtx.moveTo(lx,ly);
+      for(let s=0;s<5;s++){lx+=(Math.random()-.5)*30;ly+=Math.random()*28+10;simCtx.lineTo(lx,ly);}
+      simCtx.stroke();simCtx.restore();
+    }
+    // Screen shake
+    const sk=eruptIntensity*10;
+    simCanvas.style.transform=`translate(${(Math.random()-.5)*sk}px,${(Math.random()-.5)*sk*0.7}px)`;
+  } else {
+    simCanvas.style.transform='';
+  }
+}
+
+/* ════════════════════════════════════════
+   JAPAN — rendered from real SVG paths
+   Source SVG viewBox: 0 0 64 64
+   4 paths correspond to the main island groups
+   ════════════════════════════════════════ */
+
+// Raw SVG path strings extracted from the uploaded SVG (viewBox 0 0 64 64)
+const JAPAN_SVG_PATHS = [
+  // Kyushu + SW islands
+  "M10 51.6c-.6-.1-1.6.4-2.3-.4c-.7-.8-1.7-.1-1.9.6c-.2.7-4.3.9-3.8 1.3c.5.5 1.8 2.9 2.3 2.4s1.1-2.1 1.6-1.3s.7 2.3-1.1 3.7c-1.8 1.5.9.6.5 2.3c-.3 1.9 1.6 1.7 1.9 1.8c.3.1 2-.9 2.3-1.6c.3-.7 2.1-5.4 1.9-5.8c-.2-.4-.8-1.4-1.6-1.2c-.7.2 2.4-1.4.2-1.8",
+  // Honshu + Shikoku + Kyushu main body
+  "M9 48.9c-.7.1-2 .7-1.1 1.4c.9.7 2.8-.9 3.6 0c.8.9 1.5-1.6 1.8-1c.3.6 2.4.1 3.9-.4s3.1-1.6 4.6-1.2c1.5.4 2.7.8 1.9 1.4c-.8.6-1.4 2-.8 2.2c.7.2 1.7 1.7 2.6 1.4c.9-.3 2-3.3 3.4-3.2c1.4.1.4-1.4-.5-1.5c-.9-.1 1.1-2.5 1.7-1.4c.5 1.1 3.5 2 4.1 1.6c.7-.4 1.5-1.9 2.5-1.9s-1.5 2.8 0 2c1.5-.7 1.4-3.3 2.6-2.5c1.2.8 1.5-2.4 1.7-1.1c.2 1.3-.9 2.4 0 2.1c.9-.3 3-2.5 2.6-3.9c-.5-1.3-.8-3.4.7-4.2c1.4-.7-.5-5.8.9-5.8s1.4.6 1.4-.8c.1-1.4.6-2.1 1.7-3.3c1.1-1.1-1.8-4.8-2.2-5.4c-.4-.6.8-2.6-.6-3.3c0 0-1.4-1-1.7 0c-.3 1 1.7 1.2 1.5 2c-.3.8-2.3.9-2.4-.5c-.1-1.5-.8-.1-.8.9s-2.4.1-1.7 1.4s-1.3 2.7-.2 3c1.1.3-.4 5.4-1.1 5.9c-.8.5-.2 1.5-1.6 1.9c-1.4.4-2.8 3.3-4.6 3.8c-1.8.5-2.3 1.3-2.5.5c-.2-.9-1.6-.7-.4-1.3c1.2-.6 2-1.8.8-1.5c-1.3.3-2.5 1.5-2 2.1c.5.7.2 1.9-.8 2.6c-1 .7-2.6 1.6-1.9 2.3c.8.7-.2 2.1-1.1 1.6c-.9-.5-1.8-1.9-2.7-1.3c-.9.7-3.3 1.2-4.6 1c-1.3-.2-3.2-.8-3.4.1c-.2.9-2 2.9-2.9 3.1c-.8.2-1.4 1-2.4 1.2",
+  // Shikoku small
+  "M20.4 49.3c-.6.1-2-.5-2.5.3c-.5.9-1.2.4-1.6.9c-.4.5-1.3-1-1.9 0c-.6 1-2.1 2.1-1.3 2.7c.8.6-.3 1 .4 1.7s2 .9 2.3 0c.2-.9 1.1-3 2.2-2.5s1.6.8 2 .3s1.1-1.3 1.7-1.5c.4-.1.1-2.2-1.3-1.9",
+  // Hokkaido
+  "M44.1 17.5c.7.7 1 1.3.5 1.4c-.5.1-1.4-.8-1.8 0c-.4.8-1.2 2.1-2 1.2c-.8-.9 1.5-2.4.5-2.6c-1-.2-1.8-1.1-1.3-2.1s1.7-1.5 2.3-1.9c.6-.4-.2-.8 0-1.4c.3-.6.3-.6 1.5 0c1.1.6 2.3 1 2.3-.4s-1.3-2.1 0-2.5c1.3-.4.6-1.1 1.1-2.1c.5-1 0-2.5-.5-3.4c-.5-.9.9-2.7 2.3-.8c1.4 1.9 4.8 5.2 6.1 5.4c1.4.1 1.7.5 2.6.9c.9.3 3.5-2.5 2.9-1.7c-.5.9-1.7 2.3-1.1 2.8c.6.5.9 1.3.5 1.6c-.4.3 3-.7 1.5.3c-1.5.9-2.2.8-2.6 1.4c-.4.6-2.3.4-3.2-.1c-.8-.5-2.3 1.9-2.7 2.7c-.5.7.2 2.4-.5 1.8c0 0-1.7-.8-2.8-1.3c-1.1-.5-2.5-1.8-3.5-1.3c-1.1.5-1.9 1.5-2.1.9c-.1-.3 0-.7-.7-.9c-.6-.2-1.5.3-1.6.9c-.2.6.2.9.9 1c.8-.2 1.2 0 1.4.2"
+];
+
+// Pre-build Path2D objects once
+const JAPAN_PATH2D = JAPAN_SVG_PATHS.map(d => new Path2D(d));
+
+// SVG viewBox dimensions
+const SVG_W = 64, SVG_H = 64;
+
+function drawJapan(){
+  const W=simCanvas.width, H=simCanvas.height;
+  simCtx.clearRect(0,0,W,H);
+  const t=Date.now()/1000;
+
+  // ── Ocean background (same colours as before)
+  const ob=simCtx.createLinearGradient(0,0,0,H);
+  ob.addColorStop(0,'rgba(0,12,35,0.9)');
+  ob.addColorStop(0.5,'rgba(0,22,55,0.8)');
+  ob.addColorStop(1,'rgba(0,18,45,0.88)');
+  simCtx.fillStyle=ob; simCtx.fillRect(0,0,W,H);
+
+  // Ocean ripples — concentric
+  const jcx=W*0.5, jcy=H*0.5;
+  for(let i=0;i<14;i++){
+    const phase=(t*0.055+i/14)%1;
+    const r=W*(0.04+phase*0.62);
+    const alpha=(1-phase)*0.07;
+    simCtx.beginPath(); simCtx.arc(jcx,jcy,r,0,Math.PI*2);
+    simCtx.strokeStyle=`rgba(60,140,220,${alpha})`; simCtx.lineWidth=1.3; simCtx.stroke();
+  }
+
+  // Gentle current lines
+  for(let i=0;i<10;i++){
+    const y=H*(0.06+i*0.095);
+    simCtx.beginPath();
+    for(let x=0;x<=W;x+=4){const wy=y+Math.sin(x*0.004+t*(0.18+i*0.02))*10; x===0?simCtx.moveTo(x,wy):simCtx.lineTo(x,wy);}
+    simCtx.strokeStyle=`rgba(50,110,190,${0.035+i*0.004})`; simCtx.lineWidth=1; simCtx.stroke();
+  }
+
+  // Continental shelf glow
+  const shelfG=simCtx.createRadialGradient(jcx,jcy,0,jcx,jcy,W*0.38);
+  shelfG.addColorStop(0,'rgba(20,60,100,0.22)'); shelfG.addColorStop(0.5,'rgba(10,40,80,0.1)'); shelfG.addColorStop(1,'rgba(0,0,0,0)');
+  simCtx.fillStyle=shelfG; simCtx.fillRect(0,0,W,H);
+
+  // ── Scale & centre the SVG paths
+  const CONTENT_X=1.5, CONTENT_Y=1.5, CONTENT_W=62, CONTENT_H=62;
+  const svgScale = Math.min(W,H) * 0.88 / Math.max(CONTENT_W, CONTENT_H);
+  const svgOX = W*0.5 - (CONTENT_X + CONTENT_W*0.5)*svgScale;
+  const svgOY = H*0.5 - (CONTENT_Y + CONTENT_H*0.5)*svgScale;
+
+  simCtx.save();
+  simCtx.translate(svgOX, svgOY);
+  simCtx.scale(svgScale, svgScale);
+
+  // Coastal glow
+  simCtx.save();
+  simCtx.shadowColor='rgba(80,200,160,0.5)';
+  simCtx.shadowBlur=12/svgScale;
+  simCtx.strokeStyle='rgba(120,210,160,0.35)';
+  simCtx.lineWidth=3.5/svgScale;
+  simCtx.lineJoin='round'; simCtx.lineCap='round';
+  JAPAN_PATH2D.forEach(p=>{simCtx.stroke(p);});
+  simCtx.restore();
+
+  // Drop shadow
+  simCtx.save();
+  simCtx.shadowColor='rgba(0,0,0,0.65)';
+  simCtx.shadowBlur=10/svgScale;
+  simCtx.shadowOffsetX=3/svgScale;
+  simCtx.shadowOffsetY=4/svgScale;
+  simCtx.fillStyle='rgba(98,132,65,0.92)';
+  JAPAN_PATH2D.forEach(p=>{simCtx.fill(p);});
+  simCtx.restore();
+
+  // Base fill
+  simCtx.fillStyle='rgba(98,132,65,0.92)';
+  JAPAN_PATH2D.forEach(p=>{simCtx.fill(p);});
+
+  // Terrain shading
+  JAPAN_PATH2D.forEach(p=>{
+    simCtx.save();
+    simCtx.clip(p);
+    simCtx.fillStyle='rgba(35,50,15,0.30)';
+    simCtx.fillRect(0,0,SVG_W,SVG_H);
+    const lightG=simCtx.createLinearGradient(SVG_W,0,0,SVG_H);
+    lightG.addColorStop(0,'rgba(200,230,150,0.12)');
+    lightG.addColorStop(0.5,'rgba(0,0,0,0)');
+    lightG.addColorStop(1,'rgba(0,0,0,0.08)');
+    simCtx.fillStyle=lightG;
+    simCtx.fillRect(0,0,SVG_W,SVG_H);
+    simCtx.restore();
+  });
+
+  // Coastline
+  simCtx.strokeStyle='rgba(160,200,110,0.6)';
+  simCtx.lineWidth=0.28/svgScale;
+  simCtx.lineJoin='round';
+  JAPAN_PATH2D.forEach(p=>{simCtx.stroke(p);});
+
+  simCtx.restore();
+
+  // Sunrise glow
+  const breathe=(Math.sin(t*0.42)+1)/2;
+  const sg=simCtx.createRadialGradient(W*0.92,H*0.25,0,W*0.92,H*0.25,W*0.65);
+  sg.addColorStop(0,`rgba(255,200,100,${0.10+breathe*0.07})`);
+  sg.addColorStop(0.4,`rgba(255,150,50,${0.05+breathe*0.03})`);
+  sg.addColorStop(1,'rgba(0,0,0,0)');
+  simCtx.fillStyle=sg; simCtx.fillRect(0,0,W,H);
+
+  // Vignette
+  const vg=simCtx.createRadialGradient(jcx,jcy,W*0.18,jcx,jcy,W*0.82);
+  vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(1,'rgba(0,0,0,0.5)');
+  simCtx.fillStyle=vg; simCtx.fillRect(0,0,W,H);
+
+  // Labels
+  simCtx.save();
+  simCtx.font=`${Math.max(32,W*0.052)}px Noto Serif JP,serif`;
+  simCtx.textAlign='center'; simCtx.textBaseline='middle';
+  simCtx.shadowColor='rgba(0,0,0,0.85)'; simCtx.shadowBlur=18;
+  simCtx.fillStyle='rgba(255,242,188,0.95)';
+  simCtx.fillText('日本', W*0.5, H*0.88);
+  simCtx.restore();
+
+  simCtx.save();
+  simCtx.font=`300 ${Math.max(15,W*0.024)}px Cinzel,serif`;
+  simCtx.textAlign='center'; simCtx.textBaseline='middle';
+  simCtx.fillStyle='rgba(255,232,162,0.62)';
+  simCtx.shadowColor='rgba(0,0,0,0.75)'; simCtx.shadowBlur=10;
+  simCtx.fillText('J  A  P  A  N', W*0.5, H*0.933);
+  simCtx.restore();
+}
+
+/* ════════════════════════════════════════
+   EFFECT ROUTER
+   ════════════════════════════════════════ */
+function stopSim(){
+  if(raf){cancelAnimationFrame(raf);raf=null;}
+  simCanvas.style.transform='';
+  simCtx.clearRect(0,0,simCanvas.width,simCanvas.height);
+  lavaParts=[];ashParts=[];pyroParts=[];
+  subStepEl.style.opacity='0';
+  lightningBolts=[];lightningTimer=0;
+}
+
+function runSim(effect){
+  stopSim();
+  if(effect==='none') return;
+  if(effect==='volcano') initVolcano();
+  if(effect==='pressure') initPressure();
+  if(effect==='magma') initMagma();
+  if(effect==='subduction') initSubduction();
+
+  function loop(){
+    switch(effect){
+      case 'ocean':      drawOcean();      break;
+      case 'subduction': drawSubduction(); break;
+      case 'pressure':   drawPressure();   break;
+      case 'magma':      drawMagma();      break;
+      case 'volcano':    drawVolcano();    break;
+      case 'japan':      drawJapan();      break;
+    }
+    raf=requestAnimationFrame(loop);
+  }
+  raf=requestAnimationFrame(loop);
+}
+
+/* ════════════════════════════════════════
+   CARD & SCENE MANAGEMENT
+   ════════════════════════════════════════ */
+function showCard(scene){
+  const c=scene.card;
+  cardNum.textContent=c.num;cardTitle.textContent=c.title;cardBody.textContent=c.body;
+  chapCard.classList.add('visible');phase='card';
+}
+function hideCard(){
+  chapCard.classList.remove('visible');
+  phase='image';
+}
+cardClose.addEventListener('click',e=>{e.stopPropagation();hideCard();});
+cardCorner.addEventListener('click',e=>{e.stopPropagation();hideCard();});
+
+function showScene(idx){
+  const scene=SCENES[idx];if(!scene) return;
+  stopSim();
+  simCanvas.classList.remove('visible');
+  
+  bgImg.style.opacity='0';
+  bgImg.src=scene.img||'';
+  bgImg.onload=()=>{bgImg.style.opacity='1';};
+  bgImg.onerror=()=>{bgImg.style.opacity='1';}; // Force solid even if asset fails
+
+  if(scene.audio){
+    narration.src=scene.audio;
+    narration.currentTime = 0;
+    narration.play().catch(()=>{});
+  } else {
+    narration.pause();
+  }
+
+  showCard(scene);
+}
+
+function fadeToScene(idx){
+  if(busy) return;
+  busy=true;
+  veil.classList.add('on');
+  setTimeout(()=>{
+    if(idx>=SCENES.length){showEnd();veil.classList.remove('on');busy=false;return;}
+    sceneIdx=idx;showScene(idx);veil.classList.remove('on');
+    setTimeout(()=>{busy=false;},700);
+  },700);
+}
+
+/* ════════════════════════════════════════
+   CLICK HANDLING — subduction intercepts clicks for step-through
+   ════════════════════════════════════════ */
+titleScreen.addEventListener('click',()=>{
+  kickAudio();titleScreen.classList.add('hide');cancelAnimationFrame(titleRaf);
+  setTimeout(()=>{titleScreen.style.display='none';sceneIdx=1;showScene(1);phase='card';},1500);
+});
+
+document.addEventListener('click',e=>{
+  if(e.target.closest('#title-screen')) return;
+  if(e.target.closest('#chapter-card')) return;
+  if(e.target.closest('#end-screen')) return;
+  
+  kickAudio();
+
+  if(phase === 'image') {
+    const scene = SCENES[sceneIdx];
+    if (scene && scene.sim === 'none') {
+       fadeToScene(sceneIdx + 1);
+    } else if (scene) {
+       runSim(scene.sim);
+       simCanvas.classList.add('visible');
+       bgImg.style.opacity = '0';
+       phase = 'sim';
+    }
+    return;
+  }
+
+  if(phase!=='sim') return;
+  
+  // Subduction: advance steps first
+  if(SCENES[sceneIdx]&&SCENES[sceneIdx].sim==='subduction'){
+    const done=advanceSubStep();
+    if(!done) return; // still more steps
+    // hide step UI and go to next scene
+    subStepEl.style.opacity='0';
+    fadeToScene(sceneIdx+1);
+    return;
+  }
+  fadeToScene(sceneIdx+1);
+});
+
+/* ════════════════════════════════════════
+   END SCREEN
+   ════════════════════════════════════════ */
+function showEnd(){
+  stopSim();
+  narration.pause();
+  endScreen.classList.add('visible');
+  simCtx.clearRect(0,0,simCanvas.width,simCanvas.height);
+  phase='end';
+  let endRaf;
+  const ep=[];
+  for(let i=0;i<70;i++) ep.push({x:Math.random()*endCanvas.width,y:Math.random()*endCanvas.height,r:Math.random()*1.5+0.2,vy:-(Math.random()*0.35+0.08),life:Math.random(),sp:Math.random()*0.004+0.002});
+  function endLoop(){
+    endCtx.clearRect(0,0,endCanvas.width,endCanvas.height);
+    const bg=endCtx.createRadialGradient(endCanvas.width*.5,endCanvas.height*.6,0,endCanvas.width*.5,endCanvas.height*.5,endCanvas.width*.8);
+    bg.addColorStop(0,'rgba(22,8,4,1)');bg.addColorStop(1,'rgba(0,0,0,1)');
+    endCtx.fillStyle=bg;endCtx.fillRect(0,0,endCanvas.width,endCanvas.height);
+    ep.forEach(p=>{p.y+=p.vy;p.life=(p.life+p.sp)%1;const a=Math.sin(p.life*Math.PI)*0.55;endCtx.beginPath();endCtx.arc(p.x,p.y,p.r,0,Math.PI*2);endCtx.fillStyle=`rgba(255,220,130,${a})`;endCtx.fill();if(p.y<0)p.y=endCanvas.height;});
+    endRaf=requestAnimationFrame(endLoop);
+  }
+  endLoop();
+  document.getElementById('restart-btn').onclick=()=>{cancelAnimationFrame(endRaf);endScreen.classList.remove('visible');endCtx.clearRect(0,0,endCanvas.width,endCanvas.height);phase='sim';fadeToScene(1);};
+}
+
+/* ════════════════════════════════════════
+   HINT VISIBILITY
+   ════════════════════════════════════════ */
+function updateHint(){
+  if (phase === 'image') {
+    const isNone = SCENES[sceneIdx] && SCENES[sceneIdx].sim === 'none';
+    simHint.textContent = isNone ? "Click to continue" : "Click to begin simulation";
+    simHint.style.opacity = '1';
+    subStepEl.style.opacity = '0';
+  } else if (phase === 'sim') {
+    const isSub=SCENES[sceneIdx]&&SCENES[sceneIdx].sim==='subduction';
+    simHint.textContent = "Click to advance";
+    simHint.style.opacity = !isSub ? '1' : '0';
+    subStepEl.style.opacity = isSub ? '1' : '0';
+  } else {
+    simHint.style.opacity = '0';
+    subStepEl.style.opacity = '0';
+  }
+}
+setInterval(updateHint,300);
+</script>
+</body>
+</html>
