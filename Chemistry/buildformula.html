@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Build Formula - Lau Chin Hang</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;height:100dvh;}
+body{font-family:'Nunito',sans-serif;background:#f0f4f8;display:flex;justify-content:center;align-items:flex-start;overflow:hidden;}
+.app{width:100%;max-width:480px;height:100vh;height:100dvh;position:relative;display:flex;flex-direction:column;}
+
+/* BGs */
+.bg-forest{background:linear-gradient(180deg,#062010 0%,#0b3518 12%,#10501f 28%,#18702e 42%,#f7edd8 43%,#f7edd8 100%);position:relative;}
+.bg-forest::before{content:'';position:absolute;top:0;left:0;right:0;height:44%;background:radial-gradient(ellipse at 15% 55%,rgba(60,200,80,0.18) 0%,transparent 45%),radial-gradient(ellipse at 85% 35%,rgba(40,180,60,0.15) 0%,transparent 45%);pointer-events:none;z-index:0;}
+.bg-white{background:#ffffff;}
+
+/* Sparkles */
+.sparkle-wrap{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:0;}
+.sparkle{position:absolute;width:3px;height:3px;border-radius:50%;background:#4a90d9;opacity:0;animation:sparkAnim var(--dur) var(--delay) infinite;}
+@keyframes sparkAnim{0%{opacity:0;transform:translateY(0) scale(0.5);}30%{opacity:0.5;}100%{opacity:0;transform:translateY(-40px) scale(0);}}
+
+/* Screens */
+.screen{display:none;height:100vh;height:100dvh;flex-direction:column;position:relative;}
+.screen.active{display:flex;}
+
+/* ===== START SCREEN — iOS clean light style ===== */
+#start-screen{background:linear-gradient(180deg,#d6e8f8 0%,#c2d8f0 50%,#b0cae8 100%);align-items:center;justify-content:center;padding:16px 20px;text-align:center;gap:0;}
+
+/* Logo area */
+.logo-area{display:flex;flex-direction:column;align-items:center;margin-bottom:6px;}
+.logo-badge{width:72px;height:72px;border-radius:22px;background:linear-gradient(135deg,#1a5eb8,#0d3d8a);display:flex;align-items:center;justify-content:center;box-shadow:0 6px 24px rgba(0,122,255,0.35);margin-bottom:8px;}
+.logo-sub{font-family:'Fredoka One',cursive;font-size:11px;color:#1a5eb8;letter-spacing:3px;text-transform:uppercase;}
+.logo-main{font-family:'Fredoka One',cursive;font-size:30px;color:#1a1a2e;letter-spacing:2px;margin-top:0;}
+.tagline{color:#5a7a9a;font-size:12px;font-weight:600;margin-bottom:12px;}
+
+/* Level buttons */
+.level-select{display:flex;gap:8px;margin-bottom:12px;width:100%;max-width:340px;}
+.level-btn{flex:1;padding:10px 6px;border-radius:14px;cursor:pointer;text-align:center;transition:0.2s;font-family:'Nunito',sans-serif;box-shadow:0 2px 8px rgba(0,0,0,0.08);}
+.level-btn:active{transform:scale(0.95);}
+.level-btn.l1{background:#ffffff;border:1.5px solid #c8dff0;color:#1a5eb8;}
+.level-btn.l2{background:#fff5e6;border:1.5px solid #ffc87a;color:#cc6600;}
+.level-btn.picked.l1{background:linear-gradient(135deg,#34c759,#28a745);border-color:#34c759;color:#fff;box-shadow:0 4px 14px rgba(52,199,89,0.4);transform:scale(1.04);}
+.level-btn.picked.l2{background:linear-gradient(135deg,#ff8c00,#e07000);border-color:#ff8c00;color:#fff;box-shadow:0 4px 14px rgba(255,140,0,0.4);transform:scale(1.04);}
+.lvl-title{font-family:'Fredoka One',cursive;font-size:13px;}
+.lvl-desc{font-size:9px;opacity:0.7;margin-top:2px;line-height:1.2;}
+
+/* Name input */
+.input-group{margin-bottom:10px;width:100%;max-width:300px;}
+.input-group label{display:block;color:#5a7a9a;font-weight:700;font-size:10px;margin-bottom:4px;text-transform:uppercase;letter-spacing:1px;}
+.name-input{width:100%;padding:10px 16px;border:1.5px solid #c8dff0;border-radius:30px;background:#ffffff;color:#1a1a2e;font-family:'Nunito',sans-serif;font-size:15px;font-weight:700;text-align:center;outline:none;transition:0.3s;box-shadow:0 2px 8px rgba(0,0,0,0.05);}
+.name-input::placeholder{color:#a0b8cc;}
+.name-input:focus{box-shadow:0 0 0 3px rgba(0,122,255,0.18);border-color:#1a5eb8;}
+
+/* Buttons */
+.btn{padding:11px 36px;border:none;border-radius:30px;font-family:'Fredoka One',cursive;font-size:16px;cursor:pointer;transition:0.15s;text-transform:uppercase;letter-spacing:1px;}
+.btn:active{transform:scale(0.95);}
+.btn-green{background:linear-gradient(180deg,#1a5eb8,#0d3d8a);color:#fff;box-shadow:0 4px 18px rgba(0,122,255,0.35);margin-bottom:6px;width:200px;}
+.btn-gold{background:linear-gradient(180deg,#ff8c00,#e07000);color:#fff;font-size:12px;padding:8px 22px;border:none;width:200px;box-shadow:0 4px 14px rgba(255,140,0,0.3);}
+.btn-ghost{background:transparent;color:#5a7a9a;font-family:'Nunito',sans-serif;font-weight:700;font-size:11px;padding:6px 18px;border:1.5px solid #c8dff0;border-radius:22px;cursor:pointer;transition:0.2s;margin-top:4px;}
+.btn-ghost:hover{border-color:#1a5eb8;color:#1a5eb8;}
+
+/* Music toggle */
+.music-toggle{position:fixed;top:10px;right:10px;width:38px;height:38px;border-radius:50%;background:#ffffff;border:1.5px solid #c8dff0;color:#1a5eb8;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:0.3s;z-index:500;box-shadow:0 2px 8px rgba(0,0,0,0.08);}
+.music-toggle:hover{background:#f0f8ff;}
+.music-toggle.muted{opacity:0.4;}
+
+/* ===== HUD ===== */
+.game-hud{background:linear-gradient(180deg,#111,#0a0a0a);padding:5px 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #222;flex-shrink:0;}
+.hud-item{text-align:center;}
+.hud-label{font-size:9px;color:#666;font-weight:800;text-transform:uppercase;letter-spacing:1px;}
+.hud-value{font-family:'Fredoka One',cursive;font-size:19px;color:#fff;}
+.hud-value.gold{color:#ffd740;}
+.hud-value.time-warn{color:#ff9100;animation:timePulse 0.5s ease infinite alternate;}
+.hud-value.time-danger{color:#ff1744;animation:timePulse 0.3s ease infinite alternate;}
+@keyframes timePulse{0%{opacity:1;}100%{opacity:0.5;}}
+.streak-circle{width:36px;height:36px;border-radius:50%;background:#333;display:flex;align-items:center;justify-content:center;font-family:'Fredoka One',cursive;font-size:15px;color:#888;transition:0.3s;}
+.streak-circle.hot{background:linear-gradient(135deg,#ff8f00,#ffa000);color:#fff;box-shadow:0 0 12px rgba(255,143,0,0.5);}
+.streak-circle.fire{background:linear-gradient(135deg,#d32f2f,#ff5722);color:#fff;box-shadow:0 0 12px rgba(211,47,47,0.5);animation:fireGlow 0.6s ease infinite alternate;}
+@keyframes fireGlow{0%{box-shadow:0 0 12px rgba(211,47,47,0.5);}100%{box-shadow:0 0 24px rgba(255,87,34,0.7);}}
+
+/* Question timer */
+.timer-track{width:100%;height:8px;background:#1a1a1a;position:relative;flex-shrink:0;}
+.timer-fill{height:100%;transition:width 0.1s linear;background:linear-gradient(90deg,#00e676,#69f0ae);}
+.timer-fill.warn{background:linear-gradient(90deg,#ff9100,#ffab40);}
+.timer-fill.danger{background:linear-gradient(90deg,#ff1744,#ff5252);animation:dangerPulse 0.4s ease infinite alternate;}
+@keyframes dangerPulse{0%{box-shadow:0 0 6px rgba(255,23,68,0.4);}100%{box-shadow:0 0 14px rgba(255,23,68,0.7);}}
+.timer-label{text-align:center;font-weight:800;font-size:11px;color:#555;padding:1px 0;background:#0d0d0d;flex-shrink:0;}
+.speed-indicator{position:absolute;right:8px;top:0;font-family:'Fredoka One',cursive;font-size:9px;color:#00e676;transition:0.3s;}
+.speed-indicator.med{color:#ffab40;}
+.speed-indicator.slow{color:#ff5252;}
+
+/* Prompt */
+.prompt-box{text-align:center;padding:4px 10px;background:linear-gradient(180deg,#f7edd8,#f5e8cc);border-bottom:2px solid #e8dcc0;flex-shrink:0;}
+.prompt-label{font-size:9px;color:#999;font-weight:800;text-transform:uppercase;letter-spacing:2px;}
+.prompt-name{font-family:'Fredoka One',cursive;font-size:17px;color:#333;margin-top:1px;}
+.prompt-hint{font-size:10px;color:#bbb;font-weight:600;margin-top:2px;}
+.level-pill{display:inline-block;padding:1px 8px;border-radius:10px;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:1px;}
+.level-pill.l1{background:#e8f5e9;color:#2e7d32;}.level-pill.l2{background:#fff3e0;color:#e65100;}
+
+/* Grid */
+.grid-area{flex:1;padding:3px 6px;display:flex;flex-direction:column;gap:3px;align-items:center;justify-content:center;min-height:0;}
+.grid-row{display:flex;gap:4px;justify-content:center;}
+.stone{width:66px;height:66px;border-radius:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.12s;position:relative;font-weight:800;font-size:13px;text-align:center;line-height:1.15;user-select:none;-webkit-tap-highlight-color:transparent;flex-shrink:0;touch-action:manipulation;}
+.stone.cation{background:linear-gradient(145deg,#b9f6ca,#69f0ae,#00c853);border:3px solid #00c853;color:#1b5e20;box-shadow:0 3px 10px rgba(0,200,83,0.25),inset 0 2px 4px rgba(255,255,255,0.5);}
+.stone.anion{background:linear-gradient(145deg,#bbdefb,#64b5f6,#2196f3);border:3px solid #2196f3;color:#0d47a1;box-shadow:0 3px 10px rgba(33,150,243,0.25),inset 0 2px 4px rgba(255,255,255,0.5);}
+.stone.selected{transform:scale(1.08);box-shadow:0 0 0 4px #ffd740,0 0 18px rgba(255,215,64,0.4) !important;border-color:#ffd740 !important;z-index:5;}
+.stone.selected::after{content:'\2713';position:absolute;top:-8px;right:-8px;background:linear-gradient(135deg,#ffd740,#ff8f00);color:#fff;font-family:'Fredoka One',cursive;font-size:12px;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.3);animation:checkPop 0.2s ease-out;}
+@keyframes checkPop{0%{transform:scale(0);}100%{transform:scale(1);}}
+.stone:not(.selected):active{transform:scale(0.9);}
+.stone .ion-text{pointer-events:none;}
+
+/* Formula bar */
+.formula-bar{background:#fff;margin:3px 8px;border-radius:12px;padding:5px 12px;text-align:center;border:2px solid #e5e7eb;min-height:40px;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,0.04);flex-shrink:0;}
+.formula-built{font-family:'Fredoka One',cursive;font-size:24px;color:#333;min-height:28px;}
+.formula-built .sub{font-size:16px;vertical-align:sub;}
+.charge-status{font-size:11px;font-weight:700;margin-top:1px;}
+.charge-status.balanced{color:#00c853;}
+.charge-status.unbalanced{color:#ff1744;}
+.charge-status.neutral{color:#aaa;}
+
+/* Actions */
+.action-bar{padding:3px 8px 6px;display:flex;gap:5px;justify-content:center;flex-shrink:0;}
+.btn-check{background:linear-gradient(180deg,#00e676,#00c853);color:#fff;font-size:14px;padding:9px 24px;opacity:0.35;pointer-events:none;box-shadow:none;transition:0.3s;}
+.btn-check.ready{opacity:1;pointer-events:auto;box-shadow:0 3px 14px rgba(0,200,83,0.4);animation:readyPulse 1.2s ease infinite alternate;}
+@keyframes readyPulse{0%{box-shadow:0 3px 14px rgba(0,200,83,0.4);}100%{box-shadow:0 3px 22px rgba(0,230,118,0.6);}}
+.btn-clear{background:linear-gradient(180deg,#ff9100,#e65100);color:#fff;font-size:11px;padding:8px 14px;}
+.btn-skip-sm{background:linear-gradient(180deg,#78909c,#455a64);color:#fff;font-size:11px;padding:8px 14px;}
+.btn-end-sm{background:linear-gradient(180deg,#ef5350,#b71c1c);color:#fff;font-size:10px;padding:7px 10px;}
+
+/* Feedback */
+.feedback-flash{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:200;pointer-events:none;}
+.feedback-flash.show{display:flex;}
+.feedback-msg{font-family:'Fredoka One',cursive;font-size:28px;padding:12px 24px;border-radius:18px;text-shadow:1px 1px 4px rgba(0,0,0,0.2);animation:popIn 0.4s ease-out;}
+.feedback-msg.ok{background:linear-gradient(135deg,rgba(0,200,83,0.96),rgba(0,230,118,0.96));color:#fff;}
+.feedback-msg.fail{background:linear-gradient(135deg,rgba(211,47,47,0.96),rgba(255,23,68,0.96));color:#fff;}
+.feedback-msg.timeout{background:linear-gradient(135deg,rgba(255,143,0,0.96),rgba(255,171,64,0.96));color:#fff;}
+.correct-formula{display:block;font-size:15px;margin-top:3px;opacity:0.85;}
+.bonus-line{display:block;font-size:13px;margin-top:2px;color:#ffd740;}
+@keyframes popIn{0%{transform:scale(0.2);opacity:0;}60%{transform:scale(1.1);}100%{transform:scale(1);opacity:1;}}
+.unlock-pop{position:fixed;top:50px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#7c4dff,#b388ff);color:#fff;padding:10px 22px;border-radius:28px;font-family:'Fredoka One',cursive;font-size:13px;z-index:250;box-shadow:0 4px 18px rgba(124,77,255,0.5);animation:dropIn 0.4s ease-out,fadeOut2 0.4s 2s forwards;white-space:nowrap;}
+@keyframes dropIn{0%{transform:translateX(-50%) translateY(-40px);opacity:0;}100%{transform:translateX(-50%) translateY(0);opacity:1;}}
+@keyframes fadeOut2{0%{opacity:1;}100%{opacity:0;transform:translateX(-50%) translateY(-20px);}}
+
+/* ===== TROPHY SCREEN ===== */
+#trophy-screen{background:linear-gradient(180deg,#d6e8f8 0%,#c2d8f0 50%,#b0cae8 100%);align-items:center;justify-content:center;padding:16px;text-align:center;overflow-y:auto;}
+.trophy-container{animation:trophyEntry 1s ease-out;}
+@keyframes trophyEntry{0%{transform:scale(0) rotate(-20deg);opacity:0;}60%{transform:scale(1.1) rotate(4deg);}100%{transform:scale(1) rotate(0);opacity:1;}}
+.trophy-svg{width:110px;height:110px;filter:drop-shadow(0 0 24px rgba(255,215,0,0.5));}
+.trophy-glow{animation:trophyGlow 2s ease-in-out infinite alternate;}
+@keyframes trophyGlow{0%{filter:drop-shadow(0 0 24px rgba(255,215,0,0.5));}100%{filter:drop-shadow(0 0 40px rgba(255,215,0,0.8));}}
+.trophy-title{font-family:'Fredoka One',cursive;font-size:28px;color:#1a5eb8;margin:10px 0 4px;}
+.trophy-score{font-family:'Fredoka One',cursive;font-size:44px;color:#1a1a2e;margin:4px 0;}
+.trophy-label{font-size:11px;color:#5a7a9a;font-weight:700;text-transform:uppercase;letter-spacing:2px;}
+.confetti-wrap{position:absolute;inset:0;pointer-events:none;overflow:hidden;}
+.confetti{position:absolute;width:7px;height:7px;border-radius:2px;animation:confettiFall var(--dur) var(--delay) linear forwards;}
+@keyframes confettiFall{0%{transform:translateY(-20px) rotate(0deg);opacity:1;}100%{transform:translateY(100vh) rotate(720deg);opacity:0;}}
+
+/* Summary */
+.stats-row{display:flex;gap:8px;width:100%;margin-bottom:8px;}
+.stat-box{flex:1;background:#ffffff;border-radius:12px;padding:8px 4px;text-align:center;border:1.5px solid #c8dff0;box-shadow:0 2px 8px rgba(0,0,0,0.05);}
+.stat-num{font-family:'Fredoka One',cursive;font-size:20px;color:#1a5eb8;}
+.stat-txt{font-size:9px;color:#5a7a9a;font-weight:700;text-transform:uppercase;margin-top:1px;}
+.log-scroll{width:100%;max-height:160px;overflow-y:auto;background:#ffffff;border-radius:12px;padding:6px;margin-bottom:8px;border:1.5px solid #c8dff0;box-shadow:0 2px 8px rgba(0,0,0,0.04);}
+.log-row{display:flex;align-items:center;gap:6px;padding:4px 2px;border-bottom:1px solid #e8f0f8;font-size:11px;color:#334155;}
+.log-row:last-child{border:none;}.log-ico{font-size:13px;width:16px;text-align:center;}.log-f{font-weight:800;color:#1a1a2e;min-width:70px;}.log-p{font-weight:800;color:#1a5eb8;min-width:34px;text-align:right;}
+
+/* Leaderboard */
+.lb-heading{font-family:'Fredoka One',cursive;font-size:20px;color:#ff8c00;margin:10px 0;}
+.lb-list{width:100%;max-height:320px;overflow-y:auto;background:#ffffff;border-radius:12px;padding:6px;margin-bottom:12px;border:1.5px solid #c8dff0;box-shadow:0 2px 8px rgba(0,0,0,0.05);}
+.lb-entry{display:flex;align-items:center;padding:7px;border-bottom:1px solid #e8f0f8;gap:8px;}
+.lb-entry:last-child{border:none;}.lb-pos{font-family:'Fredoka One',cursive;font-size:15px;width:26px;text-align:center;color:#1a5eb8;}.lb-pos.g{color:#ff9500;}.lb-pos.s{color:#8e8e93;}.lb-pos.b{color:#ff6b35;}.lb-who{flex:1;font-weight:700;color:#1a1a2e;font-size:13px;}.lb-pts{font-family:'Fredoka One',cursive;font-size:15px;color:#1a5eb8;}.lb-empty{color:#8e8e93;text-align:center;padding:24px 12px;font-size:13px;}
+
+/* Footer */
+.start-footer{margin-top:8px;display:flex;align-items:center;justify-content:center;gap:6px;}
+.start-footer img{width:14px;height:auto;opacity:0.6;}
+.start-footer span{font-size:9px;color:#5a7a9a;font-weight:600;letter-spacing:0.3px;}
+.start-footer a{font-size:9px;color:#1a5eb8;font-weight:700;text-decoration:none;}
+.start-footer a:hover{text-decoration:underline;}
+
+
+/* Dot & Cross Panel */
+.dxpanel{background:linear-gradient(180deg,#1a1a2e,#16213e);border-bottom:2px solid #0f3460;overflow:hidden;transition:max-height 0.35s ease,padding 0.35s ease;max-height:0;padding:0 8px;flex-shrink:0;}
+.dxpanel.visible{max-height:160px;padding:6px 8px;}
+.dxpanel-label{font-size:8px;color:#4a6fa5;font-weight:800;text-transform:uppercase;letter-spacing:1px;text-align:center;margin-bottom:3px;}
+.dxpanel-inner{display:flex;align-items:center;justify-content:center;gap:4px;flex-wrap:nowrap;overflow-x:auto;}
+.dx-op{font-family:"Fredoka One",cursive;font-size:14px;color:#4a6fa5;padding-top:8px;flex-shrink:0;}
+
+
+/* Tutorial */
+#tutorial-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:600;display:none;flex-direction:column;align-items:center;justify-content:center;padding:20px;}
+#tutorial-overlay.active{display:flex;}
+.tut-card{background:#fff;border-radius:24px;padding:22px 18px 18px;max-width:320px;width:100%;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,0.5);}
+.tut-card-anim{animation:tutPop 0.35s ease-out;}
+@keyframes tutPop{0%{transform:scale(0.88) translateY(10px);opacity:0;}100%{transform:scale(1) translateY(0);opacity:1;}}
+.tut-dots{display:flex;gap:6px;justify-content:center;margin-bottom:12px;}
+.tut-dot{width:8px;height:8px;border-radius:50%;background:#e5e7eb;transition:0.3s;}
+.tut-dot.on{background:#1a5eb8;transform:scale(1.3);}
+.tut-icon{font-size:40px;margin-bottom:8px;display:block;}
+.tut-title{font-family:"Fredoka One",cursive;font-size:19px;color:#1a1a2e;margin-bottom:6px;}
+.tut-body{font-size:12px;color:#4b5563;line-height:1.6;margin-bottom:10px;}
+.tut-body strong{color:#1a5eb8;}
+.tut-anim{width:100%;min-height:60px;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+.tut-ion{padding:5px 10px;border-radius:10px;font-family:"Fredoka One",cursive;font-size:13px;display:inline-flex;align-items:center;}
+.tut-ion.cat{background:linear-gradient(145deg,#b9f6ca,#00c853);color:#1b5e20;border:2px solid #00c853;}
+.tut-ion.an{background:linear-gradient(145deg,#bbdefb,#2196f3);color:#0d47a1;border:2px solid #2196f3;}
+@keyframes tutPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.1);box-shadow:0 0 0 3px #ffd740;}}
+.tut-pulse{animation:tutPulse 1s ease infinite;}
+.tut-btns{display:flex;gap:8px;justify-content:center;}
+.tut-next{background:linear-gradient(180deg,#1a5eb8,#0d3d8a);color:#fff;border:none;padding:10px 26px;border-radius:24px;font-family:"Fredoka One",cursive;font-size:14px;cursor:pointer;transition:0.15s;}
+.tut-next:active{transform:scale(0.95);}
+.tut-skip{background:transparent;color:#9ca3af;border:1.5px solid #e5e7eb;padding:10px 14px;border-radius:24px;font-family:"Nunito",sans-serif;font-weight:700;font-size:11px;cursor:pointer;}
+
+/* Modal */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:300;padding:16px;}
+.modal-bg.open{display:flex;}
+.modal-box{background:#fff;border-radius:20px;padding:18px;max-width:380px;width:100%;max-height:82vh;overflow-y:auto;position:relative;box-shadow:0 8px 32px rgba(0,0,0,0.2);}
+.modal-x{position:absolute;top:8px;right:12px;font-size:20px;background:none;border:none;cursor:pointer;color:#9ca3af;}
+.modal-h{font-family:'Fredoka One',cursive;font-size:18px;color:#1a1a2e;margin-bottom:10px;}
+.modal-step{display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;}
+.modal-num{background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:#fff;font-family:'Fredoka One',cursive;font-size:13px;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.modal-txt{font-size:12px;color:#374151;line-height:1.4;padding-top:2px;}
+.modal-info{background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:8px;margin-top:6px;}
+.modal-info h4{font-size:12px;color:#1a1a2e;margin-bottom:4px;font-weight:800;}
+.modal-info p{font-size:11px;color:#4b5563;margin-bottom:2px;padding-left:6px;}
+
+@media(max-width:380px){.stone{width:60px;height:60px;font-size:12px;}}
+::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.12);border-radius:2px;}
+</style>
+
+  <!-- ✅ Google Sheets leaderboard — paste your deployed Apps Script URL below -->
+  <script>
+    var SHEETS_URL = 'https://script.google.com/macros/s/AKfycbznKLpxU9iFvMYojFm6ClnFRFh-hcDV2C6S1PoQi9CKpL_ipUaRrZXs1SgYByZCD2Wu/exec';
+  </script>
+</head>
+<body>
+<button class="music-toggle" id="music-toggle" onclick="toggleMusic()" title="Toggle music">♫</button>
+<div class="app" id="app">
+
+<!-- ===== START ===== -->
+<div class="screen active" id="start-screen">
+  <div class="sparkle-wrap" id="start-sparkles"></div>
+
+  <div class="logo-area">
+    <div class="logo-badge">
+      <svg width="40" height="40" viewBox="0 0 100 100">
+        <path d="M38 15 L38 38 L18 78 Q14 88 24 92 L76 92 Q86 88 82 78 L62 38 L62 15" fill="none" stroke="rgba(255,215,64,0.9)" stroke-width="5" stroke-linejoin="round"/>
+        <rect x="34" y="8" width="32" height="10" rx="3" fill="none" stroke="rgba(255,215,64,0.8)" stroke-width="4"/>
+        <path d="M40 70 L52 50 L64 70" stroke="rgba(255,255,255,0.6)" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="70" cy="30" r="5" fill="rgba(255,215,64,0.7)"/>
+        <circle cx="78" cy="20" r="3" fill="rgba(255,215,64,0.5)"/>
+      </svg>
+    </div>
+    <div class="logo-sub">Build</div>
+    <div class="logo-main">FORMULA</div>
+  </div>
+
+  <div class="tagline">Balance ions. Build compounds. Master chemistry!</div>
+
+  <div class="level-select">
+    <div class="level-btn l1 picked" id="lb1" onclick="pickLevel(1)"><div class="lvl-title">Level 1</div><div class="lvl-desc">Monatomic ions</div></div>
+    <div class="level-btn l2" id="lb2" onclick="pickLevel(2)"><div class="lvl-title">Level 2</div><div class="lvl-desc">Polyatomic ions</div></div>
+  </div>
+
+  <div class="input-group"><label>Your name</label><input class="name-input" id="inp-name" placeholder="Enter your name" maxlength="20" autocomplete="off"></div>
+  <button class="btn btn-green" onclick="startGame()">▶ Play</button>
+  <button class="btn btn-gold" onclick="showLB()">🏆 Leaderboard</button>
+  <button class="btn-ghost" onclick="openModal()">How to Play</button>
+
+  <div class="start-footer">
+    <span>Original game by Mr. Mong &middot; Updated &amp; enhanced by
+      <a href="https://www.instagram.com/curiominds.inc" target="_blank" rel="noopener">Mr Lau Chin Hang (@curiominds.inc)</a>
+    </span>
+  </div>
+</div>
+
+<!-- ===== GAME ===== -->
+<div class="screen bg-forest" id="game-screen">
+  <div class="game-hud">
+    <div class="hud-item"><div class="hud-label">Score</div><div class="hud-value gold" id="hud-score">0</div></div>
+    <div class="hud-item"><div class="hud-label">Time Left</div><div class="hud-value" id="hud-time" style="font-size:16px;">4:00</div></div>
+    <div class="hud-item"><div class="hud-label">Streak</div><div class="streak-circle" id="hud-streak">0</div></div>
+  </div>
+  <div class="timer-track" style="position:relative;"><div class="timer-fill" id="timer-fill"></div><div class="speed-indicator" id="speed-ind">SPEED x3</div></div>
+  <div class="timer-label" id="timer-label">0:35</div>
+
+  <!-- DOT & CROSS PANEL -->
+  <div class="dxpanel" id="dxpanel">
+    <div class="dxpanel-label">Dot &amp; Cross Diagram — Outer Shell Electrons</div>
+    <div class="dxpanel-inner" id="dxpanel-inner"></div>
+  </div>
+
+  <div class="prompt-box" id="prompt-box">
+    <div><span class="level-pill l1" id="level-pill">Level 1</span></div>
+    <div class="prompt-label" id="prompt-label">Form this compound</div>
+    <div class="prompt-name" id="prompt-name">&mdash;</div>
+    <div class="prompt-hint" id="prompt-hint">Select the correct ions to balance the charges</div>
+  </div>
+
+  <div class="grid-area" id="grid-area"></div>
+  <div class="formula-bar"><div class="formula-built" id="formula-built"></div><div class="charge-status neutral" id="charge-status">Select ions from the grid</div></div>
+  <div class="action-bar">
+    <button class="btn btn-clear" onclick="clearSelection()">Clear</button>
+    <button class="btn btn-check" id="btn-check" onclick="checkAnswer()">Check</button>
+    <button class="btn btn-skip-sm" onclick="skipRound()">Skip</button>
+    <button class="btn btn-end-sm" onclick="endGame()">End</button>
+  </div>
+
+  <svg class="mascot" id="game-mascot" viewBox="0 0 80 80" style="width:55px;height:55px;"><defs><linearGradient id="cg2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#b9f6ca"/><stop offset="100%" stop-color="#00c853"/></linearGradient></defs><polygon points="40,3 68,30 57,77 23,77 12,30" fill="url(#cg2)" stroke="#1b5e20" stroke-width="2"/><polygon points="40,3 52,30 40,68 28,30" fill="rgba(255,255,255,0.18)"/><circle cx="31" cy="35" r="5" fill="#fff"/><circle cx="32" cy="36" r="2.5" fill="#1b5e20"/><circle cx="49" cy="35" r="5" fill="#fff"/><circle cx="50" cy="36" r="2.5" fill="#1b5e20"/><path d="M33 47Q40 54 47 47" stroke="#1b5e20" stroke-width="2.5" fill="none" stroke-linecap="round" id="mascot-mouth"/></svg>
+</div>
+
+<!-- ===== TROPHY ===== -->
+<div class="screen bg-dark" id="trophy-screen">
+  <div class="vine-l"></div><div class="vine-r"></div>
+  <div class="confetti-wrap" id="confetti-wrap"></div>
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px;text-align:center;position:relative;z-index:2;">
+    <div class="trophy-container">
+      <svg class="trophy-svg trophy-glow" viewBox="0 0 120 120">
+        <defs><linearGradient id="tg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#ffd740"/><stop offset="50%" stop-color="#ffab00"/><stop offset="100%" stop-color="#ff8f00"/></linearGradient></defs>
+        <path d="M35 20 H85 L80 60 Q78 70 70 75 L70 85 H50 L50 75 Q42 70 40 60 Z" fill="url(#tg)" stroke="#e65100" stroke-width="2"/>
+        <path d="M35 20 Q10 25 15 45 Q20 60 40 55" fill="none" stroke="url(#tg)" stroke-width="6" stroke-linecap="round"/>
+        <path d="M85 20 Q110 25 105 45 Q100 60 80 55" fill="none" stroke="url(#tg)" stroke-width="6" stroke-linecap="round"/>
+        <rect x="42" y="85" width="36" height="6" rx="3" fill="#e65100"/>
+        <rect x="36" y="91" width="48" height="10" rx="4" fill="url(#tg)" stroke="#e65100" stroke-width="1.5"/>
+        <text x="60" y="58" text-anchor="middle" font-family="'Fredoka One',cursive" font-size="18" fill="#fff" opacity="0.9">&#x2605;</text>
+      </svg>
+    </div>
+    <div class="trophy-title">Time's Up!</div>
+    <div class="trophy-label">Final Score</div>
+    <div class="trophy-score" id="trophy-score">0</div>
+    <div class="stats-row" id="trophy-stats"></div>
+    <div class="log-scroll" id="trophy-log"></div>
+
+    <button class="btn btn-green" onclick="startGame()" style="font-size:15px;margin-top:8px;">Play Again</button>
+    <button class="btn-ghost" onclick="showScreen('start-screen')" style="margin-top:6px;">Menu</button>
+  </div>
+</div>
+
+<!-- ===== LEADERBOARD ===== -->
+<div class="screen" id="leaderboard-screen" style="background:linear-gradient(180deg,#d6e8f8 0%,#c2d8f0 50%,#b0cae8 100%);">
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;padding:18px;overflow-y:auto;">
+    <div class="logo-badge" style="width:56px;height:56px;border-radius:14px;margin-bottom:10px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#1a5eb8,#0d3d8a);"><svg width="28" height="28" viewBox="0 0 100 100"><path d="M38 15 L38 38 L18 78 Q14 88 24 92 L76 92 Q86 88 82 78 L62 38 L62 15" fill="none" stroke="rgba(255,215,64,0.9)" stroke-width="5" stroke-linejoin="round"/><rect x="34" y="8" width="32" height="10" rx="3" fill="none" stroke="rgba(255,215,64,0.8)" stroke-width="4"/></svg></div>
+    <div class="lb-heading">Leaderboard</div>
+    <div class="lb-list" id="lb-list"></div>
+    <button class="btn btn-green" onclick="startGame()" style="font-size:15px;">Play</button>
+    <button class="btn-ghost" onclick="showScreen('start-screen')" style="margin-top:6px;">Menu</button>
+  </div>
+</div>
+</div>
+
+<!-- TUTORIAL OVERLAY -->
+<div id="tutorial-overlay">
+  <div class="tut-card" id="tut-card">
+    <div class="tut-dots" id="tut-dots"></div>
+    <span class="tut-icon" id="tut-icon"></span>
+    <div class="tut-title" id="tut-title"></div>
+    <div class="tut-body" id="tut-body"></div>
+    <div class="tut-anim" id="tut-anim"></div>
+    <div class="tut-btns">
+      <button class="tut-skip" onclick="skipTutorial()">Skip</button>
+      <button class="tut-next" id="tut-next-btn" onclick="tutNext()">Next &#8594;</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modal" onclick="if(event.target===this)closeModal()">
+<div class="modal-box">
+  <button class="modal-x" onclick="closeModal()">&times;</button>
+  <div class="modal-h">How to Play</div>
+  <div style="font-size:12px;font-weight:700;color:#ff8f00;margin-bottom:6px;">BUILD FORMULA</div>
+  <div class="modal-step"><div class="modal-num">1</div><div class="modal-txt">A compound name appears. Select the correct ions to build it.</div></div>
+  <div class="modal-step"><div class="modal-num">2</div><div class="modal-txt">Tap <strong>multiple tiles</strong> of the same ion to balance charges (e.g. 1x Mg<sup>2+</sup> + 2x Cl<sup>-</sup>).</div></div>
+  <div class="modal-step"><div class="modal-num">3</div><div class="modal-txt">When charges balance (neutral), tap <strong>Check</strong> to confirm.</div></div>
+  <div style="font-size:12px;font-weight:700;color:#7c4dff;margin:8px 0 6px;">SCORING &amp; TIMING</div>
+  <div class="modal-step"><div class="modal-num">!</div><div class="modal-txt"><strong>35s</strong> per question. <strong>4 min</strong> total game. Answer faster and select more ions for bigger rewards!</div></div>
+  <div class="modal-info">
+    <h4>⚡ Speed Bonus — answer faster for more points!</h4>
+    <p>Answer in <strong>0–5s</strong> → Speed x4 🔥🔥</p>
+    <p>Answer in <strong>5–10s</strong> → Speed x3 🔥</p>
+    <p>Answer in <strong>10–17s</strong> → Speed x2.5</p>
+    <p>Answer in <strong>17–24s</strong> → Speed x2</p>
+    <p>Answer in <strong>24–30s</strong> → Speed x1.5</p>
+    <p>Answer after <strong>30s</strong> → Speed x1</p>
+  </div>
+  <div class="modal-info" style="margin-top:6px;">
+    <h4>🧪 Complexity Bonus — harder formulas = more points!</h4>
+    <p>2 ions total (e.g. NaCl) → Complexity x1</p>
+    <p>3 ions total (e.g. MgCl₂) → Complexity x2</p>
+    <p>4–5 ions total (e.g. Al₂O₃) → Complexity x3</p>
+    <p>6+ ions total → Complexity x4 💎</p>
+  </div>
+  <div class="modal-info" style="margin-top:6px;">
+    <h4>🔥 Streak Bonus — keep getting them right!</h4>
+    <p>Each correct answer in a row adds +3 base points. Hit 5 in a row for FIRE mode!</p>
+  </div>
+  <div class="modal-info" style="margin-top:6px;">
+    <h4>Levels</h4>
+    <p><strong style="color:#00c853">Level 1:</strong> Monatomic ions (Na⁺, Ca²⁺, O²⁻, N³⁻, etc.)</p>
+    <p><strong style="color:#ff9100">Level 2:</strong> Polyatomic ions (OH⁻, SO₄²⁻, NH₄⁺, PO₄³⁻, etc.)</p>
+  </div>
+</div>
+</div>
+
+<div class="feedback-flash" id="fb-overlay"><div class="feedback-msg" id="fb-msg"></div></div>
+
+<script>
+
+// ── DOT & CROSS DATA ──────────────────────────────────────────────────────
+// outerDots = electrons in outermost shell AFTER ionisation (max 8 shown)
+var ION_SHELLS={
+  'H1':{dots:0,isCat:true},'Na1':{dots:0,isCat:true},'K1':{dots:0,isCat:true},
+  'Li1':{dots:0,isCat:true},'Ag1':{dots:10,isCat:true},
+  'Be2':{dots:0,isCat:true},'Mg2':{dots:0,isCat:true},'Ca2':{dots:0,isCat:true},
+  'Al3':{dots:0,isCat:true},'Fe2':{dots:6,isCat:true},'Fe3':{dots:5,isCat:true},
+  'Cu2':{dots:9,isCat:true},'Zn2':{dots:10,isCat:true},'Pb2':{dots:0,isCat:true},
+  'Ba2':{dots:0,isCat:true},'Ni2':{dots:8,isCat:true},
+  'Cl1':{dots:8,isCat:false},'Br1':{dots:8,isCat:false},'F1':{dots:8,isCat:false},
+  'I1':{dots:8,isCat:false},'O2':{dots:8,isCat:false},'S2':{dots:8,isCat:false},
+  'N3':{dots:8,isCat:false}
+};
+
+function chStr(ch,isCat){return isCat?(ch===1?'+':ch+'+'):(ch===1?'\u2212':ch+'\u2212');}
+
+function ionSVG(sym,ch,isCat,count){
+  // 🔧 MODIFIED: larger atom (r=26), brighter brackets + white charge label
+  var key=(isCat?sym+ch:sym+ch);
+  var shell=ION_SHELLS[key]||{dots:(isCat?0:8),isCat:isCat};
+  var dots=Math.min(shell.dots,8);
+  var r=26,cx=37,cy=37;
+  var bgCol=isCat?'#c8f7d8':'#c5e4fd';
+  var brdCol=isCat?'#00e676':'#40c4ff';
+  var dotCol=isCat?'#1b5e20':'#0d47a1';
+  var bkCol='#e0e0e0';
+  var chargeCol='#ffffff';
+  var charge=chStr(ch,isCat);
+  var pos=[[cx-5,cy-r-9],[cx+5,cy-r-9],[cx+r+9,cy-5],[cx+r+9,cy+5],
+           [cx-5,cy+r+9],[cx+5,cy+r+9],[cx-r-9,cy-5],[cx-r-9,cy+5]];
+  var elec='';
+  for(var i=0;i<dots;i++){
+    var px=pos[i][0],py=pos[i][1];
+    if(isCat){elec+='<circle cx="'+px+'" cy="'+py+'" r="3" fill="'+dotCol+'"/>';}
+    else{
+      elec+='<line x1="'+(px-4)+'" y1="'+(py-4)+'" x2="'+(px+4)+'" y2="'+(py+4)+'" stroke="'+dotCol+'" stroke-width="2.2" stroke-linecap="round"/>';
+      elec+='<line x1="'+(px+4)+'" y1="'+(py-4)+'" x2="'+(px-4)+'" y2="'+(py+4)+'" stroke="'+dotCol+'" stroke-width="2.2" stroke-linecap="round"/>';
+    }
+  }
+  var bk='<polyline points="21,10 16,10 16,64 21,64" fill="none" stroke="'+bkCol+'" stroke-width="2" stroke-linecap="round"/>'
+        +'<polyline points="53,10 58,10 58,64 53,64" fill="none" stroke="'+bkCol+'" stroke-width="2" stroke-linecap="round"/>';
+  var svg='<svg width="74" height="76" viewBox="0 0 74 76" xmlns="http://www.w3.org/2000/svg">'
+    +'<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="'+bgCol+'" stroke="'+brdCol+'" stroke-width="2"/>'
+    +'<text x="'+cx+'" y="'+(cy+6)+'" text-anchor="middle" font-family="Fredoka One,cursive" font-size="14" fill="'+dotCol+'">'+sym+'</text>'
+    +elec+bk
+    +'<text x="62" y="16" font-size="11" font-weight="900" font-family="Nunito,sans-serif" fill="'+chargeCol+'">'+charge+'</text>'
+    +'</svg>';
+  var badge=count>1?'<div style="background:#ffd740;color:#1a1a2e;font-family:Fredoka One,cursive;font-size:9px;padding:1px 6px;border-radius:8px;margin-top:1px;">\xd7'+count+'</div>':'';
+  return '<div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;">'+svg+'<div style="font-size:9px;color:#c0d4e8;font-weight:700;margin-top:1px;">'+sym+'<sup>'+charge+'</sup></div>'+badge+'</div>';
+}
+
+function polyBadge(sym,ch,isCat,count){
+  var bgCol=isCat?'#e8f5e9':'#e3f2fd',brdCol=isCat?'#00c853':'#2196f3',txtCol=isCat?'#1b5e20':'#0d47a1';
+  var charge=chStr(ch,isCat);
+  var badge=count>1?'<div style="background:#ffd740;color:#1a1a2e;font-family:Fredoka One,cursive;font-size:8px;padding:1px 5px;border-radius:8px;margin-top:2px;">\xd7'+count+'</div>':'';
+  return '<div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;">'
+    +'<div style="width:60px;height:60px;border-radius:10px;background:'+bgCol+';border:1.5px solid '+brdCol+';display:flex;align-items:center;justify-content:center;font-family:Fredoka One,cursive;font-size:10px;color:'+txtCol+';text-align:center;padding:3px;">'+sym+'<span style="font-size:7px;vertical-align:super;">'+charge+'</span></div>'
+    +'<div style="font-size:7px;color:#a0b8cc;font-weight:700;margin-top:1px;">polyatomic</div>'
+    +badge+'</div>';
+}
+
+function updateDotCross(){
+  var panel=document.getElementById('dxpanel');
+  var inner=document.getElementById('dxpanel-inner');
+  var catItems=Object.keys(G.selected).map(function(k){
+    var c=CATIONS.find(function(x){return ionUid(x)===k;});
+    return c?{ion:c,count:G.selected[k]}:null;
+  }).filter(Boolean);
+  var anItems=Object.keys(G.selected).map(function(k){
+    var a=ANIONS.find(function(x){return ionUid(x)===k;});
+    return a?{ion:a,count:G.selected[k]}:null;
+  }).filter(Boolean);
+  if(catItems.length===0&&anItems.length===0){panel.classList.remove('visible');return;}
+  panel.classList.add('visible');
+  var parts=[];
+  catItems.forEach(function(e,i){
+    parts.push(e.ion.poly?polyBadge(e.ion.sym,e.ion.ch,true,e.count):ionSVG(e.ion.sym,e.ion.ch,true,e.count));
+    if(i<catItems.length-1||anItems.length>0)parts.push('<div class="dx-op">+</div>');
+  });
+  anItems.forEach(function(e,i){
+    parts.push(e.ion.poly?polyBadge(e.ion.sym,e.ion.ch,false,e.count):ionSVG(e.ion.sym,e.ion.ch,false,e.count));
+    if(i<anItems.length-1)parts.push('<div class="dx-op">+</div>');
+  });
+  inner.innerHTML=parts.join('');
+}
+
+// ── TUTORIAL ──────────────────────────────────────────────────────────────
+var tutorialSeen=false;
+var TUT=[
+  {icon:'\u2697\ufe0f',title:'Welcome to Build Formula!',
+   body:'A compound name appears at the top. Pick the <strong>right ions</strong> from the grid — then press <strong>Check</strong>!',
+   anim:function(){return '<div class="tut-ion cat">Na<sup>+</sup></div><span style="font-size:18px;color:#aaa">+</span><div class="tut-ion an">Cl<sup>\u2212</sup></div><span style="font-size:18px;color:#aaa">=</span><span style="font-family:Fredoka One,cursive;font-size:18px;color:#1a5eb8">NaCl \u2713</span>';}},
+  {icon:'\ud83d\udfe2\ud83d\udd35',title:'Two types of ions',
+   body:'<strong style="color:#00c853">Green tiles</strong> are cations (+). <strong style="color:#2196f3">Blue tiles</strong> are anions (\u2212). You need one of each to build a compound.',
+   anim:function(){return '<div class="tut-ion cat">Mg<sup>2+</sup></div><div style="width:16px"></div><div class="tut-ion an">O<sup>2\u2212</sup></div>';}},
+  {icon:'\u2696\ufe0f',title:'Balance the charges',
+   body:'Tap tiles to select them. You may need <strong>more than one</strong> of the same ion. e.g. MgCl\u2082: 1\xd7 Mg\xb2\u207a + 2\xd7 Cl\u207b \u2192 charge = 0 \u2713',
+   anim:function(){return '<div class="tut-ion cat tut-pulse">Mg<sup>2+</sup></div><span style="font-size:14px;color:#aaa">+</span><div class="tut-ion an tut-pulse" style="animation-delay:.3s">Cl<sup>\u2212</sup></div><div class="tut-ion an tut-pulse" style="animation-delay:.6s">Cl<sup>\u2212</sup></div>';}},
+  {icon:'\ud83d\udd2c',title:'Dot \u0026 Cross Diagrams',
+   body:'As you select ions, a <strong>dot \u0026 cross diagram</strong> appears showing outer shell electrons. <strong>Dots (\u2022)</strong> = cation electrons. <strong>Crosses (\xd7)</strong> = anion electrons.',
+   anim:function(){
+     return '<div style="font-size:11px;color:#4b5563;text-align:center;line-height:1.8;">'
+       +'<span style="background:#e8f5e9;border:1px solid #00c853;border-radius:6px;padding:2px 8px;font-weight:700;color:#1b5e20;">\u2022 Cation: dots</span>'
+       +'&nbsp;&nbsp;'
+       +'<span style="background:#e3f2fd;border:1px solid #2196f3;border-radius:6px;padding:2px 8px;font-weight:700;color:#0d47a1;">\xd7 Anion: crosses</span>'
+       +'<br><span style="font-size:10px;color:#aaa;">Updates live as you tap tiles!</span></div>';}},
+  {icon:'\u26a1',title:'Score big \u2014 be fast!',
+   body:'Answer in <strong>under 5 seconds</strong> for a <strong>Speed \xd74 bonus</strong>. More ions = bigger complexity bonus. Keep your streak! \ud83d\udd25',
+   anim:function(){return '<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;"><span style="background:#1a5eb8;color:#fff;padding:4px 10px;border-radius:16px;font-size:10px;font-weight:700;">Speed \xd74 \ud83d\udd25</span><span style="background:#ff8f00;color:#fff;padding:4px 10px;border-radius:16px;font-size:10px;font-weight:700;">Complexity \xd73 \ud83d\udc8e</span></div><div style="font-family:Fredoka One,cursive;font-size:20px;color:#ffd740;margin-top:6px;">= Big Points! \ud83c\udfaf</div>';}}
+];
+var tutStep=0;
+
+function showTutorial(){
+  tutStep=0;renderTutStep();
+  document.getElementById('tutorial-overlay').classList.add('active');
+  clearInterval(G.qTimerId);clearInterval(G.gameTimerId);
+}
+function renderTutStep(){
+  var s=TUT[tutStep],total=TUT.length;
+  var dots='';for(var i=0;i<total;i++)dots+='<div class="tut-dot'+(i===tutStep?' on':'')+'"></div>';
+  document.getElementById('tut-dots').innerHTML=dots;
+  document.getElementById('tut-icon').textContent=s.icon;
+  document.getElementById('tut-title').textContent=s.title;
+  document.getElementById('tut-body').innerHTML=s.body;
+  document.getElementById('tut-anim').innerHTML=s.anim();
+  document.getElementById('tut-next-btn').textContent=tutStep===total-1?'Play! \ud83d\ude80':'Next \u2192';
+  var card=document.getElementById('tut-card');
+  card.classList.remove('tut-card-anim');card.offsetHeight;card.classList.add('tut-card-anim');
+}
+function tutNext(){if(tutStep<TUT.length-1){tutStep++;renderTutStep();}else skipTutorial();}
+function skipTutorial(){
+  tutorialSeen=true;
+  document.getElementById('tutorial-overlay').classList.remove('active');
+  G.startTime=Date.now()-(G.gameMaxTime-G.gameTimeLeft)*1000;
+  G.roundStart=Date.now()-(G.qMaxTime-G.qTimeLeft)*1000;
+  G.qTimerId=setInterval(updateQTimer,100);
+  G.gameTimerId=setInterval(updateGameTimer,100);
+}
+
+// ==============
+// DATA
+// ==============
+var CATIONS=[
+  // Level 1: single charge monatomic
+  {sym:'H',ch:1,name:'hydrogen',lvl:1,html:'H<sup>+</sup>',poly:false},
+  {sym:'Na',ch:1,name:'sodium',lvl:1,html:'Na<sup>+</sup>',poly:false},
+  {sym:'K',ch:1,name:'potassium',lvl:1,html:'K<sup>+</sup>',poly:false},
+  {sym:'Li',ch:1,name:'lithium',lvl:1,html:'Li<sup>+</sup>',poly:false},
+  {sym:'Ag',ch:1,name:'silver',lvl:1,html:'Ag<sup>+</sup>',poly:false},
+  // Level 1: multi-charge monatomic
+  {sym:'Be',ch:2,name:'beryllium',lvl:1,html:'Be<sup>2+</sup>',poly:false},
+  {sym:'Mg',ch:2,name:'magnesium',lvl:1,html:'Mg<sup>2+</sup>',poly:false},
+  {sym:'Ca',ch:2,name:'calcium',lvl:1,html:'Ca<sup>2+</sup>',poly:false},
+  {sym:'Al',ch:3,name:'aluminium',lvl:1,html:'Al<sup>3+</sup>',poly:false},
+  {sym:'Fe',ch:2,name:'iron(II)',lvl:1,html:'Fe<sup>2+</sup>',poly:false,uid:'Fe2'},
+  {sym:'Fe',ch:3,name:'iron(III)',lvl:1,html:'Fe<sup>3+</sup>',poly:false,uid:'Fe3'},
+  {sym:'Cu',ch:2,name:'copper(II)',lvl:1,html:'Cu<sup>2+</sup>',poly:false},
+  {sym:'Zn',ch:2,name:'zinc',lvl:1,html:'Zn<sup>2+</sup>',poly:false},
+  {sym:'Pb',ch:2,name:'lead(II)',lvl:1,html:'Pb<sup>2+</sup>',poly:false},
+  {sym:'Ba',ch:2,name:'barium',lvl:1,html:'Ba<sup>2+</sup>',poly:false},
+  {sym:'Ni',ch:2,name:'nickel(II)',lvl:1,html:'Ni<sup>2+</sup>',poly:false},
+  // Level 2: polyatomic cations
+  {sym:'NH4',ch:1,name:'ammonium',lvl:2,html:'NH<sub>4</sub><sup>+</sup>',poly:true},
+];
+var ANIONS=[
+  // Level 1: single charge monatomic
+  {sym:'Cl',ch:1,name:'chloride',lvl:1,html:'Cl<sup>&minus;</sup>',poly:false},
+  {sym:'Br',ch:1,name:'bromide',lvl:1,html:'Br<sup>&minus;</sup>',poly:false},
+  {sym:'F',ch:1,name:'fluoride',lvl:1,html:'F<sup>&minus;</sup>',poly:false},
+  {sym:'I',ch:1,name:'iodide',lvl:1,html:'I<sup>&minus;</sup>',poly:false},
+  // Level 1: multi-charge monatomic
+  {sym:'O',ch:2,name:'oxide',lvl:1,html:'O<sup>2&minus;</sup>',poly:false},
+  {sym:'S',ch:2,name:'sulfide',lvl:1,html:'S<sup>2&minus;</sup>',poly:false},
+  {sym:'N',ch:3,name:'nitride',lvl:1,html:'N<sup>3&minus;</sup>',poly:false},
+  // Level 2: polyatomic anions
+  {sym:'OH',ch:1,name:'hydroxide',lvl:2,html:'OH<sup>&minus;</sup>',poly:true},
+  {sym:'NO3',ch:1,name:'nitrate',lvl:2,html:'NO<sub>3</sub><sup>&minus;</sup>',poly:true},
+  {sym:'NO2',ch:1,name:'nitrite',lvl:2,html:'NO<sub>2</sub><sup>&minus;</sup>',poly:true},
+  {sym:'CN',ch:1,name:'cyanide',lvl:2,html:'CN<sup>&minus;</sup>',poly:true},
+  {sym:'CO3',ch:2,name:'carbonate',lvl:2,html:'CO<sub>3</sub><sup>2&minus;</sup>',poly:true},
+  {sym:'SO4',ch:2,name:'sulfate',lvl:2,html:'SO<sub>4</sub><sup>2&minus;</sup>',poly:true},
+  {sym:'SO3',ch:2,name:'sulfite',lvl:2,html:'SO<sub>3</sub><sup>2&minus;</sup>',poly:true},
+  {sym:'S2O3',ch:2,name:'thiosulfate',lvl:2,html:'S<sub>2</sub>O<sub>3</sub><sup>2&minus;</sup>',poly:true},
+  {sym:'HCO3',ch:1,name:'hydrogen carbonate',lvl:2,html:'HCO<sub>3</sub><sup>&minus;</sup>',poly:true},
+  {sym:'MnO4',ch:1,name:'permanganate',lvl:2,html:'MnO<sub>4</sub><sup>&minus;</sup>',poly:true},
+  {sym:'PO4',ch:3,name:'phosphate',lvl:2,html:'PO<sub>4</sub><sup>3&minus;</sup>',poly:true},
+  {sym:'Cr2O7',ch:2,name:'dichromate',lvl:2,html:'Cr<sub>2</sub>O<sub>7</sub><sup>2&minus;</sup>',poly:true},
+  {sym:'CH3COO',ch:1,name:'ethanoate',lvl:2,html:'CH<sub>3</sub>COO<sup>&minus;</sup>',poly:true},
+];
+
+// ==============
+// STATE
+// ==============
+var G={name:'',score:0,streak:0,bestStreak:0,correct:0,wrong:0,skipped:0,log:[],
+  level:1,active:false,target:null,selected:{},recentCompounds:[],
+  qTimerId:null,qTimeLeft:35,qMaxTime:35,roundStart:0,
+  gameTimerId:null,gameTimeLeft:240,gameMaxTime:240};
+var leaderboard=[];
+var audioCtx=null;
+var musicGain=null;
+var musicPlaying=false;
+
+// ==============
+// UTIL
+// ==============
+function gcd(a,b){return b===0?a:gcd(b,a%b);}
+function shuffle(a){var b=a.slice();for(var i=b.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=b[i];b[i]=b[j];b[j]=t;}return b;}
+function ionUid(n){return n.uid||(n.sym+n.ch);}
+function lvlName(l){return['','Level 1','Level 2'][l];}
+
+function fmtHTML(cat,an,cN,aN){var f='';if(cN>1&&cat.poly)f+='('+cat.sym+')';else f+=cat.sym;if(cN>1)f+='<span class="sub">'+cN+'</span>';if(aN>1&&an.poly)f+='('+an.sym+')';else f+=an.sym;if(aN>1)f+='<span class="sub">'+aN+'</span>';return f;}
+function fmtPlain(cat,an,cN,aN){var f='';if(cN>1&&cat.poly)f+='('+cat.sym+')';else f+=cat.sym;if(cN>1)f+=cN;if(aN>1&&an.poly)f+='('+an.sym+')';else f+=an.sym;if(aN>1)f+=aN;return f;}
+
+function speedMult(){var e=(Date.now()-G.roundStart)/1000;if(e<5)return 4;if(e<10)return 3;if(e<17)return 2.5;if(e<24)return 2;if(e<30)return 1.5;return 1;}
+function complexityMult(cCount,aCount){var total=cCount+aCount;if(total<=2)return 1;if(total===3)return 2;if(total<=5)return 3;return 4;}
+function updateSpeedInd(){var el=document.getElementById('speed-ind');var e=(Date.now()-G.roundStart)/1000;if(e<5){el.textContent='SPEED x4';el.className='speed-indicator';}else if(e<10){el.textContent='SPEED x3';el.className='speed-indicator';}else if(e<17){el.textContent='SPEED x2.5';el.className='speed-indicator med';}else if(e<24){el.textContent='SPEED x2';el.className='speed-indicator med';}else if(e<30){el.textContent='SPEED x1.5';el.className='speed-indicator med';}else{el.textContent='SPEED x1';el.className='speed-indicator slow';}}
+
+function getIonsForLevel(lvl){
+  var cats=CATIONS.filter(function(c){return c.lvl<=lvl;});
+  var ans=ANIONS.filter(function(a){return a.lvl<=lvl;});
+  return{cats:cats,ans:ans};
+}
+
+// ==============
+// TARGET
+// ==============
+function genTarget(){
+  var io=getIonsForLevel(G.level);
+  var cat,an;
+  var attempts=0;
+  do{
+    cat=io.cats[Math.floor(Math.random()*io.cats.length)];
+    an=io.ans[Math.floor(Math.random()*io.ans.length)];
+    var compName=cat.name+' '+an.name;
+    if(G.recentCompounds.indexOf(compName)<0)break;
+    attempts++;
+  }while(attempts<5);
+
+  var g=gcd(cat.ch,an.ch);
+  var cCount=an.ch/g,aCount=cat.ch/g;
+  var target={cation:cat,anion:an,cCount:cCount,aCount:aCount,
+    formula:fmtHTML(cat,an,cCount,aCount),
+    formulaPlain:fmtPlain(cat,an,cCount,aCount),
+    compoundName:cat.name+' '+an.name};
+
+  G.recentCompounds.push(target.compoundName);
+  if(G.recentCompounds.length>5)G.recentCompounds.shift();
+
+  return target;
+}
+
+// ==============
+// GRID
+// ==============
+function buildGrid(){
+  var io=getIonsForLevel(G.level),target=G.target,ions=[];
+  var ac=target.cCount;for(var i=0;i<ac+1;i++)ions.push(Object.assign({},target.cation,{type:'cation'}));
+  var aa=target.aCount;for(var i=0;i<aa+1;i++)ions.push(Object.assign({},target.anion,{type:'anion'}));
+
+  var oc=shuffle(io.cats.filter(function(c){return ionUid(c)!==ionUid(target.cation);}));
+  var oa=shuffle(io.ans.filter(function(a){return ionUid(a)!==ionUid(target.anion);}));
+  var ci=0,ai=0;
+  while(ions.length<16){
+    if(ions.length%2===0&&ci<oc.length)ions.push(Object.assign({},oc[ci++],{type:'cation'}));
+    else if(ai<oa.length)ions.push(Object.assign({},oa[ai++],{type:'anion'}));
+    else if(ci<oc.length)ions.push(Object.assign({},oc[ci++],{type:'cation'}));
+    else break;
+  }
+  var final=shuffle(ions.slice(0,16));
+  var area=document.getElementById('grid-area');area.innerHTML='';
+  for(var r=0;r<4;r++){
+    var row=document.createElement('div');row.className='grid-row';
+    for(var c=0;c<4;c++){
+      var idx=r*4+c;if(idx>=final.length)break;
+      var ion=final[idx],tile=document.createElement('div');
+      tile.className='stone '+ion.type;
+      tile.innerHTML='<span class="ion-text">'+ion.html+'</span>';
+      tile.dataset.uid=ionUid(ion)+'_'+idx;tile.dataset.ionUid=ionUid(ion);
+      tile.dataset.type=ion.type;tile.dataset.sym=ion.sym;tile.dataset.ch=ion.ch;
+      tile.dataset.poly=ion.poly?'1':'0';tile.dataset.name=ion.name||'';
+      (function(t,io){t.addEventListener('click',function(){handleTile(t,io);});})(tile,ion);
+      row.appendChild(tile);
+    }
+    area.appendChild(row);
+  }
+}
+
+function handleTile(el,ion){
+  var uid=ionUid(ion);
+  if(el.classList.contains('selected')){
+    if(G.selected[uid]){G.selected[uid]--;}
+    if(G.selected[uid]<=0){delete G.selected[uid];el.classList.remove('selected');}else{el.classList.add('selected');}
+  }else{
+    G.selected[uid]=(G.selected[uid]||0)+1;
+    el.classList.add('selected');
+  }
+  updateFormula();
+  updateDotCross();
+  playClick();
+}
+
+function updateFormula(){
+  var cats=Object.keys(G.selected).map(function(k){var c=CATIONS.find(function(x){return ionUid(x)===k;});return{ion:c,count:G.selected[k]};}).filter(function(x){return x.ion;});
+  var ans=Object.keys(G.selected).map(function(k){var a=ANIONS.find(function(x){return ionUid(x)===k;});return{ion:a,count:G.selected[k]};}).filter(function(x){return x.ion;});
+
+  var fb=document.getElementById('formula-built');
+  if(cats.length===0||ans.length===0){fb.innerHTML='';document.getElementById('charge-status').className='charge-status neutral';document.getElementById('charge-status').textContent='Select ions from the grid';return;}
+
+  var posCharge=0,negCharge=0;
+  cats.forEach(function(c){posCharge+=c.ion.ch*c.count;});
+  ans.forEach(function(a){negCharge+=a.ion.ch*a.count;});
+
+  var formula='';
+  cats.forEach(function(c){formula+=(c.count>1&&c.ion.poly?'(':'')+(c.ion.sym)+(c.count>1&&c.ion.poly?')':'');if(c.count>1)formula+='<span class="sub">'+c.count+'</span>';});
+  ans.forEach(function(a){formula+=(a.count>1&&a.ion.poly?'(':'')+(a.ion.sym)+(a.count>1&&a.ion.poly?')':'');if(a.count>1)formula+='<span class="sub">'+a.count+'</span>';});
+
+  fb.innerHTML=formula;
+  var status=document.getElementById('charge-status');
+  if(posCharge===negCharge){status.className='charge-status balanced';status.textContent='Balanced! ✓';}
+  else{status.className='charge-status unbalanced';status.textContent='Charges: +'+posCharge+' vs −'+negCharge;}
+
+  if(posCharge===negCharge){document.getElementById('btn-check').classList.add('ready');}
+  else{document.getElementById('btn-check').classList.remove('ready');}
+}
+
+function clearSelection(){
+  G.selected={};
+  document.querySelectorAll('.stone').forEach(function(s){s.classList.remove('selected');});
+  updateFormula();
+  playClick();
+}
+
+// ==============
+// SCORE
+// ==============
+function calcScore(speedM,complexM){
+  var basePts=10+(G.streak*3);
+  var total=Math.round(basePts*speedM*complexM);
+  return{total:total,base:basePts,speedM:speedM,complexM:complexM};
+}
+
+// ==============
+// CHECK & FEEDBACK
+// ==============
+function checkAnswer(){
+  if(!document.getElementById('btn-check').classList.contains('ready'))return;
+  clearTimeout(G.qTimerId);
+
+  var cats=Object.keys(G.selected).map(function(k){var c=CATIONS.find(function(x){return ionUid(x)===k;});return{ion:c,count:G.selected[k]};}).filter(function(x){return x.ion;});
+  var ans=Object.keys(G.selected).map(function(k){var a=ANIONS.find(function(x){return ionUid(x)===k;});return{ion:a,count:G.selected[k]};}).filter(function(x){return x.ion;});
+
+  if(cats.length!==1||ans.length!==1){playWrong();showFeedback('Try again!','fail');return;}
+
+  var cat=cats[0],an=ans[0];
+  var isCorrect=(ionUid(cat.ion)===ionUid(G.target.cation)&&ionUid(an.ion)===ionUid(G.target.anion)&&cat.count===G.target.cCount&&an.count===G.target.aCount);
+
+  if(isCorrect){
+    playCorrect();
+    var speedM=speedMult();
+    var complexM=complexityMult(G.target.cCount,G.target.aCount);
+    var score=calcScore(speedM,complexM);
+    G.score+=score.total;
+    G.streak++;
+    G.correct++;
+    if(G.streak>G.bestStreak)G.bestStreak=G.streak;
+
+    var feedbackText='+ '+score.total+' pts';
+    var bonusText='Speed x'+speedM.toFixed(1)+' + Hard x'+complexM.toFixed(1);
+
+    G.log.push({formula:G.target.formulaPlain,pts:score.total,ok:true});
+    updateHUD();
+    playUnlock();
+
+    var fb=document.getElementById('fb-msg');
+    fb.innerHTML='Correct!<span class="bonus-line">'+bonusText+'</span>';
+    fb.className='feedback-msg ok';
+    showFb();
+
+    setTimeout(nextRound,1800);
+  }else{
+    playWrong();
+    G.wrong++;
+    G.streak=0;
+    G.log.push({formula:G.target.formulaPlain,pts:0,ok:false});
+    updateHUD();
+
+    var fb=document.getElementById('fb-msg');
+    fb.innerHTML='Not quite<span class="correct-formula">'+G.target.formula+'</span>';
+    fb.className='feedback-msg fail';
+    showFb();
+
+    setTimeout(nextRound,1800);
+  }
+}
+
+function skipRound(){
+  clearTimeout(G.qTimerId);
+  G.skipped++;
+  G.streak=0;
+  G.log.push({formula:G.target.formulaPlain,pts:0,ok:false});
+  updateHUD();
+  nextRound();
+}
+
+function nextRound(){
+  if(G.gameTimeLeft<=0){endGame();return;}
+  G.target=genTarget();
+  G.selected={};
+  buildGrid();
+  updateFormula();
+  clearTimeout(G.qTimerId);
+  G.qTimeLeft=G.qMaxTime;
+  G.roundStart=Date.now();
+  updateQTimer();
+  G.qTimerId=setInterval(updateQTimer,100);
+
+  document.getElementById('prompt-name').textContent=G.target.compoundName.replace(/ /g,'\u00a0');
+  document.getElementById('prompt-label').textContent='Form this compound';
+  document.getElementById('prompt-hint').textContent='Select the correct ions to balance charges';
+}
+
+function updateQTimer(){
+  var elapsed=(Date.now()-G.roundStart)/1000;
+  G.qTimeLeft=Math.max(0,G.qMaxTime-elapsed);
+
+  if(G.qTimeLeft<=0){
+    clearTimeout(G.qTimerId);
+    G.skipped++;
+    G.streak=0;
+    G.log.push({formula:G.target.formulaPlain,pts:0,ok:false});
+    updateHUD();
+
+    var fb=document.getElementById('fb-msg');
+    fb.innerHTML='Time\'s up!<span class="correct-formula">'+G.target.formula+'</span>';
+    fb.className='feedback-msg timeout';
+    showFb();
+
+    setTimeout(nextRound,1800);
+    return;
+  }
+
+  var qLabel=document.getElementById('timer-label');
+  var sec=Math.ceil(G.qTimeLeft);
+  qLabel.textContent='0:'+('0'+sec).slice(-2);
+
+  var pct=(G.qTimeLeft/G.qMaxTime)*100;
+  var fill=document.getElementById('timer-fill');
+  fill.style.width=pct+'%';
+  fill.className='timer-fill'+(pct<40?'danger':pct<60?'warn':'');
+
+  updateSpeedInd();
+}
+
+function updateHUD(){
+  document.getElementById('hud-score').textContent=G.score;
+  var sc=document.getElementById('hud-streak');
+  sc.textContent=G.streak;
+  if(G.streak>=5){sc.classList.add('fire');}
+  else if(G.streak>=2){sc.classList.add('hot');}
+  else{sc.classList.remove('fire','hot');}
+}
+
+function showFb(){
+  var fb=document.getElementById('fb-overlay');
+  fb.classList.add('show');
+  setTimeout(function(){fb.classList.remove('show');},1500);
+}
+
+// ==============
+// GAME LOOP
+// ==============
+function startGame(){
+  var name=(document.getElementById('inp-name').value||'Player').trim();
+  if(!name)name='Player';
+  G.name=name;
+  G.score=0;
+  G.streak=0;
+  G.bestStreak=0;
+  G.correct=0;
+  G.wrong=0;
+  G.skipped=0;
+  G.log=[];
+  G.recentCompounds=[];
+  G.active=true;
+  G.gameTimeLeft=G.gameMaxTime;
+  G.startTime=Date.now();
+
+  document.getElementById('level-pill').textContent=lvlName(G.level).toUpperCase();
+
+  showScreen('game-screen');
+  playClick();
+  startMusicIntense();
+
+  G.target=genTarget();
+  G.selected={};
+  buildGrid();
+  updateFormula();
+  updateHUD();
+
+  G.qTimeLeft=G.qMaxTime;
+  G.roundStart=Date.now();
+  G.qTimerId=setInterval(updateQTimer,100);
+
+  document.getElementById('prompt-name').textContent=G.target.compoundName.replace(/ /g,'\u00a0');
+
+  G.gameTimerId=setInterval(updateGameTimer,100);
+  if(!tutorialSeen)setTimeout(showTutorial,500);
+}
+
+function updateGameTimer(){
+  var elapsed=(Date.now()-G.startTime)/1000;
+  G.gameTimeLeft=Math.max(0,G.gameMaxTime-elapsed);
+
+  var t=document.getElementById('hud-time');
+  var min=Math.floor(G.gameTimeLeft/60);
+  var sec=Math.ceil(G.gameTimeLeft%60);
+  t.textContent=min+':'+('0'+sec).slice(-2);
+
+  if(G.gameTimeLeft<=30&&G.gameTimeLeft>0){t.classList.add('time-warn');}
+  if(G.gameTimeLeft<=5&&G.gameTimeLeft>0){t.classList.add('time-danger');}
+  if(G.gameTimeLeft<=0){t.classList.remove('time-warn','time-danger');}
+
+  if(G.gameTimeLeft<=0){endGame();}
+}
+
+function endGame(){
+  G.active=false;
+  clearTimeout(G.qTimerId);
+  clearTimeout(G.gameTimerId);
+  stopMusic();
+
+  updateLeaderboard();
+  showTrophy();
+  playClick();
+}
+
+// ==============
+// UI
+// ==============
+function pickLevel(l){
+  G.level=l;
+  document.querySelectorAll('.level-btn').forEach(function(b){b.classList.remove('picked');});
+  document.getElementById('lb'+l).classList.add('picked');
+  playClick();
+}
+
+function showScreen(id){
+  var p=document.getElementById('dxpanel');if(p&&id!=='game-screen')p.classList.remove('visible');
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
+  document.getElementById(id).classList.add('active');
+}
+
+function showTrophy(){
+  var stats='<div class="stat-box"><div class="stat-num">'+G.correct+'</div><div class="stat-txt">Correct</div></div><div class="stat-box"><div class="stat-num">'+G.wrong+'</div><div class="stat-txt">Wrong</div></div><div class="stat-box"><div class="stat-num">'+G.bestStreak+'</div><div class="stat-txt">Best Streak</div></div>';
+  document.getElementById('trophy-stats').innerHTML=stats;
+
+  var logHtml='';
+  G.log.forEach(function(entry){
+    logHtml+='<div class="log-row"><div class="log-ico">'+(entry.ok?'✓':'✗')+'</div><div class="log-f">'+entry.formula+'</div><div class="log-p">'+(entry.pts>0?'+'+entry.pts:'—')+'</div></div>';
+  });
+  document.getElementById('trophy-log').innerHTML=logHtml;
+
+  document.getElementById('trophy-score').textContent=G.score;
+  showScreen('trophy-screen');
+  playTrophyMusic();
+  createConfetti();
+}
+
+function createConfetti(){
+  var wrap=document.getElementById('confetti-wrap');
+  for(var i=0;i<40;i++){
+    var conf=document.createElement('div');
+    conf.className='confetti';
+    var colors=['#ffd740','#ff8f00','#00c853','#2196f3','#7c4dff'];
+    conf.style.background=colors[Math.floor(Math.random()*colors.length)];
+    conf.style.left=Math.random()*100+'%';
+    conf.style.setProperty('--dur',(2+Math.random()*1)+'s');
+    conf.style.setProperty('--delay',Math.random()*0.5+'s');
+    wrap.appendChild(conf);
+  }
+}
+
+// 🔧 MODIFIED: fetch top-10 from Firebase in real time
+// ✅ SHEETS: fetch top-10 scores via GET request to Apps Script
+function showLB(){
+  showScreen('leaderboard-screen');playClick();
+  document.getElementById('lb-list').innerHTML='<div class="lb-empty">Loading…</div>';
+  fetch(SHEETS_URL + '?action=get', {redirect: 'follow'})
+    .then(function(r){return r.json();})
+    .then(function(entries){
+      leaderboard = entries; // keep local array in sync
+      var html='';
+      entries.forEach(function(e,i){
+        var p=i+1,pc='';if(p===1)pc='g';else if(p===2)pc='s';else if(p===3)pc='b';
+        html+='<div class="lb-entry"><div class="lb-pos '+pc+'">'+p+'.</div><div class="lb-who">'+e.name+'</div><div class="lb-pts">'+e.score+'</div></div>';
+      });
+      document.getElementById('lb-list').innerHTML=html||'<div class="lb-empty">No scores yet. Play to join!</div>';
+    })
+    .catch(function(){
+      document.getElementById('lb-list').innerHTML='<div class="lb-empty">Could not load scores. Check your connection.</div>';
+    });
+}
+
+// ✅ SHEETS: GET with params — avoids CORS issues with Apps Script
+function updateLeaderboard(){
+  var url = SHEETS_URL
+    + '?action=save'
+    + '&name=' + encodeURIComponent(G.name)
+    + '&score=' + encodeURIComponent(G.score);
+  fetch(url)
+    .then(function(r){return r.json();})
+    .then(function(res){console.log('Score saved:',res);})
+    .catch(function(e){console.warn('Score save failed:',e);});
+  // Update local array for immediate trophy screen display
+  leaderboard.push({name:G.name, score:G.score});
+  leaderboard.sort(function(a,b){return b.score-a.score;});
+  leaderboard = leaderboard.slice(0,10);
+}
+
+// ✅ SHEETS: init local array; Sheets is the source of truth, fetched in showLB()
+function loadLeaderboard(){
+  try{var s=localStorage.getItem('bf-lb');if(s)leaderboard=JSON.parse(s);}catch(e){}
+}
+
+function openModal(){
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal(){
+  document.getElementById('modal').classList.remove('open');
+}
+
+// ==============
+// AUDIO
+// ==============
+function initAudio(){
+  if(audioCtx)return;
+  audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  var masterGain=audioCtx.createGain();
+  masterGain.connect(audioCtx.destination);
+  musicGain=audioCtx.createGain();
+  musicGain.connect(masterGain);
+  masterGain.gain.value=0.3;
+}
+
+function playClick(){
+  initAudio();
+  var now=audioCtx.currentTime;
+  var osc=audioCtx.createOscillator();
+  var gain=audioCtx.createGain();
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  gain.gain.value=0.15;
+  osc.frequency.setValueAtTime(800,now);
+  osc.frequency.exponentialRampToValueAtTime(600,now+0.05);
+  osc.start(now);osc.stop(now+0.05);
+}
+
+function playCorrect(){
+  initAudio();
+  var now=audioCtx.currentTime;
+  [1000,1200].forEach(function(f,i){
+    var osc=audioCtx.createOscillator();
+    var gain=audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    gain.gain.value=0.15;
+    osc.frequency.value=f;
+    osc.start(now+i*0.1);osc.stop(now+i*0.1+0.1);
+  });
+}
+
+function playWrong(){
+  initAudio();
+  var now=audioCtx.currentTime;
+  var osc=audioCtx.createOscillator();
+  var gain=audioCtx.createGain();
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  gain.gain.value=0.15;
+  osc.frequency.setValueAtTime(400,now);
+  osc.frequency.exponentialRampToValueAtTime(300,now+0.2);
+  osc.start(now);osc.stop(now+0.2);
+}
+
+function playUnlock(){
+  initAudio();
+  var now=audioCtx.currentTime;
+  var freqs=[600,800,1000];
+  freqs.forEach(function(f,i){
+    var osc=audioCtx.createOscillator();
+    var gain=audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    gain.gain.value=0.1;
+    osc.frequency.value=f;
+    osc.start(now+i*0.05);osc.stop(now+i*0.05+0.1);
+  });
+}
+
+function startMusicIntense(){
+  // Music removed
+}
+
+function playTrophyMusic(){
+  // Music removed
+  return;
+  var now=audioCtx.currentTime;
+  var fanfareFreqs=[];
+  fanfareFreqs.forEach(function(f,i){
+  });
+}
+
+function stopMusic(){
+  musicPlaying=false;
+  if(musicGain)musicGain.gain.value=0;
+}
+
+function toggleMusic(){
+  var btn=document.getElementById('music-toggle');
+  if(musicPlaying){
+    stopMusic();
+    btn.classList.add('muted');
+  }else if(G.active){
+    startMusicIntense();
+    btn.classList.remove('muted');
+  }
+}
+
+// ==============
+// INIT
+// ==============
+function initSparkles(){
+  var wrap=document.getElementById('start-sparkles');
+  if(!wrap)return;
+  for(var i=0;i<25;i++){
+    var sp=document.createElement('div');
+    sp.className='sparkle';
+    sp.style.setProperty('--dur',(2+Math.random()*2)+'s');
+    sp.style.setProperty('--delay',Math.random()*4+'s');
+    sp.style.left=Math.random()*100+'%';
+    sp.style.top=Math.random()*80+'%';
+    wrap.appendChild(sp);
+  }
+}
+
+window.addEventListener('load',function(){
+  loadLeaderboard();
+  initSparkles();
+  G.startTime=Date.now();
+  document.getElementById('inp-name').focus();
+});
+</script>
+</body>
+</html>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
