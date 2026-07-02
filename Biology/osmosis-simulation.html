@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Osmosis Simulation</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap');
+
+  :root {
+    --bg: #0a0f1e;
+    --panel: #0f1729;
+    --border: #1e2d4a;
+    --water: #3b82f6;
+    --solute: #f97316;
+    --membrane: #a78bfa;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --accent: #38bdf8;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px;
+    background-image: radial-gradient(ellipse at 20% 50%, rgba(59,130,246,0.05) 0%, transparent 60%),
+                      radial-gradient(ellipse at 80% 20%, rgba(167,139,250,0.07) 0%, transparent 50%);
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(1.4rem, 4vw, 2.2rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, var(--accent), var(--membrane));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 4px;
+    text-align: center;
+  }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+    text-align: center;
+  }
+
+  .sim-wrapper {
+    width: 100%;
+    max-width: 860px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 0 60px rgba(59,130,246,0.08), 0 0 0 1px rgba(255,255,255,0.03);
+  }
+
+  canvas {
+    display: block;
+    width: 100%;
+    background: #060b18;
+  }
+
+  .controls {
+    padding: 20px 24px;
+    border-top: 1px solid var(--border);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .control-label {
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .control-label span { color: var(--accent); }
+
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--border);
+    outline: none;
+  }
+
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    box-shadow: 0 0 8px rgba(56,189,248,0.6);
+  }
+
+  .btn-row {
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 10px;
+  }
+
+  button {
+    flex: 1;
+    padding: 10px 16px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+  }
+
+  button:hover { border-color: var(--accent); color: var(--accent); background: rgba(56,189,248,0.05); }
+  button.active { background: var(--accent); color: #000; border-color: var(--accent); }
+  button.pore-btn.active { background: #22c55e; border-color: #22c55e; color: #000; }
+  button.pore-btn.active:hover { background: #16a34a; border-color: #16a34a; }
+  button.pore-btn:not(.active) { border-color: #ef4444; color: #ef4444; }
+  button.pore-btn:not(.active):hover { background: rgba(239,68,68,0.1); }
+
+  .credits {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding-top: 6px;
+    border-top: 1px solid var(--border);
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+  .credits a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .credits a:hover { text-decoration: underline; }
+
+  .legend {
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.7rem;
+    color: var(--muted);
+  }
+
+  .dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .info-bar {
+    grid-column: 1 / -1;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 0.72rem;
+    line-height: 1.7;
+    color: #94a3b8;
+  }
+
+  .info-bar strong { color: var(--membrane); }
+
+  .stats-row {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+
+  .stat-box {
+    background: rgba(0,0,0,0.25);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    text-align: center;
+  }
+
+  .stat-box .val {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--accent);
+  }
+
+  .stat-box .lbl {
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  @media (max-width: 500px) {
+    .controls { grid-template-columns: 1fr; }
+    .btn-row { flex-direction: column; }
+    .stats-row { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<h1>Osmosis Simulation</h1>
+<p class="subtitle">Partially Permeable Membrane · Particle Movement</p>
+
+<div class="sim-wrapper">
+  <canvas id="canvas"></canvas>
+  <div class="controls">
+    <div class="control-group">
+      <div class="control-label">Left Solute Concentration <span id="lc-val">30%</span></div>
+      <input type="range" id="left-conc" min="0" max="60" value="30">
+    </div>
+    <div class="control-group">
+      <div class="control-label">Right Solute Concentration <span id="rc-val">10%</span></div>
+      <input type="range" id="right-conc" min="0" max="60" value="10">
+    </div>
+
+    <div class="btn-row">
+      <button id="btn-play" class="active">⏸ Pause</button>
+      <button id="btn-reset">↺ Reset</button>
+      <button id="btn-speed">Speed: 1×</button>
+      <button id="btn-pores" class="active pore-btn">🔓 Pores Open</button>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-box"><div class="val" id="stat-left">—</div><div class="lbl">Left Water</div></div>
+      <div class="stat-box"><div class="val" id="stat-cross">0</div><div class="lbl">Crossings/s</div></div>
+      <div class="stat-box"><div class="val" id="stat-right">—</div><div class="lbl">Right Water</div></div>
+    </div>
+
+    <div class="legend">
+      <div class="legend-item"><div class="dot" style="background:#3b82f6"></div> Water molecule (H₂O)</div>
+      <div class="legend-item"><div class="dot" style="background:#f97316"></div> Solute particle</div>
+      <div class="legend-item"><div class="dot" style="background:#a78bfa; border-radius:2px; width:6px; height:12px;"></div> Membrane pore</div>
+    </div>
+
+    <div class="info-bar">
+      <strong>How it works:</strong> Water molecules pass freely through membrane pores. Solute particles are too large to pass. High solute = low water concentration → water moves from <em>low</em> to <em>high</em> solute side (osmosis) until equilibrium.
+    </div>
+
+    <div class="credits">
+      Created by <strong>Mr Lau Chin Hang</strong> &nbsp;·&nbsp;
+      <a href="https://www.instagram.com/curiominds.inc" target="_blank">@curiominds.inc</a>
+    </div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+let W, H, MX; // canvas dims, membrane x
+const MEMBRANE_W = 14;
+const PORE_SLOTS = 7;
+
+let particles = [];
+let running = true;
+let speedMult = 1;
+let crossings = 0;
+let lastCrossTime = Date.now();
+let crossPerSec = 0;
+
+let leftConc = 30;
+let rightConc = 10;
+let poresOpen = true;
+let poreAnimT = 1.0; // 0=fully closed, 1=fully open (animated)
+
+const TOTAL = 220;
+const PARTICLE_R = 5;
+const WATER_R = 4;
+
+function resize() {
+  const rect = canvas.parentElement.getBoundingClientRect();
+  W = Math.min(rect.width, 860);
+  H = Math.round(W * 0.52);
+  canvas.width = W;
+  canvas.height = H;
+  MX = W / 2;
+}
+
+function randBetween(a, b) { return a + Math.random() * (b - a); }
+
+function initParticles() {
+  particles = [];
+  crossings = 0;
+
+  const leftSoluteCount = Math.round(TOTAL * leftConc / 100 / 2);
+  const rightSoluteCount = Math.round(TOTAL * rightConc / 100 / 2);
+  const leftWaterCount = Math.round(TOTAL / 2) - leftSoluteCount;
+  const rightWaterCount = Math.round(TOTAL / 2) - rightSoluteCount;
+
+  const pad = 20, memPad = MEMBRANE_W / 2 + 10;
+
+  for (let i = 0; i < leftWaterCount; i++) {
+    particles.push(createParticle('water', pad, MX - memPad, pad, H - pad));
+  }
+  for (let i = 0; i < leftSoluteCount; i++) {
+    particles.push(createParticle('solute', pad, MX - memPad, pad, H - pad));
+  }
+  for (let i = 0; i < rightWaterCount; i++) {
+    particles.push(createParticle('water', MX + memPad, W - pad, pad, H - pad));
+  }
+  for (let i = 0; i < rightSoluteCount; i++) {
+    particles.push(createParticle('solute', MX + memPad, W - pad, pad, H - pad));
+  }
+}
+
+function createParticle(type, x1, x2, y1, y2) {
+  const speed = type === 'water' ? 1.4 : 0.75;
+  // Pick a random angle but ensure neither component is too small (avoid near-axis travel that causes sticking)
+  let angle;
+  do { angle = Math.random() * Math.PI * 2; }
+  while (Math.abs(Math.cos(angle)) < 0.15 || Math.abs(Math.sin(angle)) < 0.15);
+  return {
+    type,
+    x: randBetween(x1, x2),
+    y: randBetween(y1, y2),
+    vx: Math.cos(angle) * speed,
+    vy: Math.sin(angle) * speed,
+    speed,
+    r: type === 'water' ? WATER_R : PARTICLE_R + 1,
+    side: x1 < MX ? 'left' : 'right',
+    poreY: null,
+    crossing: false,
+    crossProgress: 0,
+  };
+}
+
+function enforceSpeed(p) {
+  // Keep particle moving at its designated speed at all times
+  const cur = Math.hypot(p.vx, p.vy);
+  if (cur < 0.01) {
+    // Completely stopped — give a fresh random direction
+    let angle;
+    do { angle = Math.random() * Math.PI * 2; }
+    while (Math.abs(Math.cos(angle)) < 0.15 || Math.abs(Math.sin(angle)) < 0.15);
+    p.vx = Math.cos(angle) * p.speed;
+    p.vy = Math.sin(angle) * p.speed;
+  } else {
+    // Rescale to exact speed
+    p.vx = (p.vx / cur) * p.speed;
+    p.vy = (p.vy / cur) * p.speed;
+  }
+}
+
+// Pore y-positions
+function getPoreYs() {
+  const ys = [];
+  const spacing = H / (PORE_SLOTS + 1);
+  for (let i = 1; i <= PORE_SLOTS; i++) ys.push(spacing * i);
+  return ys;
+}
+
+function update(dt) {
+  // Animate pore open/close
+  const poreTarget = poresOpen ? 1.0 : 0.0;
+  poreAnimT += (poreTarget - poreAnimT) * Math.min(dt * 0.008, 1);
+  if (Math.abs(poreAnimT - poreTarget) < 0.001) poreAnimT = poreTarget;
+
+  const poreYs = getPoreYs();
+  const poreHeight = H / (PORE_SLOTS + 1) * 0.35;
+  const memLeft = MX - MEMBRANE_W / 2;
+  const memRight = MX + MEMBRANE_W / 2;
+
+  particles.forEach(p => {
+    if (p.crossing) {
+      // Animate through pore
+      p.crossProgress += dt * 0.003 * speedMult;
+      const dir = p.side === 'left' ? 1 : -1;
+      p.x = MX + dir * (p.crossProgress - 0.5) * MEMBRANE_W * 2.5;
+      if (p.crossProgress >= 1) {
+        p.crossing = false;
+        p.side = p.side === 'left' ? 'right' : 'left';
+        p.vx = (p.side === 'right' ? 1 : -1) * p.speed * 0.8;
+        p.vy = (Math.random() < 0.5 ? 1 : -1) * p.speed * 0.6;
+        enforceSpeed(p);
+        crossings++;
+      }
+      return;
+    }
+
+    p.x += p.vx * dt * 0.05 * speedMult;
+    p.y += p.vy * dt * 0.05 * speedMult;
+
+    // Top/bottom wall bounce
+    if (p.y - p.r < 0) {
+      p.y = p.r + 0.5;
+      p.vy = Math.abs(p.vy) || 0.3;
+      enforceSpeed(p);
+    }
+    if (p.y + p.r > H) {
+      p.y = H - p.r - 0.5;
+      p.vy = -(Math.abs(p.vy) || 0.3);
+      enforceSpeed(p);
+    }
+
+    // Left outer wall
+    if (p.side === 'left' && p.x - p.r < p.r) {
+      p.x = p.r * 2 + 0.5;
+      p.vx = Math.abs(p.vx) || 0.3;
+      enforceSpeed(p);
+    }
+    // Right outer wall
+    if (p.side === 'right' && p.x + p.r > W - p.r) {
+      p.x = W - p.r * 2 - 0.5;
+      p.vx = -(Math.abs(p.vx) || 0.3);
+      enforceSpeed(p);
+    }
+
+    // Check for membrane crossing (water only, and only when pores are open enough)
+    if (p.type === 'water' && !p.crossing && poreAnimT > 0.5) {
+      const nearMem = (p.side === 'left' && p.x + p.r >= memLeft && p.vx > 0) ||
+                      (p.side === 'right' && p.x - p.r <= memRight && p.vx < 0);
+      if (nearMem) {
+        let foundPore = false;
+        for (let py of poreYs) {
+          if (Math.abs(p.y - py) < poreHeight) {
+            p.crossing = true;
+            p.crossProgress = 0;
+            p.poreY = py;
+            p.y = py;
+            foundPore = true;
+            break;
+          }
+        }
+        if (!foundPore) {
+          if (p.side === 'left') {
+            p.x = memLeft - p.r - 0.5;
+            p.vx = -(Math.abs(p.vx) || 0.3);
+          } else {
+            p.x = memRight + p.r + 0.5;
+            p.vx = Math.abs(p.vx) || 0.3;
+          }
+          enforceSpeed(p);
+        }
+      }
+    }
+
+    // Bounce water off membrane when pores are closed
+    if (p.type === 'water' && !p.crossing && poreAnimT <= 0.5) {
+      if (p.side === 'left' && p.x + p.r >= memLeft) {
+        p.x = memLeft - p.r - 0.5;
+        p.vx = -(Math.abs(p.vx) || 0.3);
+        enforceSpeed(p);
+      }
+      if (p.side === 'right' && p.x - p.r <= memRight) {
+        p.x = memRight + p.r + 0.5;
+        p.vx = Math.abs(p.vx) || 0.3;
+        enforceSpeed(p);
+      }
+    }
+
+    // Bounce solutes off membrane
+    if (p.type === 'solute') {
+      if (p.side === 'left' && p.x + p.r >= memLeft) {
+        p.x = memLeft - p.r - 0.5;
+        p.vx = -(Math.abs(p.vx) || 0.3);
+        enforceSpeed(p);
+      }
+      if (p.side === 'right' && p.x - p.r <= memRight) {
+        p.x = memRight + p.r + 0.5;
+        p.vx = Math.abs(p.vx) || 0.3;
+        enforceSpeed(p);
+      }
+    }
+  });
+
+  // Update crossings/s
+  const now = Date.now();
+  if (now - lastCrossTime >= 1000) {
+    crossPerSec = crossings;
+    crossings = 0;
+    lastCrossTime = now;
+  }
+}
+
+function drawMembrane() {
+  const poreYs = getPoreYs();
+  const basePoreHeight = H / (PORE_SLOTS + 1) * 0.35;
+  const poreHeight = basePoreHeight * poreAnimT; // shrinks to 0 when closed
+  const mx = MX, mw = MEMBRANE_W;
+
+  // Closed membrane colour: shift from purple to red as pores close
+  const r = Math.round(109 + (180 - 109) * (1 - poreAnimT));
+  const g = Math.round(40 * poreAnimT);
+  const b = Math.round(217 * poreAnimT + 40 * (1 - poreAnimT));
+  const memCol = `rgb(${r},${g},${b})`;
+  const memColMid = poreAnimT > 0.5
+    ? '#a78bfa'
+    : `rgb(${Math.round(220 * (1-poreAnimT) + 167 * poreAnimT)},${Math.round(80 * poreAnimT)},${Math.round(250 * poreAnimT + 60 * (1-poreAnimT))})`;
+
+  ctx.save();
+  let prevY = 0;
+  for (let py of poreYs) {
+    const top = py - poreHeight;
+    const bot = py + poreHeight;
+    const grad = ctx.createLinearGradient(mx - mw/2, 0, mx + mw/2, 0);
+    grad.addColorStop(0, memCol);
+    grad.addColorStop(0.5, memColMid);
+    grad.addColorStop(1, memCol);
+    ctx.fillStyle = grad;
+    ctx.fillRect(mx - mw/2, prevY, mw, Math.max(0, top - prevY));
+
+    if (poreHeight > 1) {
+      // Pore channel sides — fade as it closes
+      ctx.fillStyle = `rgba(167,139,250,${0.3 * poreAnimT})`;
+      ctx.fillRect(mx - mw/2, top, 3, poreHeight * 2);
+      ctx.fillRect(mx + mw/2 - 3, top, 3, poreHeight * 2);
+    }
+
+    prevY = poreHeight > 1 ? bot : top;
+  }
+  const grad2 = ctx.createLinearGradient(mx - mw/2, 0, mx + mw/2, 0);
+  grad2.addColorStop(0, memCol);
+  grad2.addColorStop(0.5, memColMid);
+  grad2.addColorStop(1, memCol);
+  ctx.fillStyle = grad2;
+  ctx.fillRect(mx - mw/2, prevY, mw, H - prevY);
+
+  // Glow — green when open, red when closed
+  const glowCol = poreAnimT > 0.5 ? '#a78bfa' : '#ef4444';
+  ctx.shadowColor = glowCol;
+  ctx.shadowBlur = 18;
+  ctx.strokeStyle = poreAnimT > 0.5 ? 'rgba(167,139,250,0.5)' : 'rgba(239,68,68,0.5)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(mx - mw/2, 0); ctx.lineTo(mx - mw/2, H);
+  ctx.moveTo(mx + mw/2, 0); ctx.lineTo(mx + mw/2, H);
+  ctx.stroke();
+
+  // Pore status label on membrane
+  ctx.shadowBlur = 0;
+  ctx.save();
+  ctx.translate(mx, H / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.font = "bold 9px 'Space Mono'";
+  ctx.fillStyle = poreAnimT > 0.5 ? 'rgba(167,139,250,0.9)' : 'rgba(239,68,68,0.9)';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(poresOpen ? 'OPEN' : 'CLOSED', 0, 0);
+  ctx.restore();
+
+  ctx.restore();
+}
+
+function drawParticle(p) {
+  ctx.save();
+  if (p.type === 'water') {
+    const g = ctx.createRadialGradient(p.x - 1, p.y - 1, 0, p.x, p.y, p.r);
+    g.addColorStop(0, '#93c5fd');
+    g.addColorStop(1, '#1d4ed8');
+    ctx.fillStyle = g;
+    ctx.shadowColor = '#3b82f6';
+    ctx.shadowBlur = 6;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    ctx.fill();
+    // H₂O symbol
+    if (p.r > 3) {
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.font = `bold ${Math.round(p.r * 1.1)}px Space Mono`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('○', p.x, p.y);
+    }
+  } else {
+    const g = ctx.createRadialGradient(p.x - 1.5, p.y - 1.5, 0, p.x, p.y, p.r);
+    g.addColorStop(0, '#fdba74');
+    g.addColorStop(1, '#c2410c');
+    ctx.fillStyle = g;
+    ctx.shadowColor = '#f97316';
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    // Hexagonal solute
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.beginPath();
+    for (let i = 0; i < 6; i++) {
+      const a = (Math.PI / 3) * i;
+      i === 0 ? ctx.moveTo(Math.cos(a) * p.r, Math.sin(a) * p.r)
+              : ctx.lineTo(Math.cos(a) * p.r, Math.sin(a) * p.r);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+  ctx.restore();
+}
+
+function drawBackground() {
+  // Left side tint (higher/lower solute)
+  const leftAlpha = leftConc / 120;
+  const rightAlpha = rightConc / 120;
+  const leftGrad = ctx.createLinearGradient(0, 0, MX - MEMBRANE_W/2, 0);
+  leftGrad.addColorStop(0, `rgba(249,115,22,${leftAlpha * 0.15})`);
+  leftGrad.addColorStop(1, 'transparent');
+  ctx.fillStyle = leftGrad;
+  ctx.fillRect(0, 0, MX - MEMBRANE_W/2, H);
+
+  const rightGrad = ctx.createLinearGradient(MX + MEMBRANE_W/2, 0, W, 0);
+  rightGrad.addColorStop(0, 'transparent');
+  rightGrad.addColorStop(1, `rgba(249,115,22,${rightAlpha * 0.15})`);
+  ctx.fillStyle = rightGrad;
+  ctx.fillRect(MX + MEMBRANE_W/2, 0, W - MX - MEMBRANE_W/2, H);
+
+  // Labels
+  ctx.save();
+  ctx.font = "bold 11px 'Space Mono'";
+  ctx.fillStyle = 'rgba(100,116,139,0.8)';
+  ctx.textAlign = 'center';
+  ctx.fillText('HIGH SOLUTE', (MX - MEMBRANE_W/2) / 2, 18);
+  ctx.fillText('← NET WATER FLOW →', MX, H - 10);
+
+  // Arrows showing net flow direction
+  const leftW = particles.filter(p => p.type === 'water' && p.side === 'left').length;
+  const rightW = particles.filter(p => p.type === 'water' && p.side === 'right').length;
+  if (leftW !== rightW) {
+    const arrowDir = leftConc > rightConc ? 1 : -1; // water flows toward higher solute
+    ctx.fillStyle = 'rgba(56,189,248,0.5)';
+    ctx.font = "18px sans-serif";
+    ctx.fillText(arrowDir > 0 ? '→' : '←', MX, H - 10);
+  }
+  ctx.restore();
+
+  // Side labels
+  ctx.save();
+  ctx.font = "11px 'Space Mono'";
+  ctx.fillStyle = 'rgba(100,116,139,0.7)';
+  ctx.textAlign = 'left';
+  ctx.fillText('LEFT', 8, 18);
+  ctx.textAlign = 'right';
+  ctx.fillText('RIGHT', W - 8, 18);
+  ctx.restore();
+}
+
+function drawStats() {
+  const leftW = particles.filter(p => p.type === 'water' && p.side === 'left').length;
+  const rightW = particles.filter(p => p.type === 'water' && p.side === 'right').length;
+  document.getElementById('stat-left').textContent = leftW;
+  document.getElementById('stat-right').textContent = rightW;
+  document.getElementById('stat-cross').textContent = crossPerSec;
+}
+
+let last = null;
+function loop(ts) {
+  if (!last) last = ts;
+  const dt = Math.min(ts - last, 50);
+  last = ts;
+
+  ctx.clearRect(0, 0, W, H);
+  drawBackground();
+  drawMembrane();
+  particles.forEach(drawParticle);
+
+  if (running) update(dt);
+  drawStats();
+  requestAnimationFrame(loop);
+}
+
+// Controls
+document.getElementById('left-conc').addEventListener('input', function() {
+  leftConc = +this.value;
+  document.getElementById('lc-val').textContent = leftConc + '%';
+  initParticles();
+});
+document.getElementById('right-conc').addEventListener('input', function() {
+  rightConc = +this.value;
+  document.getElementById('rc-val').textContent = rightConc + '%';
+  initParticles();
+});
+
+const btnPlay = document.getElementById('btn-play');
+btnPlay.addEventListener('click', () => {
+  running = !running;
+  btnPlay.textContent = running ? '⏸ Pause' : '▶ Play';
+  btnPlay.classList.toggle('active', running);
+});
+
+document.getElementById('btn-reset').addEventListener('click', () => {
+  initParticles();
+});
+
+const btnPores = document.getElementById('btn-pores');
+btnPores.addEventListener('click', () => {
+  poresOpen = !poresOpen;
+  btnPores.textContent = poresOpen ? '🔓 Pores Open' : '🔒 Pores Closed';
+  btnPores.classList.toggle('active', poresOpen);
+  // Abort any in-progress crossings so particles don't get stuck inside
+  if (!poresOpen) {
+    particles.forEach(p => {
+      if (p.crossing) {
+        p.crossing = false;
+        p.crossProgress = 0;
+        // Push them back to their original side
+        if (p.side === 'left') {
+          p.x = MX - MEMBRANE_W / 2 - p.r - 2;
+          p.vx = -(Math.abs(p.vx) || 0.5);
+        } else {
+          p.x = MX + MEMBRANE_W / 2 + p.r + 2;
+          p.vx = Math.abs(p.vx) || 0.5;
+        }
+        enforceSpeed(p);
+      }
+    });
+  }
+});
+
+let speeds = [1, 2, 3];
+let speedIdx = 0;
+document.getElementById('btn-speed').addEventListener('click', function() {
+  speedIdx = (speedIdx + 1) % speeds.length;
+  speedMult = speeds[speedIdx];
+  this.textContent = `Speed: ${speedMult}×`;
+});
+
+window.addEventListener('resize', () => { resize(); initParticles(); });
+
+resize();
+initParticles();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Maltase Enzyme Simulation — Lock & Key Model</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: hsl(220,20%,12%); color: hsl(210,20%,95%); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; padding: 12px; }
+  h1 { font-size: 1.1rem; font-weight: 700; }
+  .subtitle { font-size: 0.72rem; color: #94a3b8; margin-top: 2px; }
+  header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .icon { background: rgba(45,212,168,0.15); border-radius: 8px; padding: 7px; display:flex; }
+  .layout { display: grid; grid-template-columns: 1fr 280px; gap: 14px; max-width: 1400px; margin: 0 auto; }
+  @media(max-width:900px){ .layout { grid-template-columns:1fr; } }
+  .card { background: hsl(220,18%,16%); border: 1px solid hsl(220,15%,25%); border-radius: 12px; }
+  .canvas-wrap { height: min(60vh, 520px); min-height: 350px; overflow: hidden; border-radius: 12px; }
+  canvas { display:block; width:100%; height:100%; cursor:crosshair; }
+  .sidebar { display:flex; flex-direction:column; gap:12px; }
+  .panel { padding: 14px; }
+  .panel-title { font-size: 0.65rem; font-weight: 600; color: #64748b; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 10px; }
+  .controls { display:flex; flex-direction:column; gap:14px; }
+  .ctrl-row { display:flex; flex-direction:column; gap:5px; }
+  .ctrl-header { display:flex; justify-content:space-between; align-items:center; }
+  .ctrl-label { font-size: 0.72rem; font-weight:500; display:flex; align-items:center; gap:5px; }
+  .ctrl-val { font-size:0.72rem; font-family:monospace; font-weight:700; }
+  .ctrl-val.warn { color:#f87171; }
+  .ctrl-warn { font-size:0.62rem; color:#f87171; font-weight:500; }
+  input[type=range] { width:100%; accent-color: hsl(160,70%,50%); height:4px; cursor:pointer; }
+  .btn-row { display:flex; gap:8px; }
+  button { flex:1; padding:6px 10px; border-radius:6px; border:none; cursor:pointer; font-size:0.78rem; font-weight:500; display:flex; align-items:center; justify-content:center; gap:4px; }
+  .btn-primary { background:hsl(160,70%,50%); color:hsl(220,20%,10%); }
+  .btn-secondary { background:hsl(220,15%,22%); color:hsl(210,20%,90%); }
+  .btn-outline { background:transparent; border:1px solid hsl(220,15%,25%); color:hsl(210,20%,90%); }
+  .stats-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .stat-card { background:rgba(255,255,255,0.04); border:1px solid hsl(220,15%,25%); border-radius:8px; padding:8px 10px; }
+  .stat-label { font-size:0.62rem; color:#94a3b8; display:flex; align-items:center; gap:4px; margin-bottom:4px; }
+  .stat-val { font-size:1.15rem; font-weight:700; }
+  .cyan { color:#38bdf8; } .green { color:#4ade80; } .amber { color:#fbbf24; } .red { color:#f87171; }
+  .banner { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:10px 12px; margin-top:10px; }
+  .banner-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; font-size:0.68rem; color:#94a3b8; }
+  @media(max-width:700px){ .banner-grid{ grid-template-columns:1fr; } }
+  .tag-green { color:hsl(160,70%,50%); font-weight:600; }
+  .tag-amber { color:#fbbf24; font-weight:600; }
+  .tag-red { color:#f87171; font-weight:600; }
+  .graphs { display:flex; flex-direction:column; gap:10px; margin-top:10px; }
+  .graph-card { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:10px; }
+  .graph-title { font-size:0.65rem; font-weight:600; color:#94a3b8; margin-bottom:6px; }
+  .graph-canvas { width:100%; height:90px; display:block; }
+  .legend { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:10px; margin-top:12px; }
+  .legend-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+  .legend-item { display:flex; align-items:center; gap:6px; font-size:0.65rem; color:rgba(255,255,255,0.75); }
+  .dot { width:10px; height:10px; border-radius:2px; flex-shrink:0; }
+  .hint { font-size:0.6rem; color:#475569; text-align:center; margin-top:4px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="icon" style="background:rgba(45,212,168,0.15);border-radius:8px;padding:7px;display:flex;">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2dd4a8" stroke-width="2"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>
+  </div>
+  <div>
+    <h1>Maltase Enzyme Simulation <span style="font-weight:400;color:#2dd4a8">by @curiominds.inc</span></h1>
+    <div class="subtitle">Lock &amp; Key Model — Enzyme specificity, substrate concentration, temperature &amp; pH effects</div>
+  </div>
+</header>
+<div class="layout">
+  <div>
+    <div class="card canvas-wrap"><canvas id="sim"></canvas></div>
+    <p class="hint">Scroll to zoom · Alt+drag or middle-click to pan</p>
+    <div class="banner">
+      <div class="banner-grid">
+        <div><span class="tag-green">Lock &amp; Key:</span> Maltase's active site has a specific shape complementary only to maltose. Sucrose and lactose cannot fit and bounce off.</div>
+        <div><span class="tag-amber">Catalysis:</span> Maltose binds → enzyme-substrate complex forms → maltose is hydrolysed into 2 glucose molecules → enzyme is released unchanged.</div>
+        <div><span class="tag-red">Denaturation:</span> Above 35°C or outside pH 6.5–7.5, the enzyme's shape changes. The active site distorts so maltose can no longer fit.</div>
+      </div>
+    </div>
+    <div class="graphs">
+      <div class="graph-card"><div class="graph-title">Rate vs Temperature</div><canvas class="graph-canvas" id="g-temp"></canvas></div>
+      <div class="graph-card"><div class="graph-title">Rate vs pH</div><canvas class="graph-canvas" id="g-ph"></canvas></div>
+      <div class="graph-card"><div class="graph-title">Rate vs [Substrate]</div><canvas class="graph-canvas" id="g-conc"></canvas></div>
+    </div>
+  </div>
+  <div class="sidebar">
+    <div class="card panel">
+      <div class="panel-title">Controls</div>
+      <div class="controls" id="controls"></div>
+    </div>
+    <div class="card panel">
+      <div class="panel-title">Live Data</div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-label cyan">⚡ Glucose Produced</div><div class="stat-val cyan" id="s-glucose">0</div></div>
+        <div class="stat-card"><div class="stat-label green">📈 Rate (glucose/s)</div><div class="stat-val green" id="s-rate">0.0</div></div>
+        <div class="stat-card"><div class="stat-label amber">🧪 Sites Occupied</div><div class="stat-val amber" id="s-occ">0/0</div></div>
+        <div class="stat-card"><div class="stat-label red">⚠ Denatured</div><div class="stat-val red" id="s-den">0</div></div>
+      </div>
+    </div>
+    <div class="legend">
+      <div class="panel-title">KEY</div>
+      <div class="legend-grid">
+        <div class="legend-item"><div class="dot" style="background:#2dd4a8"></div>Maltase (enzyme)</div>
+        <div class="legend-item"><div class="dot" style="background:#f59e0b"></div>Maltose (substrate)</div>
+        <div class="legend-item"><div class="dot" style="background:#ec4899"></div>Sucrose (wrong)</div>
+        <div class="legend-item"><div class="dot" style="background:#a78bfa"></div>Lactose (wrong)</div>
+        <div class="legend-item"><div class="dot" style="background:#38bdf8"></div>Glucose (product)</div>
+        <div class="legend-item"><div class="dot" style="background:#22d3ee"></div>E-S Complex</div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+const params = { temperature:35, pH:8, maltoseCount:10, enzymeCount:3, sucrose:3, lactose:3, paused:false, speed:1 };
+const sliders = [
+  { key:'temperature', label:'Temperature', min:0, max:80, step:1, unit:'°C', icon:'🌡️', optimum:35, warnAbove:35, warnText:'Denaturation above 35°C' },
+  { key:'pH', label:'pH Level', min:1, max:14, step:0.5, unit:'', icon:'💧', optimum:8, warnAbove:8.5, warnBelow:7.5, warnText:'Denaturation outside pH 7.5–8.5' },
+  { key:'maltoseCount', label:'Maltose Molecules', min:0, max:30, step:1, unit:'', icon:'🧪' },
+  { key:'enzymeCount', label:'Maltase Enzymes', min:1, max:10, step:1, unit:'', icon:'⚗️' },
+  { key:'sucrose', label:'Sucrose (wrong)', min:0, max:10, step:1, unit:'', icon:'⚛️' },
+  { key:'lactose', label:'Lactose (wrong)', min:0, max:10, step:1, unit:'', icon:'⚛️' },
+  { key:'speed', label:'Simulation Speed', min:0.1, max:4, step:0.1, unit:'×', icon:'⏩' },
+];
+function buildControls() {
+  const div = document.getElementById('controls');
+  const br = document.createElement('div'); br.className='btn-row';
+  const playBtn = document.createElement('button'); playBtn.className='btn-primary'; playBtn.id='playBtn'; playBtn.innerHTML='⏸ Pause';
+  playBtn.onclick = () => { params.paused=!params.paused; playBtn.innerHTML=params.paused?'▶ Play':'⏸ Pause'; playBtn.className=params.paused?'btn-secondary':'btn-primary'; };
+  const resetBtn = document.createElement('button'); resetBtn.className='btn-outline'; resetBtn.innerHTML='↺ Reset'; resetBtn.onclick=resetSim;
+  br.appendChild(playBtn); br.appendChild(resetBtn); div.appendChild(br);
+  sliders.forEach(s => {
+    const row = document.createElement('div'); row.className='ctrl-row';
+    const valId='val-'+s.key, warnId='warn-'+s.key;
+    row.innerHTML = `<div class="ctrl-header"><label class="ctrl-label">${s.icon} ${s.label}</label><span class="ctrl-val" id="${valId}">${params[s.key]}${s.unit}${s.optimum!==undefined?' <span style=\"color:#64748b\">(opt:${s.optimum}${s.unit})</span>':''}</span></div><input type="range" min="${s.min}" max="${s.max}" step="${s.step}" value="${params[s.key]}" /><div class="ctrl-warn" id="${warnId}" style="display:none">${s.warnText||''}</div>`;
+    const input = row.querySelector('input');
+    input.addEventListener('input', () => {
+      params[s.key]=parseFloat(input.value);
+      const isWarn=(s.warnAbove&&params[s.key]>s.warnAbove)||(s.warnBelow&&params[s.key]<s.warnBelow);
+      const valEl=document.getElementById(valId); valEl.className='ctrl-val'+(isWarn?' warn':'');
+      valEl.innerHTML=`${params[s.key]}${s.unit}${s.optimum!==undefined?' <span style="color:#64748b">(opt:${s.optimum}${s.unit})</span>':''}`;
+      const warnEl=document.getElementById(warnId); if(warnEl) warnEl.style.display=isWarn?'block':'none';
+      syncMolecules(); drawGraphs();
+    });
+    div.appendChild(row);
+  });
+}
+buildControls();
+const COLORS = { maltase:'#2dd4a8', maltaseDen:'#7a8a82', maltose:'#f59e0b', sucrose:'#ec4899', lactose:'#a78bfa', glucose:'#38bdf8', complex:'#22d3ee' };
+function getActivityFactor(temp,pH) {
+  let tf = temp<=35 ? Math.pow(2,(temp-35)/10) : Math.max(0,1-Math.pow((temp-35)/15,2));
+  const pd=Math.abs(pH-8);
+  let pf = pd>=0.5?0:Math.pow(1-(pd/0.5),2);
+  return tf*pf;
+}
+function getDenaturationLevel(temp,pH) {
+  let l=temp>35?Math.min(1,Math.pow((temp-35)/15,2)):0;
+  const pd=Math.abs(pH-8); if(pd>0) l=Math.max(l,Math.min(1,pd/0.5)); return l;
+}
+function getSpeedFactor(temp){return 0.3+(temp/80)*2.0;}
+class Molecule {
+  constructor(type,x,y,w,h){this.type=type;this.x=x;this.y=y;this.w=w;this.h=h;this.vx=(Math.random()-.5)*2;this.vy=(Math.random()-.5)*2;this.angle=Math.random()*Math.PI*2;this.angVel=(Math.random()-.5)*0.02;this.opacity=1;this.bounceTimer=0;this.flash=0;}
+  update(sf,W,H){this.vx+=(Math.random()-.5)*0.3*sf;this.vy+=(Math.random()-.5)*0.3*sf;const spd=Math.hypot(this.vx,this.vy),ms=3*sf;if(spd>ms){this.vx=this.vx/spd*ms;this.vy=this.vy/spd*ms;}this.vx*=0.99;this.vy*=0.99;this.x+=this.vx;this.y+=this.vy;this.angle+=this.angVel*sf;this.angVel+=(Math.random()-.5)*0.005;this.angVel*=0.98;if(this.x-this.w/2<0){this.x=this.w/2;this.vx=Math.abs(this.vx);}if(this.x+this.w/2>W){this.x=W-this.w/2;this.vx=-Math.abs(this.vx);}if(this.y-this.h/2<0){this.y=this.h/2;this.vy=Math.abs(this.vy);}if(this.y+this.h/2>H){this.y=H-this.h/2;this.vy=-Math.abs(this.vy);}if(this.bounceTimer>0)this.bounceTimer--;if(this.flash>0)this.flash-=0.02;}
+}
+class Enzyme extends Molecule {
+  constructor(x,y){super('maltase',x,y,50,40);this.bound=null;this.reactionTimer=0;this.denatured=false;this.denaturedAmount=0;this.cooldown=0;}
+  update(sf,W,H){if(this.bound){this.reactionTimer-=sf;super.update(sf,W,H);this.bound.x=this.x;this.bound.y=this.y;}else{super.update(sf,W,H);}if(this.cooldown>0)this.cooldown--;}
+}
+class Substrate extends Molecule {
+  constructor(type,x,y){const s={maltose:[28,20],sucrose:[26,26],lactose:[30,16]};const[w,h]=s[type]||[24,24];super(type,x,y,w,h);this.boundTo=null;}
+}
+class Product extends Molecule {
+  constructor(x,y){super('glucose',x,y,14,14);this.age=0;}
+  update(sf,W,H){super.update(sf,W,H);this.age++;if(this.age>300)this.opacity=Math.max(0,this.opacity-0.01);}
+}
+const state={enzymes:[],substrates:[],products:[],glucoseProduced:0,reactionEvents:[],frame:0};
+const view={zoom:1,panX:0,panY:0,dragging:false,lastX:0,lastY:0};
+const REACTION_DURATION=120;
+function resetSim(){state.enzymes.forEach(e=>{e.bound=null;e.reactionTimer=0;});state.substrates=[];state.products=[];state.glucoseProduced=0;state.reactionEvents=[];state.frame=0;view.zoom=1;view.panX=0;view.panY=0;syncMolecules();}
+function syncMolecules(){const canvas=document.getElementById('sim'),W=canvas.width,H=canvas.height;while(state.enzymes.length<params.enzymeCount)state.enzymes.push(new Enzyme(Math.random()*(W-60)+30,Math.random()*(H-60)+30));while(state.enzymes.length>params.enzymeCount){const r=state.enzymes.pop();if(r.bound){r.bound.boundTo=null;r.bound=null;}}const syncType=(type,target)=>{const cur=state.substrates.filter(s=>s.type===type).length;if(cur<target){for(let i=0;i<target-cur;i++)state.substrates.push(new Substrate(type,Math.random()*(W-40)+20,Math.random()*(H-40)+20));}else if(cur>target){let rem=cur-target;for(let i=state.substrates.length-1;i>=0&&rem>0;i--)if(state.substrates[i].type===type&&!state.substrates[i].boundTo){state.substrates.splice(i,1);rem--;}}};syncType('maltose',params.maltoseCount);syncType('sucrose',params.sucrose);syncType('lactose',params.lactose);}
+function simulate(){const canvas=document.getElementById('sim'),W=canvas.width,H=canvas.height,sf=getSpeedFactor(params.temperature)*params.speed,activity=getActivityFactor(params.temperature,params.pH),denat=getDenaturationLevel(params.temperature,params.pH);state.frame++;for(const e of state.enzymes){e.denatured=denat>0.4;e.denaturedAmount=denat;e.update(sf,W,H);if(e.bound&&e.reactionTimer<=0){const idx=state.substrates.indexOf(e.bound);if(idx>-1)state.substrates.splice(idx,1);for(let i=0;i<2;i++){const g=new Product(e.x+20,e.y+(i===0?-10:10));g.vx=2+Math.random()*2;g.vy=(i===0?-1:1)+Math.random()*2;state.products.push(g);}state.glucoseProduced+=2;state.reactionEvents.push(Date.now());e.bound=null;e.cooldown=30;e.flash=1;}}for(const s of state.substrates)if(!s.boundTo)s.update(sf,W,H);state.products=state.products.filter(p=>p.opacity>0);for(const p of state.products)p.update(sf,W,H);for(const e of state.enzymes){if(e.bound||e.cooldown>0)continue;for(const s of state.substrates){if(s.boundTo)continue;const dx=s.x-e.x,dy=s.y-e.y,d=Math.hypot(dx,dy);if(d<35){if(s.type==='maltose'&&!e.denatured&&activity>0.1){e.bound=s;s.boundTo=e;e.reactionTimer=REACTION_DURATION/Math.max(0.2,activity);}else{s.bounceTimer=20;const a=Math.atan2(dy,dx);s.vx=Math.cos(a)*3;s.vy=Math.sin(a)*3;e.vx-=Math.cos(a)*0.5;e.vy-=Math.sin(a)*0.5;}}}}for(let i=0;i<state.substrates.length;i++){if(state.substrates[i].boundTo)continue;for(let j=i+1;j<state.substrates.length;j++){if(state.substrates[j].boundTo)continue;const a=state.substrates[i],b=state.substrates[j],dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy);if(d<20&&d>0){const nx=dx/d,ny=dy/d;a.vx-=nx*0.5;a.vy-=ny*0.5;b.vx+=nx*0.5;b.vy+=ny*0.5;}}}const now=Date.now(),recent=state.reactionEvents.filter(t=>now-t<5000);if(state.frame%10===0){document.getElementById('s-glucose').textContent=state.glucoseProduced;document.getElementById('s-rate').textContent=(recent.length/5).toFixed(1);document.getElementById('s-occ').textContent=state.enzymes.filter(e=>e.bound).length+'/'+state.enzymes.length;document.getElementById('s-den').textContent=state.enzymes.filter(e=>e.denatured).length;}}
+const AS_OX=20,AS_R=9,AS_GAP=7;
+function hexPath(ctx,cx,cy,r){ctx.moveTo(cx+r,cy);for(let i=1;i<=6;i++){const a=Math.PI/3*i;ctx.lineTo(cx+r*Math.cos(a),cy+r*Math.sin(a));}ctx.closePath();}
+function pentPath(ctx,cx,cy,r){ctx.moveTo(cx+r,cy);for(let i=1;i<=5;i++){const a=Math.PI*2/5*i-Math.PI/10;ctx.lineTo(cx+r*Math.cos(a),cy+r*Math.sin(a));}ctx.closePath();}
+function diamond(ctx,cx,cy,w,h){ctx.moveTo(cx,cy-h);ctx.lineTo(cx+w,cy);ctx.lineTo(cx,cy+h);ctx.lineTo(cx-w,cy);ctx.closePath();}
+function lighten(hex,a){const n=parseInt(hex.replace('#',''),16);return `rgb(${Math.min(255,(n>>16)+a)},${Math.min(255,((n>>8)&255)+a)},${Math.min(255,(n&255)+a)})`;}
+function darken(hex,a){const n=parseInt(hex.replace('#',''),16);return `rgb(${Math.max(0,(n>>16)-a)},${Math.max(0,((n>>8)&255)-a)},${Math.max(0,(n&255)-a)})`;}
+function lerp(h1,h2,t){const n1=parseInt(h1.replace('#',''),16),n2=parseInt(h2.replace('#',''),16);return `rgb(${Math.round((n1>>16)+((n2>>16)-(n1>>16))*t)},${Math.round(((n1>>8)&255)+(((n2>>8)&255)-((n1>>8)&255))*t)},${Math.round((n1&255)+((n2&255)-(n1&255))*t)})`;}
+function drawMaltase(ctx,e,denat){ctx.save();ctx.translate(e.x,e.y);ctx.rotate(e.angle);const base=e.denatured?lerp(COLORS.maltase,COLORS.maltaseDen,denat):COLORS.maltase,r=26;if(denat>0.5){ctx.beginPath();ctx.ellipse(0,0,r*(1+denat*0.3),r*(1-denat*0.2),0,0,Math.PI*2);const g=ctx.createRadialGradient(-4,-4,2,0,0,r+4);g.addColorStop(0,lighten(base,40));g.addColorStop(1,base);ctx.fillStyle=g;ctx.fill();ctx.strokeStyle=darken(base,30);ctx.lineWidth=1.5;ctx.stroke();}else{ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);const g=ctx.createRadialGradient(-4,-4,2,0,0,r+4);g.addColorStop(0,lighten(base,40));g.addColorStop(1,base);ctx.fillStyle=g;ctx.fill();ctx.strokeStyle=darken(base,30);ctx.lineWidth=1.5;ctx.stroke();ctx.save();ctx.globalCompositeOperation='destination-out';ctx.beginPath();hexPath(ctx,AS_OX,-AS_GAP,AS_R-0.5);ctx.fillStyle='rgba(0,0,0,1)';ctx.fill();ctx.beginPath();hexPath(ctx,AS_OX,AS_GAP,AS_R-0.5);ctx.fill();ctx.restore();ctx.strokeStyle=darken(base,50);ctx.lineWidth=1;ctx.beginPath();hexPath(ctx,AS_OX,-AS_GAP,AS_R-0.5);ctx.stroke();ctx.beginPath();hexPath(ctx,AS_OX,AS_GAP,AS_R-0.5);ctx.stroke();}if(denat<0.3&&!e.bound){ctx.fillStyle='#ffffff99';ctx.font='6px sans-serif';ctx.textAlign='center';ctx.fillText('active site',AS_OX,AS_GAP+AS_R+7);}ctx.fillStyle='#fff';ctx.font='bold 8px sans-serif';ctx.textAlign='center';ctx.fillText(e.denatured?'Denatured':'Maltase',-5,3);ctx.restore();}
+function drawMaltose(ctx,m){ctx.save();ctx.translate(m.x,m.y);ctx.rotate(m.angle);const c=COLORS.maltose;ctx.beginPath();hexPath(ctx,-7,0,9);const g1=ctx.createRadialGradient(-7,-2,1,-7,0,10);g1.addColorStop(0,lighten(c,30));g1.addColorStop(1,c);ctx.fillStyle=g1;ctx.fill();ctx.strokeStyle=darken(c,30);ctx.lineWidth=1.2;ctx.stroke();ctx.beginPath();hexPath(ctx,7,0,9);const g2=ctx.createRadialGradient(7,-2,1,7,0,10);g2.addColorStop(0,lighten(c,30));g2.addColorStop(1,c);ctx.fillStyle=g2;ctx.fill();ctx.strokeStyle=darken(c,30);ctx.lineWidth=1.2;ctx.stroke();ctx.fillStyle='#000c';ctx.font='bold 6px sans-serif';ctx.textAlign='center';ctx.fillText('Maltose',0,3);ctx.restore();}
+function drawSucrose(ctx,m){ctx.save();ctx.translate(m.x,m.y);ctx.rotate(m.angle);const c=COLORS.sucrose;ctx.beginPath();pentPath(ctx,-7,0,9);const g1=ctx.createRadialGradient(-7,-2,1,-7,0,10);g1.addColorStop(0,lighten(c,30));g1.addColorStop(1,c);ctx.fillStyle=g1;ctx.fill();ctx.strokeStyle=darken(c,30);ctx.lineWidth=1.2;ctx.stroke();ctx.beginPath();hexPath(ctx,7,0,9);const g2=ctx.createRadialGradient(7,-2,1,7,0,10);g2.addColorStop(0,lighten(c,30));g2.addColorStop(1,c);ctx.fillStyle=g2;ctx.fill();ctx.strokeStyle=darken(c,30);ctx.lineWidth=1.2;ctx.stroke();ctx.fillStyle='#000c';ctx.font='bold 6px sans-serif';ctx.textAlign='center';ctx.fillText('Sucrose',0,3);if(m.bounceTimer>0){ctx.globalAlpha=m.bounceTimer/20;ctx.beginPath();ctx.arc(0,0,20,0,Math.PI*2);ctx.strokeStyle='#f44';ctx.lineWidth=2;ctx.stroke();ctx.globalAlpha=1;ctx.fillStyle='#f66';ctx.font='bold 7px sans-serif';ctx.fillText('✗ No fit!',0,-16);}ctx.restore();}
+function drawLactose(ctx,m){ctx.save();ctx.translate(m.x,m.y);ctx.rotate(m.angle);const c=COLORS.lactose;ctx.beginPath();diamond(ctx,-8,0,9,7);const g1=ctx.createRadialGradient(-8,-2,1,-8,0,10);g1.addColorStop(0,lighten(c,30));g1.addColorStop(1,c);ctx.fillStyle=g1;ctx.fill();ctx.strokeStyle=darken(c,30);ctx.lineWidth=1.2;ctx.stroke();ctx.beginPath();hexPath(ctx,8,0,8);const g2=ctx.createRadialGradient(8,-2,1,8,0,9);g2.addColorStop(0,lighten(c,30));g2.addColorStop(1,c);ctx.fillStyle=g2;ctx.fill();ctx.strokeStyle=darken(c,30);ctx.lineWidth=1.2;ctx.stroke();ctx.fillStyle='#000c';ctx.font='bold 6px sans-serif';ctx.textAlign='center';ctx.fillText('Lactose',0,3);if(m.bounceTimer>0){ctx.globalAlpha=m.bounceTimer/20;ctx.beginPath();ctx.arc(0,0,20,0,Math.PI*2);ctx.strokeStyle='#f44';ctx.lineWidth=2;ctx.stroke();ctx.globalAlpha=1;ctx.fillStyle='#f66';ctx.font='bold 7px sans-serif';ctx.fillText('✗ No fit!',0,-16);}ctx.restore();}
+function drawGlucose(ctx,m){ctx.save();ctx.globalAlpha=m.opacity;ctx.translate(m.x,m.y);ctx.rotate(m.angle);const c=COLORS.glucose;ctx.beginPath();hexPath(ctx,0,0,9);const g=ctx.createRadialGradient(-1,-1,1,0,0,10);g.addColorStop(0,lighten(c,40));g.addColorStop(1,c);ctx.fillStyle=g;ctx.fill();ctx.strokeStyle=darken(c,30);ctx.lineWidth=1.2;ctx.stroke();ctx.fillStyle='#000c';ctx.font='bold 6px sans-serif';ctx.textAlign='center';ctx.fillText('Glucose',0,3);ctx.restore();}
+function drawComplex(ctx,e){ctx.save();ctx.translate(e.x,e.y);ctx.rotate(e.angle);const r=26;ctx.beginPath();ctx.arc(0,0,r+2,0,Math.PI*2);const g=ctx.createRadialGradient(-4,-4,2,0,0,r+4);g.addColorStop(0,lighten(COLORS.complex,30));g.addColorStop(1,COLORS.complex);ctx.fillStyle=g;ctx.fill();ctx.strokeStyle=darken(COLORS.complex,30);ctx.lineWidth=2;ctx.stroke();const mc=COLORS.maltose;ctx.beginPath();hexPath(ctx,AS_OX,-AS_GAP,AS_R-1);ctx.fillStyle=mc;ctx.fill();ctx.beginPath();hexPath(ctx,AS_OX,AS_GAP,AS_R-1);ctx.fillStyle=mc;ctx.fill();ctx.fillStyle='#fff';ctx.font='bold 7px sans-serif';ctx.textAlign='center';ctx.fillText('E-S Complex',-4,3);const progress=1-(e.reactionTimer/REACTION_DURATION);ctx.fillStyle='#ffffff44';ctx.fillRect(-r+4,r-8,(2*r-8)*Math.max(0,Math.min(1,progress)),3);ctx.strokeStyle='#ffffff66';ctx.strokeRect(-r+4,r-8,2*r-8,3);ctx.beginPath();ctx.arc(0,0,r+8,0,Math.PI*2);ctx.strokeStyle=`rgba(34,211,238,${0.2+Math.sin(Date.now()/200)*0.15})`;ctx.lineWidth=2;ctx.stroke();ctx.restore();}
+function render(){const canvas=document.getElementById('sim'),ctx=canvas.getContext('2d'),W=canvas.width,H=canvas.height,denat=getDenaturationLevel(params.temperature,params.pH),{zoom,panX,panY}=view;ctx.clearRect(0,0,W,H);ctx.fillStyle='#0f172a';ctx.fillRect(0,0,W,H);ctx.save();ctx.translate(panX,panY);ctx.scale(zoom,zoom);ctx.strokeStyle='#1e293b';ctx.lineWidth=0.5/zoom;for(let x=0;x<W;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}for(let y=0;y<H;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}for(const p of state.products)drawGlucose(ctx,p);for(const s of state.substrates){if(s.boundTo)continue;if(s.type==='maltose')drawMaltose(ctx,s);else if(s.type==='sucrose')drawSucrose(ctx,s);else if(s.type==='lactose')drawLactose(ctx,s);}for(const e of state.enzymes){if(e.bound)drawComplex(ctx,e);else drawMaltase(ctx,e,denat);}ctx.restore();if(zoom!==1){ctx.fillStyle='rgba(255,255,255,0.3)';ctx.font='11px sans-serif';ctx.fillText(Math.round(zoom*100)+'%',10,H-10);}}
+function loop(){if(!params.paused){syncMolecules();simulate();}render();requestAnimationFrame(loop);}
+function resizeCanvas(){const canvas=document.getElementById('sim'),wrap=canvas.parentElement;canvas.width=wrap.clientWidth;canvas.height=wrap.clientHeight;}
+window.addEventListener('resize',resizeCanvas);
+resizeCanvas();syncMolecules();loop();
+const simCanvas=document.getElementById('sim');
+simCanvas.addEventListener('wheel',e=>{e.preventDefault();const rect=simCanvas.getBoundingClientRect(),mx=e.clientX-rect.left,my=e.clientY-rect.top,zf=e.deltaY<0?1.12:1/1.12,nz=Math.min(8,Math.max(0.25,view.zoom*zf));view.panX=mx-(mx-view.panX)*(nz/view.zoom);view.panY=my-(my-view.panY)*(nz/view.zoom);view.zoom=nz;},{passive:false});
+simCanvas.addEventListener('mousedown',e=>{if(e.button!==1&&!(e.button===0&&e.altKey))return;e.preventDefault();view.dragging=true;view.lastX=e.clientX;view.lastY=e.clientY;});
+window.addEventListener('mousemove',e=>{if(!view.dragging)return;view.panX+=e.clientX-view.lastX;view.panY+=e.clientY-view.lastY;view.lastX=e.clientX;view.lastY=e.clientY;});
+window.addEventListener('mouseup',()=>{view.dragging=false;});
+function drawGraph(id,data,refX,color,xMin,xMax){const canvas=document.getElementById(id);if(!canvas)return;const ctx=canvas.getContext('2d'),W=canvas.clientWidth,H=canvas.clientHeight;canvas.width=W;canvas.height=H;const pad={l:28,r:8,t:6,b:18},iW=W-pad.l-pad.r,iH=H-pad.t-pad.b;ctx.fillStyle='#0f172a';ctx.fillRect(0,0,W,H);ctx.strokeStyle='#334155';ctx.lineWidth=0.5;for(let i=0;i<=4;i++){const y=pad.t+iH*i/4;ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke();}const pts=data.map((d,i)=>({px:pad.l+(i/(data.length-1))*iW,py:pad.t+iH*(1-d/100)}));ctx.beginPath();ctx.moveTo(pts[0].px,pts[0].py);for(let i=1;i<pts.length;i++)ctx.lineTo(pts[i].px,pts[i].py);ctx.strokeStyle=color;ctx.lineWidth=2;ctx.stroke();const rx=pad.l+((refX-xMin)/(xMax-xMin))*iW;ctx.strokeStyle='rgba(255,255,255,0.35)';ctx.lineWidth=1;ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(rx,pad.t);ctx.lineTo(rx,pad.t+iH);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#94a3b8';ctx.font='8px sans-serif';ctx.textAlign='center';ctx.fillText(xMin,pad.l,H-3);ctx.fillText(xMax,W-pad.r,H-3);ctx.fillText(Math.round(refX),rx,pad.t-1);}
+function drawGraphs(){const td=[];for(let t=0;t<=80;t+=2)td.push(getActivityFactor(t,8)*Math.min(params.maltoseCount/params.enzymeCount,1)*100);drawGraph('g-temp',td,params.temperature,'#ef4444',0,80);const phd=[];for(let p=1;p<=14;p+=0.5)phd.push(getActivityFactor(35,p)*Math.min(params.maltoseCount/params.enzymeCount,1)*100);drawGraph('g-ph',phd,params.pH,'#3b82f6',1,14);const cd=[];for(let c=0;c<=30;c++)cd.push(Math.min(c/params.enzymeCount,1)*getActivityFactor(params.temperature,params.pH)*100);drawGraph('g-conc',cd,params.maltoseCount,'#f59e0b',0,30);}
+drawGraphs();setInterval(drawGraphs,500);
+</script>
+</body>
+</html>

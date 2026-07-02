@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mitosis — Cell Division | CurioMinds</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Syne+Mono&family=Syne:wght@400;600;700;800&display=swap');
+
+:root {
+  --void: #03030a;
+  --deep: #07071a;
+  --mid: #0d0d2b;
+  --surface: rgba(13,13,43,0.88);
+  --border: rgba(120,80,255,0.22);
+  --accent-violet: #8b5cf6;
+  --accent-pink: #ec4899;
+  --accent-cyan: #22d3ee;
+  --accent-lime: #84cc16;
+  --accent-amber: #f59e0b;
+  --chromatin: #c084fc;
+  --membrane: rgba(139,92,246,0.6);
+  --nucleus-fill: rgba(30,10,80,0.7);
+  --text: #e2e8f0;
+  --text-dim: #7c6fa0;
+  --glow-v: 0 0 24px rgba(139,92,246,0.5);
+  --glow-p: 0 0 24px rgba(236,72,153,0.5);
+}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+
+body{
+  background:var(--void);
+  color:var(--text);
+  font-family:'Space Grotesk',sans-serif;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* Particle canvas background */
+#bgCanvas{
+  position:fixed;top:0;left:0;
+  width:100%;height:100%;
+  pointer-events:none;z-index:0;
+}
+
+.wrapper{
+  position:relative;z-index:1;
+  max-width:1080px;
+  margin:0 auto;
+  padding:14px 16px;
+}
+
+/* Header */
+header{text-align:center;padding:14px 0 10px;}
+header h1{
+  font-family:'Syne',sans-serif;
+  font-weight:800;
+  font-size:clamp(1.2rem,3vw,1.9rem);
+  letter-spacing:0.04em;
+  background:linear-gradient(120deg,var(--accent-cyan),var(--accent-violet),var(--accent-pink));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+header p{
+  font-family:'Syne Mono',monospace;
+  font-size:0.68rem;color:var(--text-dim);
+  letter-spacing:0.12em;margin-top:5px;
+}
+
+/* Layout */
+.layout{
+  display:grid;
+  grid-template-columns:220px 1fr;
+  gap:12px;margin-top:12px;
+}
+@media(max-width:680px){.layout{grid-template-columns:1fr;}}
+
+/* Panel */
+.panel{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:14px;
+  backdrop-filter:blur(16px);
+}
+.panel-title{
+  font-family:'Syne Mono',monospace;
+  font-size:0.6rem;letter-spacing:0.16em;
+  color:var(--accent-violet);
+  text-transform:uppercase;
+  margin-bottom:12px;
+  padding-bottom:8px;
+  border-bottom:1px solid var(--border);
+}
+
+/* Stage buttons */
+.stage-list{display:flex;flex-direction:column;gap:6px;}
+.stage-btn{
+  display:flex;align-items:center;gap:10px;
+  background:rgba(255,255,255,0.03);
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:9px;padding:9px 11px;
+  cursor:pointer;transition:all 0.22s;
+  text-align:left;width:100%;
+}
+.stage-btn:hover{border-color:var(--accent-violet);background:rgba(139,92,246,0.08);}
+.stage-btn.active{
+  border-color:var(--accent-violet);
+  background:rgba(139,92,246,0.14);
+  box-shadow:inset 0 0 14px rgba(139,92,246,0.08);
+}
+.stage-dot{
+  width:9px;height:9px;border-radius:50%;flex-shrink:0;
+  transition:all 0.3s;
+}
+.stage-btn.active .stage-dot{box-shadow:0 0 8px currentColor;}
+.stage-name{
+  font-family:'Syne',sans-serif;font-size:0.75rem;
+  font-weight:600;color:var(--text);
+}
+.stage-sub{font-size:0.62rem;color:var(--text-dim);margin-top:1px;}
+
+/* Playback controls */
+.playback{
+  display:flex;gap:5px;margin-top:12px;
+}
+.pb-btn{
+  flex:1;padding:8px 2px;
+  background:rgba(255,255,255,0.04);
+  border:1px solid var(--border);
+  border-radius:8px;
+  color:var(--text-dim);
+  font-family:'Syne Mono',monospace;
+  font-size:0.58rem;letter-spacing:0.04em;
+  cursor:pointer;transition:all 0.2s;
+}
+.pb-btn:hover{border-color:var(--accent-violet);color:var(--text);}
+.pb-btn.primary{
+  background:rgba(139,92,246,0.18);
+  border-color:var(--accent-violet);
+  color:var(--accent-violet);
+}
+
+/* Speed slider */
+.speed-row{
+  display:flex;align-items:center;gap:8px;
+  margin-top:10px;
+}
+.speed-row label{
+  font-size:0.65rem;color:var(--text-dim);
+  font-family:'Syne Mono',monospace;
+  white-space:nowrap;
+}
+.speed-row input[type=range]{
+  flex:1;-webkit-appearance:none;
+  height:3px;border-radius:2px;
+  background:linear-gradient(to right,var(--accent-violet),rgba(139,92,246,0.2));
+  outline:none;cursor:pointer;
+}
+.speed-row input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:12px;height:12px;border-radius:50%;
+  background:var(--accent-violet);
+  box-shadow:var(--glow-v);cursor:pointer;
+}
+.speed-val{
+  font-family:'Syne Mono',monospace;
+  font-size:0.62rem;color:var(--text);width:32px;text-align:right;
+}
+
+/* Right column */
+.right-col{display:flex;flex-direction:column;gap:12px;}
+
+/* Canvas */
+.canvas-wrap{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:12px;
+  backdrop-filter:blur(16px);
+  position:relative;
+}
+#cellCanvas{
+  width:100%;border-radius:10px;
+  display:block;
+}
+
+/* Stage indicator bar */
+.stage-bar{
+  display:flex;gap:4px;margin-top:10px;
+  justify-content:center;
+}
+.stage-pip{
+  height:3px;flex:1;border-radius:2px;
+  background:rgba(255,255,255,0.1);
+  transition:all 0.4s;
+  max-width:60px;
+}
+.stage-pip.active{background:var(--accent-violet);box-shadow:0 0 8px var(--accent-violet);}
+.stage-pip.done{background:rgba(139,92,246,0.4);}
+
+/* Info cards */
+.info-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+.info-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:12px;
+  backdrop-filter:blur(16px);
+}
+.info-title{
+  font-family:'Syne',sans-serif;
+  font-size:0.72rem;font-weight:700;
+  color:var(--accent-violet);
+  margin-bottom:8px;
+}
+.info-text{
+  font-size:0.72rem;
+  color:var(--text);
+  line-height:1.65;
+}
+.info-text strong{color:var(--accent-cyan);}
+
+/* Key events list */
+.event-list{display:flex;flex-direction:column;gap:5px;}
+.event-item{
+  display:flex;align-items:flex-start;gap:8px;
+  font-size:0.7rem;color:var(--text-dim);
+  padding:5px 8px;
+  border-radius:7px;
+  border:1px solid transparent;
+  transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.event-item.highlight{
+  background:rgba(139,92,246,0.15);
+  border-color:rgba(139,92,246,0.3);
+  color:var(--text);
+}
+.event-bullet{
+  width:6px;height:6px;border-radius:50%;
+  background:var(--text-dim);
+  flex-shrink:0;margin-top:4px;
+  transition:all 0.3s;
+}
+.event-item.highlight .event-bullet{
+  background:var(--accent-violet);
+  box-shadow:0 0 6px var(--accent-violet);
+}
+
+/* Chromosome count */
+.chr-display{
+  display:flex;justify-content:space-around;
+  margin-top:8px;
+}
+.chr-cell{text-align:center;}
+.chr-num{
+  font-family:'Syne',sans-serif;
+  font-size:1.6rem;font-weight:800;
+  background:linear-gradient(135deg,var(--accent-violet),var(--accent-pink));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.chr-label{font-size:0.62rem;color:var(--text-dim);font-family:'Syne Mono',monospace;letter-spacing:0.08em;}
+
+/* Equation / key facts */
+.eq-panel{
+  background:var(--surface);
+  border:1px solid rgba(34,211,238,0.2);
+  border-radius:12px;
+  padding:12px 14px;
+  backdrop-filter:blur(16px);
+}
+.eq-panel .panel-title{color:var(--accent-cyan);border-color:rgba(34,211,238,0.2);}
+.eq-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.eq-item{
+  background:rgba(34,211,238,0.05);
+  border:1px solid rgba(34,211,238,0.12);
+  border-radius:8px;padding:8px 10px;
+}
+.eq-key{
+  font-family:'Syne Mono',monospace;
+  font-size:0.62rem;color:var(--accent-cyan);
+  letter-spacing:0.08em;margin-bottom:3px;
+}
+.eq-val{font-size:0.72rem;color:var(--text);line-height:1.5;}
+
+/* Credit */
+.credit{
+  text-align:center;padding:12px 0 6px;
+  font-size:0.67rem;color:var(--text-dim);
+}
+.credit a{color:var(--accent-violet);text-decoration:none;font-weight:600;}
+.credit a:hover{text-shadow:var(--glow-v);}
+</style>
+</head>
+<body>
+<canvas id="bgCanvas"></canvas>
+
+<div class="wrapper">
+  <header>
+    <h1>🧬 MITOSIS — CELL DIVISION</h1>
+    <p>Cambridge IGCSE (0610) &amp; A-Level (9700) Biology · CurioMinds Interactive</p>
+  </header>
+
+  <div class="layout">
+    <!-- LEFT: Stage selector + controls -->
+    <div>
+      <div class="panel">
+        <div class="panel-title">◈ Select Stage</div>
+        <div class="stage-list" id="stageList">
+          <button class="stage-btn active" data-stage="0">
+            <div class="stage-dot" style="background:#22d3ee;color:#22d3ee;"></div>
+            <div><div class="stage-name">Interphase</div><div class="stage-sub">DNA replication</div></div>
+          </button>
+          <button class="stage-btn" data-stage="1">
+            <div class="stage-dot" style="background:#a78bfa;color:#a78bfa;"></div>
+            <div><div class="stage-name">Prophase</div><div class="stage-sub">Chromatin condenses</div></div>
+          </button>
+          <button class="stage-btn" data-stage="2">
+            <div class="stage-dot" style="background:#ec4899;color:#ec4899;"></div>
+            <div><div class="stage-name">Metaphase</div><div class="stage-sub">Chromosomes align</div></div>
+          </button>
+          <button class="stage-btn" data-stage="3">
+            <div class="stage-dot" style="background:#f59e0b;color:#f59e0b;"></div>
+            <div><div class="stage-name">Anaphase</div><div class="stage-sub">Chromatids separate</div></div>
+          </button>
+          <button class="stage-btn" data-stage="4">
+            <div class="stage-dot" style="background:#84cc16;color:#84cc16;"></div>
+            <div><div class="stage-name">Telophase</div><div class="stage-sub">Nuclear envelope reforms</div></div>
+          </button>
+          <button class="stage-btn" data-stage="5">
+            <div class="stage-dot" style="background:#34d399;color:#34d399;"></div>
+            <div><div class="stage-name">Cytokinesis</div><div class="stage-sub">Cytoplasm divides</div></div>
+          </button>
+        </div>
+
+        <!-- UPDATED BUTTON LAYOUT FOR STEPPING -->
+        <div class="playback">
+          <button class="pb-btn" id="prevBtn">◀ STAGE</button>
+          <button class="pb-btn primary" id="stepBtn">▶ STEP</button>
+          <button class="pb-btn" id="playBtn">▶ AUTO</button>
+          <button class="pb-btn" id="nextBtn">STAGE ▶</button>
+        </div>
+
+        <div class="speed-row">
+          <label>SPEED</label>
+          <input type="range" id="speedSlider" min="0.1" max="2" step="0.1" value="0.5">
+          <span class="speed-val" id="speedVal">0.5×</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="right-col">
+      <!-- Canvas -->
+      <div class="canvas-wrap">
+        <!-- Slightly taller canvas to fit new labels comfortably -->
+        <canvas id="cellCanvas" height="280"></canvas> 
+        <div class="stage-bar" id="stagePips">
+          <div class="stage-pip active" data-i="0"></div>
+          <div class="stage-pip" data-i="1"></div>
+          <div class="stage-pip" data-i="2"></div>
+          <div class="stage-pip" data-i="3"></div>
+          <div class="stage-pip" data-i="4"></div>
+          <div class="stage-pip" data-i="5"></div>
+        </div>
+      </div>
+
+      <!-- Info + events -->
+      <div class="info-grid">
+        <div class="info-card">
+          <div class="info-title" id="stageTitle">Interphase</div>
+          <div class="info-text" id="stageDesc">The cell prepares for division. DNA is replicated via semi-conservative replication, producing identical copies. The cell grows and organelles are duplicated. Chromatin remains <strong>uncondensed</strong> — visible only as a diffuse network.</div>
+        </div>
+        <div class="info-card">
+          <div class="info-title">Step-by-Step Events</div>
+          <div class="event-list" id="eventList"></div>
+        </div>
+      </div>
+
+      <!-- Chromosome count card -->
+      <div class="info-card">
+        <div class="panel-title">🔢 Chromosome / Chromatid Status</div>
+        <div class="chr-display">
+          <div class="chr-cell">
+            <div class="chr-num" id="chrNum">46</div>
+            <div class="chr-label">CHROMOSOMES</div>
+          </div>
+          <div class="chr-cell">
+            <div class="chr-num" id="chromatidNum">92</div>
+            <div class="chr-label">CHROMATIDS</div>
+          </div>
+          <div class="chr-cell">
+            <div class="chr-num" id="ploidy">2n</div>
+            <div class="chr-label">PLOIDY</div>
+          </div>
+          <div class="chr-cell">
+            <div class="chr-num" id="cellCount">1</div>
+            <div class="chr-label">CELLS</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Key facts -->
+      <div class="eq-panel">
+        <div class="panel-title">📋 A-Level Key Facts</div>
+        <div class="eq-grid">
+          <div class="eq-item"><div class="eq-key">PURPOSE</div><div class="eq-val">Growth, repair, asexual reproduction — genetically identical daughter cells</div></div>
+          <div class="eq-item"><div class="eq-key">RESULT</div><div class="eq-val">2 diploid (2n) cells, each with same chromosome number as parent</div></div>
+          <div class="eq-item"><div class="eq-key">SPINDLE</div><div class="eq-val">Microtubules form spindle fibres; attach to centromeres at kinetochore</div></div>
+          <div class="eq-item"><div class="eq-key">vs MEIOSIS</div><div class="eq-val">Mitosis: 1 division → 2 identical cells. Meiosis: 2 divisions → 4 haploid cells</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="credit">
+    Created by <strong style="color:#e2e8f0;">Mr Lau Chin Hang</strong> &nbsp;|&nbsp; <a href="https://www.instagram.com/curiominds.inc" target="_blank">@curiominds.inc</a> &nbsp;|&nbsp; Cambridge IGCSE &amp; A-Level Biology
+  </div>
+</div>
+
+<script>
+// ── Background floating particles ─────────────────────────────
+const bgC = document.getElementById('bgCanvas');
+const bgX = bgC.getContext('2d');
+let particles = [];
+function resizeBg(){
+  bgC.width=window.innerWidth; bgC.height=window.innerHeight;
+  particles = Array.from({length:60},()=>({
+    x:Math.random()*bgC.width, y:Math.random()*bgC.height,
+    r:Math.random()*2+0.5, vx:(Math.random()-0.5)*0.3, vy:(Math.random()-0.5)*0.3,
+    hue:Math.random()<0.5?270:320, a:Math.random()*0.4+0.1
+  }));
+}
+resizeBg(); window.addEventListener('resize',resizeBg);
+function drawBg(){
+  bgX.fillStyle='#03030a'; bgX.fillRect(0,0,bgC.width,bgC.height);
+  const g1=bgX.createRadialGradient(bgC.width*0.2,bgC.height*0.3,0,bgC.width*0.2,bgC.height*0.3,bgC.width*0.35);
+  g1.addColorStop(0,'rgba(139,92,246,0.06)'); g1.addColorStop(1,'transparent');
+  bgX.fillStyle=g1; bgX.fillRect(0,0,bgC.width,bgC.height);
+  const g2=bgX.createRadialGradient(bgC.width*0.8,bgC.height*0.7,0,bgC.width*0.8,bgC.height*0.7,bgC.width*0.3);
+  g2.addColorStop(0,'rgba(236,72,153,0.05)'); g2.addColorStop(1,'transparent');
+  bgX.fillStyle=g2; bgX.fillRect(0,0,bgC.width,bgC.height);
+  particles.forEach(p=>{
+    p.x+=p.vx; p.y+=p.vy;
+    if(p.x<0)p.x=bgC.width; if(p.x>bgC.width)p.x=0;
+    if(p.y<0)p.y=bgC.height; if(p.y>bgC.height)p.y=0;
+    bgX.beginPath(); bgX.arc(p.x,p.y,p.r,0,Math.PI*2);
+    bgX.fillStyle=`hsla(${p.hue},80%,70%,${p.a})`; bgX.fill();
+  });
+  requestAnimationFrame(drawBg);
+}
+drawBg();
+
+// ── Stage data ────────────────────────────────────────────────
+const STAGES = [
+  {
+    name:'Interphase', color:'#22d3ee',
+    desc:'The cell prepares for division. DNA is replicated via semi-conservative replication, producing identical copies. The cell grows and organelles are duplicated. Chromatin remains <strong>uncondensed</strong> — visible only as a diffuse network.',
+    events:['G1 phase: cell growth, protein synthesis','S phase: DNA replication (46→92 chromatids)','G2 phase: further growth, organelle duplication','Nucleus clearly visible; nucleolus present'],
+    chr:46, chromatids:92, ploidy:'2n', cells:1
+  },
+  {
+    name:'Prophase', color:'#a78bfa',
+    desc:'Chromatin fibres <strong>condense</strong> into visible chromosomes — each consisting of 2 sister chromatids joined at the centromere. The <strong>nuclear envelope breaks down</strong>. Spindle fibres begin to form from centrioles.',
+    events:['Chromatin condenses into visible chromosomes','Centrioles move to opposite poles & spindle forms','Nuclear envelope begins to disintegrate','Nucleolus disappears'],
+    chr:46, chromatids:92, ploidy:'2n', cells:1
+  },
+  {
+    name:'Metaphase', color:'#ec4899',
+    desc:'Chromosomes are most <strong>condensed and visible</strong>. Spindle fibres attach to centromeres at the kinetochore. Chromosomes align along the <strong>metaphase plate</strong> (cell equator). This is the best stage for karyotyping.',
+    events:['Chromosomes move towards the horizontal equator','Spindle fibres attach to kinetochores','Chromosomes align perfectly at metaphase plate','Maximum chromosome condensation — ideal for karyotyping'],
+    chr:46, chromatids:92, ploidy:'2n', cells:1
+  },
+  {
+    name:'Anaphase', color:'#f59e0b',
+    desc:'<strong>Sister chromatids separate</strong> at the centromere, pulled to opposite poles by shortening spindle fibres. Each pole now has 46 chromatids (now called chromosomes). The cell elongates.',
+    events:['Centromere splits — sister chromatids separate','Motor proteins walk chromatids along spindle fibres','46 chromosomes move to each pole','Cell membrane begins to elongate'],
+    chr:92, chromatids:92, ploidy:'2n (×2)', cells:1
+  },
+  {
+    name:'Telophase', color:'#84cc16',
+    desc:'Chromosomes <strong>decondense</strong> back into chromatin. A <strong>new nuclear envelope reforms</strong> around each set of chromosomes. The spindle fibres break down. Two nuclei are now present — each with 46 chromosomes.',
+    events:['Chromosomes reach poles & spindle breaks down','Nuclear envelopes reform around each chromosome set','Chromosomes decondense back to chromatin','Nucleolus reappears in each nucleus','Two distinct nuclei now present'],
+    chr:46, chromatids:46, ploidy:'2n', cells:1
+  },
+  {
+    name:'Cytokinesis', color:'#34d399',
+    desc:'The cytoplasm divides. In animal cells, a <strong>cleavage furrow</strong> forms as actin-myosin ring contracts, pinching the cell in two. Each daughter cell receives identical genetic material — <strong>2 diploid cells</strong> produced.',
+    events:['Actin-myosin contractile ring forms at equator','Cleavage furrow pinches inward','Cytoplasm and organelles distributed between cells','Two genetically identical daughter cells produced','Each daughter cell: 2n = 46 chromosomes'],
+    chr:46, chromatids:46, ploidy:'2n', cells:2
+  }
+];
+
+// ── Cell canvas drawing ──────────────────────────────────────
+const canvas = document.getElementById('cellCanvas');
+const ctx = canvas.getContext('2d');
+let currentStage = 0;
+let animT = 0; // 0→1 within stage
+let currentStep = 1; // Current sub-event target chunk
+let targetAnimT = 0; 
+let autoPlay = false;
+let autoTransitionTimeout = null;
+let animFrameId = null;
+
+const stageColors = ['#22d3ee','#a78bfa','#ec4899','#f59e0b','#84cc16','#34d399'];
+
+function resizeCanvas(){
+  canvas.width = canvas.offsetWidth;
+}
+resizeCanvas();
+window.addEventListener('resize',()=>{resizeCanvas(); drawStage(currentStage,animT);});
+
+// Helper drawing functions
+function drawCell(cx,cy,rx,ry,color,alpha=1,glowAmt=20){
+  ctx.save();
+  ctx.shadowBlur=glowAmt; ctx.shadowColor=color;
+  ctx.globalAlpha=alpha;
+  ctx.beginPath(); ctx.ellipse(cx,cy,rx,ry,0,0,Math.PI*2);
+  ctx.strokeStyle=color; ctx.lineWidth=2.5; ctx.stroke();
+  ctx.globalAlpha=alpha*0.18;
+  ctx.fillStyle=color; ctx.fill();
+  ctx.restore();
+}
+
+// Dynamic Nuclear Envelope (Solid -> Dotted -> Fade)
+function drawNucleusDynamic(cx, cy, r, color, envPhase) {
+  ctx.save();
+  
+  // Nucleoplasm fill fades out as envPhase approaches 1
+  let fillA = Math.max(0, 0.5 * (1 - envPhase * 1.5));
+  ctx.fillStyle = `rgba(30,10,80,${fillA})`;
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2);
+  ctx.fill();
+
+  // Envelope line
+  let lineA = Math.max(0, 1 - envPhase);
+  ctx.globalAlpha = lineA;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.8;
+  ctx.shadowBlur = 15; ctx.shadowColor = color;
+  
+  // Dotted transition as phase increases
+  if(envPhase > 0.1) {
+    let dashGap = (envPhase - 0.1) * 35; // Gap increases making it fall apart
+    ctx.setLineDash([5, dashGap]);
+  }
+  
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2);
+  ctx.stroke();
+  
+  ctx.restore();
+}
+
+
+// Draw a chromosome (X shape with 2 chromatids)
+function drawChromosome(cx,cy,len,color,condensed=1,angle=0){
+  ctx.save();
+  ctx.translate(cx,cy); ctx.rotate(angle);
+  const w = 4*condensed;
+  const h = len*condensed;
+  const grd = ctx.createLinearGradient(-w,-h/2,-w/4,h/2);
+  grd.addColorStop(0,color+'cc'); grd.addColorStop(0.5,color); grd.addColorStop(1,color+'cc');
+  // Chromatid 1
+  ctx.beginPath();
+  ctx.moveTo(-w,-h/2); ctx.quadraticCurveTo(-w*2,0,-w,h/2);
+  ctx.quadraticCurveTo(-w/4,h/3,-w/4,-h/3); ctx.quadraticCurveTo(-w*1.5,0,-w,-h/2);
+  ctx.fillStyle=grd; ctx.shadowBlur=8; ctx.shadowColor=color; ctx.fill();
+  // Chromatid 2
+  ctx.beginPath();
+  ctx.moveTo(w,-h/2); ctx.quadraticCurveTo(w*2,0,w,h/2);
+  ctx.quadraticCurveTo(w/4,h/3,w/4,-h/3); ctx.quadraticCurveTo(w*1.5,0,w,-h/2);
+  ctx.fill();
+  // Centromere
+  ctx.beginPath(); ctx.arc(0,0,w*0.8,0,Math.PI*2);
+  ctx.fillStyle='rgba(255,255,255,0.6)'; ctx.shadowBlur=6; ctx.fill();
+  ctx.restore();
+}
+
+function drawSpindle(cx,cy,rx,ry,color,alpha=1){
+  ctx.save(); ctx.globalAlpha=alpha;
+  ctx.strokeStyle=color; ctx.lineWidth=1.5;
+  ctx.setLineDash([3,4]);
+  for(let i=-3;i<=3;i++){
+    const off=i*(rx*0.28);
+    ctx.beginPath();
+    ctx.moveTo(cx+off,cy-ry-8);
+    ctx.quadraticCurveTo(cx+off*0.5,cy,cx+off,cy+ry+8);
+    ctx.stroke();
+  }
+  ctx.setLineDash([]);
+  ctx.restore();
+}
+
+function drawCleavageFurrow(cx,cy,rx,ry,progress,color){
+  // progress 0→1 cleavage
+  ctx.save();
+  const indent = rx*0.8*progress;
+  ctx.strokeStyle=color; ctx.lineWidth=2.5;
+  ctx.shadowBlur=15; ctx.shadowColor=color;
+  // Top indent
+  ctx.beginPath();
+  ctx.moveTo(cx-indent,cy);
+  ctx.quadraticCurveTo(cx,cy+indent*0.5,cx+indent,cy);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cx-indent,cy);
+  ctx.quadraticCurveTo(cx,cy-indent*0.5,cx+indent,cy);
+  ctx.stroke();
+  ctx.restore();
+}
+
+// Seeded random for consistent chromatin
+function seededRand(seed){
+  let s=seed;
+  return function(){ s=(s*9301+49297)%233280; return s/233280; };
+}
+
+function drawChromatinFixed(cx,cy,r,color, density=1, alphaMult=1){
+  if(alphaMult <= 0) return;
+  ctx.save();
+  const rng=seededRand(42);
+  ctx.strokeStyle=color; ctx.lineWidth=1; ctx.globalAlpha=0.5 * alphaMult;
+  ctx.shadowBlur=6; ctx.shadowColor=color;
+  const lines = Math.floor(14 * density);
+  for(let i=0;i<lines;i++){
+    const a1=rng()*Math.PI*2, r1=rng()*r*0.75;
+    const a2=rng()*Math.PI*2, r2=rng()*r*0.75;
+    ctx.beginPath();
+    ctx.moveTo(cx+Math.cos(a1)*r1,cy+Math.sin(a1)*r1);
+    ctx.quadraticCurveTo(cx*(0.8+rng()*0.4),cy*(0.8+rng()*0.4),cx+Math.cos(a2)*r2,cy+Math.sin(a2)*r2);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+// ── Main draw function per stage ──────────────────────────────
+function drawStage(stage, t){
+  const W=canvas.width, H=canvas.height;
+  ctx.clearRect(0,0,W,H);
+
+  // Background
+  const bg=ctx.createRadialGradient(W/2,H/2,0,W/2,H/2,W*0.6);
+  bg.addColorStop(0,'#0d0d2b'); bg.addColorStop(1,'#03030a');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+
+  const cx=W/2, cy=H/2 - 10; // Shifted up slightly to fit bottom text
+  const cellR = Math.min(W,H)*0.32;
+  const nuclR = cellR*0.42;
+  const color = stageColors[stage];
+
+  // Logic to highlight step-by-step events based on timeline (t)
+  const eventsCount = STAGES[stage].events.length;
+  // Subtract tiny epsilon to prevent jumping to next event exactly at the boundary limit 
+  const activeIdx = Math.max(0, Math.min(Math.floor((t - 0.001) * eventsCount), eventsCount - 1));
+  
+  const items = document.querySelectorAll('.event-item');
+  items.forEach((item, i) => {
+    if(i === activeIdx) {
+      item.classList.add('highlight');
+      item.style.transform = 'translateX(5px)';
+    } else {
+      item.classList.remove('highlight');
+      item.style.transform = 'translateX(0)';
+    }
+  });
+
+  if(stage===0){
+    // INTERPHASE — round cell, visible nucleus, chromatin network
+    const pulse=1+0.02*Math.sin(t*Math.PI*4);
+    drawCell(cx,cy,cellR*pulse,cellR*0.9*pulse,color,1,25);
+    drawNucleusDynamic(cx, cy, nuclR, '#8b5cf6', 0); // Solid
+    drawChromatinFixed(cx,cy,nuclR*0.85,'#c084fc', 1 + t*1.5); // Density increases showing replication
+    // Nucleolus
+    ctx.save(); ctx.shadowBlur=10; ctx.shadowColor='#ec4899';
+    ctx.beginPath(); ctx.arc(cx+nuclR*0.2,cy-nuclR*0.1,nuclR*0.22,0,Math.PI*2);
+    ctx.fillStyle='rgba(236,72,153,0.4)'; ctx.fill();
+    ctx.strokeStyle='#ec4899'; ctx.lineWidth=1.2; ctx.stroke();
+    ctx.restore();
+    // DNA label
+    ctx.save(); ctx.fillStyle='rgba(34,211,238,0.7)'; ctx.font="bold 11px 'Space Grotesk',sans-serif";
+    ctx.textAlign='center'; ctx.fillText('DNA replicating (chromatin densifying)',cx,cy+cellR*1.05+14);
+    ctx.restore();
+  }
+
+  else if(stage===1){
+    // PROPHASE — Dynamic envelope disintegration
+    drawCell(cx,cy,cellR,cellR*0.9,color,1,20);
+    
+    // Dynamic nucleus that turns dashed and fades away
+    // envPhase: map t from 0 to 1
+    let envPhase = t; 
+    drawNucleusDynamic(cx, cy, nuclR, '#8b5cf6', envPhase);
+
+    // Chromatin fades out as visible chromosomes condense
+    drawChromatinFixed(cx, cy, nuclR*0.85, '#c084fc', 2.5, Math.max(0, 1 - t*2.5));
+
+    // 6 condensing chromosomes
+    const chrs=[[-0.55,-0.4],[-0.2,-0.6],[0.3,-0.5],[0.55,-0.1],[-0.5,0.35],[0.2,0.45]];
+    chrs.forEach(([ox,oy],i)=>{
+      const condensed=t*0.8+0.2;
+      drawChromosome(cx+ox*nuclR,cy+oy*nuclR,22,color,condensed,(i*Math.PI*2/6)*0.5);
+    });
+    
+    // Spindle forming
+    if(t>0.3) {
+      drawSpindle(cx,cy-cellR*0.05,cellR*0.5,cellR*0.8,'#7c3aed',((t-0.3)*1.5)*0.4);
+      ctx.save();
+      ctx.fillStyle='rgba(167,139,250,0.8)';
+      ctx.font="10px 'Space Grotesk',sans-serif";
+      ctx.textAlign='center';
+      ctx.fillText('Centrioles migrating', cx, cy - cellR*0.9);
+      ctx.restore();
+    }
+  }
+
+  else if(stage===2){
+    // METAPHASE — chromosomes move and align perfectly on the HORIZONTAL equator
+    const smoothT = t * t * (3 - 2 * t); // Smooth easing for alignment
+    
+    drawCell(cx,cy,cellR,cellR*0.9,color,1,20);
+    // Spindle lines go vertically to match the horizontal plate
+    drawSpindle(cx,cy,cellR*0.55,cellR*0.85,'#7c3aed',0.4 + smoothT*0.4);
+    
+    // Metaphase plate line (Horizontal)
+    ctx.save(); ctx.strokeStyle='rgba(236,72,153,0.5)'; ctx.lineWidth=1.5;
+    ctx.setLineDash([5,5]);
+    ctx.beginPath(); 
+    ctx.moveTo(cx - cellR*0.85, cy); // From Left
+    ctx.lineTo(cx + cellR*0.85, cy); // To Right
+    ctx.stroke();
+    ctx.setLineDash([]); 
+    
+    // Label for Equator
+    ctx.fillStyle='rgba(236,72,153,0.9)';
+    ctx.font="bold 12px 'Space Grotesk',sans-serif";
+    ctx.textAlign='center';
+    ctx.shadowBlur=4; ctx.shadowColor='#000';
+    ctx.fillText('Metaphase Plate (Equator)', cx, cy + 14);
+    ctx.restore();
+
+    // Smoothly animate from Prophase scattered positions to perfect alignment
+    const prophaseChrs=[[-0.55,-0.4],[-0.2,-0.6],[0.3,-0.5],[0.55,-0.1],[-0.5,0.35],[0.2,0.45]];
+    // Spread them across the X axis horizontally
+    const metaOffsets=[-0.75, -0.45, -0.15, 0.15, 0.45, 0.75];
+
+    prophaseChrs.forEach((pPos, i) => {
+      const startX = pPos[0] * nuclR;
+      const startY = pPos[1] * nuclR;
+      
+      const targetX = metaOffsets[i] * nuclR * 1.1; // Spread horizontally
+      const targetY = 0; // Exactly on horizontal equator line
+
+      const currX = cx + startX + (targetX - startX) * smoothT;
+      const currY = cy + startY + (targetY - startY) * smoothT;
+      
+      const startAngle = (i * Math.PI * 2 / 6) * 0.5;
+      const targetAngle = 0; // Chromatids stand vertically perfectly along horizontal plate
+      const currAngle = startAngle + (targetAngle - startAngle) * smoothT;
+
+      drawChromosome(currX, currY, 22, color, 1, currAngle);
+    });
+    
+    // Pole labels (Top and Bottom)
+    ctx.save(); ctx.font="10px 'Space Grotesk',sans-serif"; ctx.textAlign='center';
+    ctx.fillStyle='rgba(167,139,250,0.8)';
+    ctx.fillText('POLE',cx,cy-cellR*0.95);
+    ctx.fillText('POLE',cx,cy+cellR*0.95+8);
+    ctx.restore();
+  }
+
+  else if(stage===3){
+    // ANAPHASE — cell elongating, chromatids moving to poles
+    const elongate=1+t*0.25;
+    drawCell(cx,cy,cellR*0.88,cellR*elongate,color,1,20);
+    drawSpindle(cx,cy,cellR*0.52,cellR*0.75*elongate,'#7c3aed',0.5);
+    
+    // Chromatids are spread horizontally matching Metaphase
+    const topOffsets=[-0.75, -0.45, -0.15, 0.15, 0.45, 0.75];
+    
+    // 6 chromatids going up (Angle 0 keeps them vertically oriented as they get pulled)
+    const topY=cy-nuclR*(0.2+t*1.2);
+    topOffsets.forEach((ox,i)=>{
+      drawChromosome(cx+ox*nuclR*0.9, topY, 16, stageColors[3], 0.9, 0);
+    });
+    
+    // 6 chromatids going down
+    const botY=cy+nuclR*(0.2+t*1.2);
+    topOffsets.forEach((ox,i)=>{
+      drawChromosome(cx+ox*nuclR*0.9, botY, 16, stageColors[3], 0.9, 0);
+    });
+
+    // Label
+    ctx.save();
+    ctx.fillStyle='rgba(245,158,11,0.9)';
+    ctx.font="bold 12px 'Space Grotesk',sans-serif";
+    ctx.textAlign='center';
+    ctx.shadowBlur=4; ctx.shadowColor='#000';
+    ctx.fillText('↑ Chromatids moving to poles ↓', cx, cy + 4);
+    ctx.restore();
+  }
+
+  else if(stage===4){
+    // TELOPHASE — two nuclei forming (Reverse of Prophase envelope)
+    const elongate=1.3;
+    drawCell(cx,cy,cellR*0.82,cellR*elongate,color,1,20);
+    
+    // Spindle fading
+    drawSpindle(cx,cy,cellR*0.5,cellR*0.7,'#7c3aed',(1-t)*0.4);
+
+    // Nuclear envelope reforming: From nothing (1) back to solid (0)
+    let envPhase = 1;
+    if (t > 0.1) envPhase = Math.max(0, 1 - (t - 0.1) * 1.5);
+
+    // Top nucleus
+    drawNucleusDynamic(cx, cy-cellR*0.55, nuclR*0.55, '#84cc16', envPhase);
+    drawChromatinFixed(cx, cy-cellR*0.55, nuclR*0.55, '#c084fc', 1, Math.min(1, t*2));
+    
+    // Bottom nucleus
+    drawNucleusDynamic(cx, cy+cellR*0.55, nuclR*0.55, '#84cc16', envPhase);
+    drawChromatinFixed(cx, cy+cellR*0.55, nuclR*0.55, '#c084fc', 1, Math.min(1, t*2));
+
+    if(t > 0.3) {
+      ctx.save();
+      ctx.fillStyle='rgba(132,204,22,0.9)';
+      ctx.font="11px 'Space Grotesk',sans-serif";
+      ctx.textAlign='center';
+      ctx.fillText('Nuclear envelopes reforming', cx, cy);
+      ctx.restore();
+    }
+  }
+
+  else if(stage===5){
+    // CYTOKINESIS — cleavage furrow
+    const elongate=1.3;
+    const progress=t;
+
+    // Two daughter cells emerging
+    if(progress>0.7){
+      const sep=(progress-0.7)*3.3*cellR*0.55;
+      drawCell(cx,cy-cellR*0.45-sep*0.5,cellR*0.78,cellR*0.68,stageColors[5],1,20);
+      drawCell(cx,cy+cellR*0.45+sep*0.5,cellR*0.78,cellR*0.68,stageColors[5],1,20);
+      drawNucleusDynamic(cx,cy-cellR*0.45-sep*0.5,nuclR*0.52,'#22d3ee', 0);
+      drawNucleusDynamic(cx,cy+cellR*0.45+sep*0.5,nuclR*0.52,'#22d3ee', 0);
+      
+      // ✓ labels
+      ctx.save(); ctx.font="bold 12px 'Syne',sans-serif"; ctx.textAlign='center';
+      ctx.fillStyle='#34d399'; ctx.shadowBlur=10; ctx.shadowColor='#34d399';
+      ctx.fillText('2n = 46',cx,cy-cellR*0.45-sep*0.5+cellR*0.78+16);
+      ctx.fillText('2n = 46',cx,cy+cellR*0.45+sep*0.5+cellR*0.68+16);
+      ctx.restore();
+    } else {
+      drawCell(cx,cy,cellR*0.82,cellR*elongate*(1-progress*0.1),color,1,20);
+      drawCleavageFurrow(cx,cy,cellR*0.82,cellR*elongate,progress,color);
+      drawNucleusDynamic(cx,cy-cellR*0.45,nuclR*0.5,'#22d3ee',0);
+      drawNucleusDynamic(cx,cy+cellR*0.45,nuclR*0.5,'#22d3ee',0);
+
+      ctx.save();
+      ctx.fillStyle='rgba(52,211,153,0.9)';
+      ctx.font="bold 12px 'Space Grotesk',sans-serif";
+      ctx.textAlign='center';
+      ctx.shadowBlur=4; ctx.shadowColor='#000';
+      ctx.fillText('← Cleavage Furrow →', cx, cy + 4);
+      ctx.restore();
+    }
+  }
+
+  // Stage label top-right
+  ctx.save();
+  ctx.font="bold 14px 'Syne',sans-serif";
+  ctx.textAlign='right'; ctx.fillStyle=color;
+  ctx.shadowBlur=12; ctx.shadowColor=color;
+  ctx.fillText(STAGES[stage].name.toUpperCase(), W-16, 26);
+  ctx.restore();
+
+  // Prominent On-Canvas "Current Sub-Event" Indicator
+  ctx.save();
+  ctx.font = "bold 14px 'Space Grotesk',sans-serif";
+  ctx.textAlign = 'center';
+  ctx.fillStyle = 'rgba(255,255,255,0.95)';
+  ctx.shadowBlur = 8;
+  ctx.shadowColor = color;
+  ctx.fillText(`${STAGES[stage].events[activeIdx]}`, W/2, H - 18);
+  ctx.restore();
+}
+
+// ── UI update ─────────────────────────────────────────────────
+function updateUI(stage){
+  const s=STAGES[stage];
+  // Buttons
+  document.querySelectorAll('.stage-btn').forEach((b,i)=>{
+    b.classList.toggle('active',i===stage);
+  });
+  // Pips
+  document.querySelectorAll('.stage-pip').forEach((p,i)=>{
+    p.classList.toggle('active',i===stage);
+    p.classList.toggle('done',i<stage);
+  });
+  // Info
+  document.getElementById('stageTitle').textContent=s.name;
+  document.getElementById('stageDesc').innerHTML=s.desc;
+  
+  // Events
+  const el=document.getElementById('eventList');
+  el.innerHTML='';
+  s.events.forEach((e,i)=>{
+    const div=document.createElement('div');
+    div.className='event-item';
+    div.innerHTML=`<div class="event-bullet"></div><span>${e}</span>`;
+    el.appendChild(div);
+  });
+  
+  // Chromosome counts
+  document.getElementById('chrNum').textContent=s.chr;
+  document.getElementById('chromatidNum').textContent=s.chromatids;
+  document.getElementById('ploidy').textContent=s.ploidy;
+  document.getElementById('cellCount').textContent=s.cells;
+}
+
+function goToStage(i){
+  currentStage=Math.max(0,Math.min(5,i));
+  animT = 0; 
+  currentStep = 1;
+  const eventsCount = STAGES[currentStage].events.length;
+  targetAnimT = autoPlay ? 1 : (currentStep / eventsCount);
+  
+  updateUI(currentStage); 
+  
+  if(autoTransitionTimeout) {
+    clearTimeout(autoTransitionTimeout); 
+    autoTransitionTimeout = null;
+  }
+  
+  if(!animFrameId) {
+    lastTime = 0;
+    animFrameId = requestAnimationFrame(animateStage);
+  }
+}
+
+// ── Animation within stage ────────────────────────────────────
+let lastTime=0;
+
+function animateStage(ts){
+  if(!lastTime) lastTime=ts;
+  const speed = parseFloat(document.getElementById('speedSlider').value);
+  const dt = (ts-lastTime)/1000;
+  lastTime = ts;
+  
+  // Move animT towards targetAnimT
+  if (animT < targetAnimT) {
+    animT = Math.min(targetAnimT, animT + dt * speed * 0.15);
+  }
+  
+  drawStage(currentStage, animT);
+  
+  // If we haven't reached target yet OR we are in autoPlay but haven't finished stage
+  if (animT < targetAnimT || (autoPlay && animT < 1)) { 
+    animFrameId = requestAnimationFrame(animateStage); 
+  } else {
+    // We reached the current target (either step bound or end of stage)
+    animFrameId = null; 
+    lastTime = 0;
+    
+    // If autoPlay and fully done, transition to next
+    if(autoPlay && animT >= 1 && !autoTransitionTimeout) {
+      autoTransitionTimeout = setTimeout(()=>{
+        if(currentStage < 5){ 
+            goToStage(currentStage+1); 
+        } else { 
+            autoPlay = false; 
+            document.getElementById('playBtn').textContent='▶ AUTO'; 
+        }
+        autoTransitionTimeout = null;
+      }, 1500); 
+    }
+  }
+}
+
+// ── Controls ──────────────────────────────────────────────────
+document.getElementById('prevBtn').addEventListener('click',()=>{
+  autoPlay=false; document.getElementById('playBtn').textContent='▶ AUTO';
+  if(autoTransitionTimeout) clearTimeout(autoTransitionTimeout);
+  goToStage(currentStage-1);
+});
+
+document.getElementById('nextBtn').addEventListener('click',()=>{
+  autoPlay=false; document.getElementById('playBtn').textContent='▶ AUTO';
+  if(autoTransitionTimeout) clearTimeout(autoTransitionTimeout);
+  goToStage(currentStage+1);
+});
+
+// NEW Step Button logic
+document.getElementById('stepBtn').addEventListener('click',()=>{
+  autoPlay = false; 
+  document.getElementById('playBtn').textContent='▶ AUTO';
+  if(autoTransitionTimeout) {
+      clearTimeout(autoTransitionTimeout); 
+      autoTransitionTimeout = null;
+  }
+  
+  const eventsCount = STAGES[currentStage].events.length;
+  
+  if (currentStep < eventsCount) {
+    // Advance to next step bound
+    currentStep++;
+    targetAnimT = currentStep / eventsCount;
+    if(!animFrameId) {
+      lastTime = 0;
+      animFrameId = requestAnimationFrame(animateStage);
+    }
+  } else if (currentStage < 5) {
+    // Stage completed, step moves to the next stage
+    goToStage(currentStage + 1);
+  }
+});
+
+document.getElementById('playBtn').addEventListener('click',()=>{
+  autoPlay=!autoPlay;
+  document.getElementById('playBtn').textContent=autoPlay?'⏸ PAUSE':'▶ AUTO';
+  if(autoTransitionTimeout) { clearTimeout(autoTransitionTimeout); autoTransitionTimeout=null; }
+  
+  if(autoPlay){
+    if(currentStage===5 && animT >= 1) {
+        goToStage(0);
+    } else {
+        targetAnimT = 1;
+        if(!animFrameId) {
+            lastTime=0; 
+            animFrameId=requestAnimationFrame(animateStage);
+        }
+    }
+  } else {
+    // Recompute currentStep based on where it paused
+    const eventsCount = STAGES[currentStage].events.length;
+    currentStep = Math.ceil(animT * eventsCount);
+    targetAnimT = currentStep / eventsCount;
+  }
+});
+
+document.querySelectorAll('.stage-btn').forEach((btn,i)=>{
+  btn.addEventListener('click',()=>{
+    autoPlay=false; document.getElementById('playBtn').textContent='▶ AUTO';
+    if(autoTransitionTimeout) clearTimeout(autoTransitionTimeout);
+    goToStage(i);
+  });
+});
+
+document.getElementById('speedSlider').addEventListener('input',function(){
+  document.getElementById('speedVal').textContent=this.value+'×';
+});
+
+// Init
+goToStage(0);
+</script>
+</body>
+</html>
