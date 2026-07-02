@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brownian Motion Simulation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.2em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.1em;
+            opacity: 0.95;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .panel {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .panel h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+        }
+
+        canvas {
+            border: 3px solid #667eea;
+            border-radius: 8px;
+            background: #ffffff;
+            display: block;
+            width: 100%;
+            height: auto;
+            cursor: default;
+            user-select: none;
+        }
+
+        canvas:active {
+            cursor: grabbing;
+        }
+
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button.active {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .legend {
+            margin-top: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            font-size: 0.95em;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 10px;
+            border: 2px solid #333;
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 5px;
+            font-size: 0.95em;
+            line-height: 1.6;
+        }
+
+        .slider-control {
+            margin-top: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .slider-control label {
+            display: block;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .slider-control #particleCount {
+            color: #667eea;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: #ddd;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔬 Brownian Motion Simulation</h1>
+            <p class="subtitle">
+                Brownian motion occurs because tiny air molecules constantly collide with larger particles 
+                such as pollen grains, causing random motion.
+            </p>
+            <p style="margin-top: 10px; font-size: 0.9em; opacity: 0.9;">
+                Created by: Mr Lau Chin Hang | Instagram: <a href="https://www.instagram.com/curiominds.inc" target="_blank" style="color: white; text-decoration: underline;">@curiominds.inc</a>
+            </p>
+        </header>
+
+        <div class="main-content">
+            <!-- Left Panel - Simulation -->
+            <div class="panel">
+                <h2>Simulation</h2>
+                <canvas id="simulationCanvas" width="600" height="600"></canvas>
+                
+                <div class="controls">
+                    <button id="startPauseBtn">⏸️ Pause</button>
+                    <button id="resetBtn">🔄 Reset</button>
+                    <button id="traceBtn" class="active">✨ Show Pollen Path</button>
+                </div>
+
+                <div class="slider-control">
+                    <label for="particleSlider">
+                        <strong>Number of Air Particles:</strong> 
+                        <span id="particleCount">800</span>
+                    </label>
+                    <input type="range" id="particleSlider" min="100" max="1600" value="800" step="100">
+                </div>
+
+                <div class="slider-control">
+                    <label for="pollenMassSlider">
+                        <strong>Pollen Mass:</strong> 
+                        <span id="pollenMassValue">150</span>
+                    </label>
+                    <input type="range" id="pollenMassSlider" min="50" max="500" value="150" step="10">
+                </div>
+
+                <div class="slider-control">
+                    <label for="temperatureSlider">
+                        <strong>Temperature (Air Speed):</strong> 
+                        <span id="temperatureValue">100%</span>
+                    </label>
+                    <input type="range" id="temperatureSlider" min="25" max="200" value="100" step="25">
+                </div>
+
+                <div class="slider-control">
+                    <label for="zoomSlider">
+                        <strong>Zoom Level:</strong> 
+                        <span id="zoomLevel">1.0x</span>
+                    </label>
+                    <input type="range" id="zoomSlider" min="1" max="5" value="1" step="0.5">
+                </div>
+
+                <div class="slider-control">
+                    <label for="speedSlider">
+                        <strong>Simulation Speed:</strong> 
+                        <span id="speedLevel">100%</span>
+                    </label>
+                    <input type="range" id="speedSlider" min="10" max="100" value="100" step="10">
+                </div>
+
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #888888; width: 8px; height: 8px;"></div>
+                        <strong>Air Molecules</strong> - Fast-moving particles
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #FF6B6B;"></div>
+                        <strong>Pollen Grain</strong> - Larger particle exhibiting random motion
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <strong>💡 What you're seeing:</strong> Hundreds of air molecules bombard the pollen grain 
+                    from all directions. The unbalanced collisions cause the pollen to move randomly - 
+                    this is Brownian motion, first observed by Robert Brown in 1827! 
+                    <br><br>
+                    <strong>🌡️ Temperature Effect:</strong> Higher temperature means faster-moving air molecules, 
+                    which causes more energetic Brownian motion. This demonstrates the direct relationship 
+                    between temperature and molecular kinetic energy!
+                </div>
+            </div>
+
+            <!-- Right Panel - Graph -->
+            <div class="panel">
+                <h2>Displacement vs Time</h2>
+                <canvas id="graphCanvas" width="600" height="600"></canvas>
+                
+                <div class="controls">
+                    <button id="clearGraphBtn">🗑️ Clear Graph</button>
+                </div>
+
+                <div class="info-box">
+                    <strong>📊 Graph Explanation:</strong> This graph shows how far the pollen grain has moved 
+                    from its starting position over time. The jagged, irregular pattern is characteristic of 
+                    Brownian motion - there's no smooth predictable path!
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========== Configuration ==========
+        const CONFIG = {
+            // Canvas dimensions
+            canvasWidth: 600,
+            canvasHeight: 600,
+            
+            // Air molecules
+            numMolecules: 800,
+            moleculeRadius: 1.5,
+            moleculeSpeed: 4.0,  // Increased from 2.5
+            moleculeColor: '#888888',
+            
+            // Pollen grain
+            pollenRadius: 20,
+            pollenColor: '#FF6B6B',
+            pollenMass: 150,  // Reduced from 500 for more visible effect
+            
+            // Air molecule mass
+            moleculeMass: 1,
+            
+            // Physics
+            friction: 0.998,  // Less friction for more visible motion
+            
+            // Graph
+            graphMaxTime: 300,  // Number of time points to show
+            graphUpdateInterval: 2  // Update graph every N frames
+        };
+
+        // ========== Canvas Setup ==========
+        const simCanvas = document.getElementById('simulationCanvas');
+        const simCtx = simCanvas.getContext('2d');
+        
+        const graphCanvas = document.getElementById('graphCanvas');
+        const graphCtx = graphCanvas.getContext('2d');
+
+        // ========== State Variables ==========
+        let isRunning = true;
+        let showTrace = true;
+        let frameCount = 0;
+        let zoomLevel = 1;
+        let speedMultiplier = 1;
+        let temperatureMultiplier = 1;  // Controls air molecule speed
+        
+        // Camera pan offset
+        let panX = 0;
+        let panY = 0;
+        let isPanning = false;
+        let lastMouseX = 0;
+        let lastMouseY = 0;
+        
+        let airMolecules = [];
+        let pollen = null;
+        let pollenPath = [];
+        let displacementData = [];
+        let timeData = [];
+
+        // ========== Particle Classes ==========
+        
+        // Air Molecule Class
+        class Molecule {
+            constructor(x, y, vx, vy) {
+                this.x = x;
+                this.y = y;
+                this.vx = vx;
+                this.vy = vy;
+                this.radius = CONFIG.moleculeRadius;
+                this.mass = CONFIG.moleculeMass;
+            }
+
+            update() {
+                // Move molecule (apply speed multiplier and temperature)
+                this.x += this.vx * speedMultiplier * temperatureMultiplier;
+                this.y += this.vy * speedMultiplier * temperatureMultiplier;
+
+                // Bounce off walls (perfectly elastic)
+                if (this.x - this.radius < 0) {
+                    this.x = this.radius;
+                    this.vx = Math.abs(this.vx);
+                }
+                if (this.x + this.radius > CONFIG.canvasWidth) {
+                    this.x = CONFIG.canvasWidth - this.radius;
+                    this.vx = -Math.abs(this.vx);
+                }
+                if (this.y - this.radius < 0) {
+                    this.y = this.radius;
+                    this.vy = Math.abs(this.vy);
+                }
+                if (this.y + this.radius > CONFIG.canvasHeight) {
+                    this.y = CONFIG.canvasHeight - this.radius;
+                    this.vy = -Math.abs(this.vy);
+                }
+            }
+
+            draw(ctx) {
+                ctx.fillStyle = CONFIG.moleculeColor;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // Pollen Grain Class
+        class Pollen {
+            constructor(x, y) {
+                this.startX = x;
+                this.startY = y;
+                this.x = x;
+                this.y = y;
+                this.vx = 0;
+                this.vy = 0;
+                this.radius = CONFIG.pollenRadius;
+                this.mass = CONFIG.pollenMass;
+            }
+
+            update() {
+                // Apply friction
+                this.vx *= CONFIG.friction;
+                this.vy *= CONFIG.friction;
+
+                // Move pollen (apply speed multiplier)
+                this.x += this.vx * speedMultiplier;
+                this.y += this.vy * speedMultiplier;
+
+                // Bounce off walls
+                if (this.x - this.radius < 0) {
+                    this.x = this.radius;
+                    this.vx = Math.abs(this.vx) * 0.5;
+                }
+                if (this.x + this.radius > CONFIG.canvasWidth) {
+                    this.x = CONFIG.canvasWidth - this.radius;
+                    this.vx = -Math.abs(this.vx) * 0.5;
+                }
+                if (this.y - this.radius < 0) {
+                    this.y = this.radius;
+                    this.vy = Math.abs(this.vy) * 0.5;
+                }
+                if (this.y + this.radius > CONFIG.canvasHeight) {
+                    this.y = CONFIG.canvasHeight - this.radius;
+                    this.vy = -Math.abs(this.vy) * 0.5;
+                }
+
+                // Record path
+                if (showTrace && frameCount % 2 === 0) {
+                    pollenPath.push({ x: this.x, y: this.y });
+                    // Limit path length for performance
+                    if (pollenPath.length > 2000) {
+                        pollenPath.shift();
+                    }
+                }
+            }
+
+            draw(ctx) {
+                // Draw main pollen (solid circle)
+                ctx.fillStyle = CONFIG.pollenColor;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Draw border
+                ctx.strokeStyle = '#CC0000';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+
+            getDisplacement() {
+                const dx = this.x - this.startX;
+                const dy = this.y - this.startY;
+                return Math.sqrt(dx * dx + dy * dy);
+            }
+        }
+
+        // ========== Physics Functions ==========
+        
+        // Check collision between molecule and pollen
+        function checkCollision(molecule, pollen) {
+            const dx = pollen.x - molecule.x;
+            const dy = pollen.y - molecule.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            return distance < (molecule.radius + pollen.radius);
+        }
+
+        // Handle elastic collision between molecule and pollen
+        function resolveCollision(molecule, pollen) {
+            // Vector from molecule to pollen
+            const dx = pollen.x - molecule.x;
+            const dy = pollen.y - molecule.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance === 0) return;
+            
+            // Normalized collision vector
+            const nx = dx / distance;
+            const ny = dy / distance;
+            
+            // Relative velocity
+            const dvx = molecule.vx - pollen.vx;
+            const dvy = molecule.vy - pollen.vy;
+            
+            // Relative velocity along collision normal
+            const velocityAlongNormal = dvx * nx + dvy * ny;
+            
+            // Don't resolve if objects are moving apart
+            if (velocityAlongNormal < 0) return;
+            
+            // Calculate impulse (perfectly elastic collision)
+            const restitution = 1.0;  // Perfectly elastic
+            const impulse = (2 * velocityAlongNormal) / (molecule.mass + pollen.mass);
+            
+            // Apply impulse
+            molecule.vx -= impulse * pollen.mass * nx * restitution;
+            molecule.vy -= impulse * pollen.mass * ny * restitution;
+            pollen.vx += impulse * molecule.mass * nx * restitution;
+            pollen.vy += impulse * molecule.mass * ny * restitution;
+            
+            // Separate overlapping objects
+            const overlap = (molecule.radius + pollen.radius) - distance;
+            if (overlap > 0) {
+                const separation = overlap / 2;
+                molecule.x -= nx * separation;
+                molecule.y -= ny * separation;
+                pollen.x += nx * separation;
+                pollen.y += ny * separation;
+            }
+        }
+
+        // ========== Initialization ==========
+        
+        function init() {
+            airMolecules = [];
+            pollenPath = [];
+            displacementData = [];
+            timeData = [];
+            frameCount = 0;
+
+            // Create air molecules with random positions and velocities
+            for (let i = 0; i < CONFIG.numMolecules; i++) {
+                const x = Math.random() * CONFIG.canvasWidth;
+                const y = Math.random() * CONFIG.canvasHeight;
+                const angle = Math.random() * Math.PI * 2;
+                const speed = CONFIG.moleculeSpeed * (0.7 + Math.random() * 0.6);
+                const vx = Math.cos(angle) * speed;
+                const vy = Math.sin(angle) * speed;
+                
+                airMolecules.push(new Molecule(x, y, vx, vy));
+            }
+
+            // Create pollen grain at center
+            pollen = new Pollen(CONFIG.canvasWidth / 2, CONFIG.canvasHeight / 2);
+        }
+
+        // ========== Update Function ==========
+        
+        function update() {
+            if (!isRunning) return;
+
+            // Update all air molecules
+            for (let i = 0; i < airMolecules.length; i++) {
+                airMolecules[i].update();
+                
+                // Check collision with pollen
+                if (checkCollision(airMolecules[i], pollen)) {
+                    resolveCollision(airMolecules[i], pollen);
+                }
+                
+                // Check collisions between molecules (simplified - only nearby)
+                for (let j = i + 1; j < airMolecules.length; j++) {
+                    const dx = airMolecules[j].x - airMolecules[i].x;
+                    const dy = airMolecules[j].y - airMolecules[i].y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (dist < airMolecules[i].radius + airMolecules[j].radius) {
+                        // Simple elastic collision for molecules
+                        const nx = dx / dist;
+                        const ny = dy / dist;
+                        const dvx = airMolecules[i].vx - airMolecules[j].vx;
+                        const dvy = airMolecules[i].vy - airMolecules[j].vy;
+                        const dotProduct = dvx * nx + dvy * ny;
+                        
+                        if (dotProduct > 0) {
+                            airMolecules[i].vx -= dotProduct * nx;
+                            airMolecules[i].vy -= dotProduct * ny;
+                            airMolecules[j].vx += dotProduct * nx;
+                            airMolecules[j].vy += dotProduct * ny;
+                        }
+                    }
+                }
+            }
+
+            // Update pollen
+            pollen.update();
+
+            // Record displacement data for graph
+            if (frameCount % CONFIG.graphUpdateInterval === 0) {
+                const displacement = pollen.getDisplacement();
+                displacementData.push(displacement);
+                timeData.push(frameCount / 60);  // Convert to seconds (assuming 60fps)
+
+                // Limit data points
+                if (displacementData.length > CONFIG.graphMaxTime) {
+                    displacementData.shift();
+                    timeData.shift();
+                }
+            }
+
+            frameCount++;
+        }
+
+        // ========== Draw Functions ==========
+        
+        function drawSimulation() {
+            // Clear canvas with light background
+            simCtx.fillStyle = '#f5f5f5';
+            simCtx.fillRect(0, 0, CONFIG.canvasWidth, CONFIG.canvasHeight);
+
+            // Save the context state
+            simCtx.save();
+
+            // Apply pan and zoom transformations
+            simCtx.translate(panX, panY);
+            simCtx.scale(zoomLevel, zoomLevel);
+
+            // Draw bounds
+            simCtx.strokeStyle = '#cccccc';
+            simCtx.lineWidth = 2 / zoomLevel;
+            simCtx.strokeRect(0, 0, CONFIG.canvasWidth, CONFIG.canvasHeight);
+
+            // Draw pollen path (trace)
+            if (showTrace && pollenPath.length > 1) {
+                simCtx.strokeStyle = '#0066cc';
+                simCtx.lineWidth = 1.5 / zoomLevel;
+                simCtx.beginPath();
+                simCtx.moveTo(pollenPath[0].x, pollenPath[0].y);
+                for (let i = 1; i < pollenPath.length; i++) {
+                    simCtx.lineTo(pollenPath[i].x, pollenPath[i].y);
+                }
+                simCtx.stroke();
+            }
+
+            // Draw air molecules
+            airMolecules.forEach(molecule => {
+                molecule.draw(simCtx);
+            });
+
+            // Draw pollen grain (on top)
+            pollen.draw(simCtx);
+
+            // Restore the context state
+            simCtx.restore();
+
+            // Draw info overlay
+            simCtx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            simCtx.font = 'bold 14px Arial';
+            let yPos = 25;
+            if (zoomLevel > 1) {
+                simCtx.fillText(`Zoom: ${zoomLevel.toFixed(1)}x (drag to pan)`, 10, yPos);
+                yPos += 25;
+            }
+            simCtx.fillText(`Temperature: ${(temperatureMultiplier * 100).toFixed(0)}%`, 10, yPos);
+            yPos += 25;
+            simCtx.fillText(`Speed: ${(speedMultiplier * 100).toFixed(0)}%`, 10, yPos);
+        }
+
+        function drawGraph() {
+            const width = graphCanvas.width;
+            const height = graphCanvas.height;
+            const padding = 60;
+
+            // Clear canvas
+            graphCtx.fillStyle = '#ffffff';
+            graphCtx.fillRect(0, 0, width, height);
+
+            if (displacementData.length < 2) return;
+
+            // Calculate scales
+            const maxDisplacement = Math.max(...displacementData, 50);
+            const maxTime = Math.max(...timeData, 1);
+            const xScale = (width - 2 * padding) / maxTime;
+            const yScale = (height - 2 * padding) / maxDisplacement;
+
+            // Draw axes
+            graphCtx.strokeStyle = '#333';
+            graphCtx.lineWidth = 2;
+            graphCtx.beginPath();
+            graphCtx.moveTo(padding, padding);
+            graphCtx.lineTo(padding, height - padding);
+            graphCtx.lineTo(width - padding, height - padding);
+            graphCtx.stroke();
+
+            // Draw grid lines
+            graphCtx.strokeStyle = '#e0e0e0';
+            graphCtx.lineWidth = 1;
+            for (let i = 0; i <= 5; i++) {
+                const y = padding + (height - 2 * padding) * i / 5;
+                graphCtx.beginPath();
+                graphCtx.moveTo(padding, y);
+                graphCtx.lineTo(width - padding, y);
+                graphCtx.stroke();
+            }
+
+            // Draw data line
+            graphCtx.strokeStyle = '#FF6B6B';
+            graphCtx.lineWidth = 2;
+            graphCtx.beginPath();
+            
+            for (let i = 0; i < displacementData.length; i++) {
+                const x = padding + timeData[i] * xScale;
+                const y = height - padding - displacementData[i] * yScale;
+                
+                if (i === 0) {
+                    graphCtx.moveTo(x, y);
+                } else {
+                    graphCtx.lineTo(x, y);
+                }
+            }
+            graphCtx.stroke();
+
+            // Draw labels
+            graphCtx.fillStyle = '#333';
+            graphCtx.font = 'bold 16px Arial';
+            graphCtx.textAlign = 'center';
+            graphCtx.fillText('Time (seconds)', width / 2, height - 15);
+            
+            graphCtx.save();
+            graphCtx.translate(20, height / 2);
+            graphCtx.rotate(-Math.PI / 2);
+            graphCtx.fillText('Displacement (pixels)', 0, 0);
+            graphCtx.restore();
+
+            // Draw y-axis values
+            graphCtx.font = '12px Arial';
+            graphCtx.textAlign = 'right';
+            for (let i = 0; i <= 5; i++) {
+                const value = (maxDisplacement * (5 - i) / 5).toFixed(0);
+                const y = padding + (height - 2 * padding) * i / 5;
+                graphCtx.fillText(value, padding - 10, y + 5);
+            }
+
+            // Draw x-axis values
+            graphCtx.textAlign = 'center';
+            const numXLabels = 5;
+            for (let i = 0; i <= numXLabels; i++) {
+                const value = (maxTime * i / numXLabels).toFixed(1);
+                const x = padding + (width - 2 * padding) * i / numXLabels;
+                graphCtx.fillText(value, x, height - padding + 20);
+            }
+        }
+
+        // ========== Animation Loop ==========
+        
+        function animate() {
+            update();
+            drawSimulation();
+            drawGraph();
+            requestAnimationFrame(animate);
+        }
+
+        // ========== Event Handlers ==========
+        
+        document.getElementById('startPauseBtn').addEventListener('click', function() {
+            isRunning = !isRunning;
+            this.textContent = isRunning ? '⏸️ Pause' : '▶️ Start';
+        });
+
+        document.getElementById('resetBtn').addEventListener('click', function() {
+            init();
+        });
+
+        document.getElementById('traceBtn').addEventListener('click', function() {
+            showTrace = !showTrace;
+            this.classList.toggle('active');
+            this.textContent = showTrace ? '✨ Show Pollen Path' : '✨ Hide Pollen Path';
+            if (!showTrace) {
+                pollenPath = [];
+            }
+        });
+
+        document.getElementById('clearGraphBtn').addEventListener('click', function() {
+            displacementData = [];
+            timeData = [];
+        });
+
+        document.getElementById('particleSlider').addEventListener('input', function() {
+            const newCount = parseInt(this.value);
+            document.getElementById('particleCount').textContent = newCount;
+            CONFIG.numMolecules = newCount;
+            
+            // Adjust molecules to match new count
+            if (airMolecules.length < newCount) {
+                // Add more molecules
+                while (airMolecules.length < newCount) {
+                    const x = Math.random() * CONFIG.canvasWidth;
+                    const y = Math.random() * CONFIG.canvasHeight;
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = CONFIG.moleculeSpeed * (0.7 + Math.random() * 0.6);
+                    const vx = Math.cos(angle) * speed;
+                    const vy = Math.sin(angle) * speed;
+                    airMolecules.push(new Molecule(x, y, vx, vy));
+                }
+            } else if (airMolecules.length > newCount) {
+                // Remove excess molecules
+                airMolecules.splice(newCount);
+            }
+        });
+
+        document.getElementById('pollenMassSlider').addEventListener('input', function() {
+            const newMass = parseInt(this.value);
+            document.getElementById('pollenMassValue').textContent = newMass;
+            pollen.mass = newMass;
+            CONFIG.pollenMass = newMass;
+        });
+
+        document.getElementById('temperatureSlider').addEventListener('input', function() {
+            const tempPercent = parseInt(this.value);
+            temperatureMultiplier = tempPercent / 100;
+            document.getElementById('temperatureValue').textContent = tempPercent + '%';
+        });
+
+        document.getElementById('zoomSlider').addEventListener('input', function() {
+            zoomLevel = parseFloat(this.value);
+            document.getElementById('zoomLevel').textContent = zoomLevel.toFixed(1) + 'x';
+        });
+
+        document.getElementById('speedSlider').addEventListener('input', function() {
+            const speedPercent = parseInt(this.value);
+            speedMultiplier = speedPercent / 100;
+            document.getElementById('speedLevel').textContent = speedPercent + '%';
+        });
+
+        // Mouse panning controls
+        simCanvas.addEventListener('mousedown', function(e) {
+            isPanning = true;
+            lastMouseX = e.clientX;
+            lastMouseY = e.clientY;
+            simCanvas.style.cursor = 'grabbing';
+        });
+
+        simCanvas.addEventListener('mousemove', function(e) {
+            if (isPanning) {
+                const dx = e.clientX - lastMouseX;
+                const dy = e.clientY - lastMouseY;
+                panX += dx;
+                panY += dy;
+                lastMouseX = e.clientX;
+                lastMouseY = e.clientY;
+            }
+        });
+
+        simCanvas.addEventListener('mouseup', function() {
+            isPanning = false;
+            simCanvas.style.cursor = zoomLevel > 1 ? 'grab' : 'default';
+        });
+
+        simCanvas.addEventListener('mouseleave', function() {
+            isPanning = false;
+            simCanvas.style.cursor = zoomLevel > 1 ? 'grab' : 'default';
+        });
+
+        // Update cursor when zoom changes
+        document.getElementById('zoomSlider').addEventListener('change', function() {
+            simCanvas.style.cursor = zoomLevel > 1 ? 'grab' : 'default';
+        });
+
+        // Reset pan when zoom is set to 1
+        document.getElementById('zoomSlider').addEventListener('input', function() {
+            if (zoomLevel === 1) {
+                panX = 0;
+                panY = 0;
+            }
+        });
+
+        // ========== Start Simulation ==========
+        
+        init();
+        animate();
+    </script>
+</body>
+</html>

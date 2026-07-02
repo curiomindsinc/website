@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#f7f8fc">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Mirror Sim">
+<link rel="manifest" id="pwa-manifest">
+<title>Plane Mirror Ray Diagram Simulator</title>
+<!-- DM Sans from Google Fonts with display=swap for fast render; system-ui fallback works offline -->
+<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Offline font fallback — system fonts that match DM Sans character */
+@font-face {
+  font-family: 'DM Sans';
+  src: local('DM Sans'), local('DMSans-Regular');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'DM Sans';
+  src: local('DM Sans Medium'), local('DMSans-Medium');
+  font-weight: 500; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'DM Sans';
+  src: local('DM Sans SemiBold'), local('DMSans-SemiBold');
+  font-weight: 600; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'DM Mono';
+  src: local('DM Mono'), local('DMMono-Regular');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+:root {
+  --bg: #f7f8fc;
+  --surface: #ffffff;
+  --surface2: #f0f2f8;
+  --border: rgba(0,0,0,0.08);
+  --border2: rgba(0,0,0,0.05);
+  --text: #1a1d2e;
+  --text2: #5a5f7a;
+  --text3: #9095b0;
+  --blue: #3b82f6;
+  --blue-bg: #eff6ff;
+  --blue-border: #bfdbfe;
+  --green: #16a34a;
+  --green-bg: #f0fdf4;
+  --green-border: #bbf7d0;
+  --red: #dc2626;
+  --red-bg: #fef2f2;
+  --red-border: #fecaca;
+  --amber: #b45309;
+  --purple: #6d28d9;
+  --mirror-blue: #2563eb;
+  --radius: 10px;
+  --radius-sm: 7px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.06);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100%;
+  min-height: 100dvh;
+  overflow: hidden;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* ── Header ── */
+#header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  flex-shrink: 0;
+  gap: 12px;
+}
+#header h1 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+}
+.mode-tabs { display: flex; gap: 4px; }
+.tab {
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all .15s;
+  font-family: inherit;
+}
+.tab.on { background: var(--blue); border-color: var(--blue); color: #fff; }
+
+/* ── Main layout ── */
+#main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  gap: 0;
+}
+
+/* ── Sidebar ── */
+#sidebar {
+  width: 210px;
+  min-width: 210px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 14px 12px;
+  gap: 10px;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.sec-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-bottom: 4px;
+}
+
+#step-list { display: flex; flex-direction: column; gap: 2px; }
+.sitem {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  color: var(--text3);
+  transition: all .2s;
+  line-height: 1.3;
+}
+.sitem.on { background: var(--blue-bg); color: var(--blue); }
+.sitem.done { color: var(--green); }
+.sdot {
+  width: 18px; height: 18px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 600;
+  background: var(--surface2);
+  flex-shrink: 0;
+  font-family: 'DM Mono', monospace;
+}
+.sitem.on .sdot { background: var(--blue); color: #fff; }
+.sitem.done .sdot { background: var(--green); color: #fff; font-size: 9px; }
+
+#instr {
+  background: var(--blue-bg);
+  border: 1px solid var(--blue-border);
+  border-radius: var(--radius-sm);
+  padding: 10px 11px;
+  font-size: 12px;
+  color: #1e40af;
+  line-height: 1.55;
+  min-height: 56px;
+}
+
+#fb {
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  font-size: 11px;
+  line-height: 1.5;
+  display: none;
+}
+#fb.ok { display: block; background: var(--green-bg); border: 1px solid var(--green-border); color: var(--green); }
+#fb.err { display: block; background: var(--red-bg); border: 1px solid var(--red-border); color: var(--red); }
+
+#score-area { display: none; text-align: center; padding: 6px 0; }
+#stars { font-size: 16px; letter-spacing: 3px; color: #d97706; }
+#score-num { font-size: 18px; font-weight: 600; color: var(--green); margin-top: 2px; }
+#score-pct { font-size: 11px; color: var(--text3); margin-top: 1px; }
+
+.actions { margin-top: auto; display: flex; flex-direction: column; gap: 5px; }
+.btn {
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all .15s;
+  text-align: center;
+  font-family: inherit;
+  width: 100%;
+}
+.btn:hover { background: var(--surface2); color: var(--text); }
+.btn.pri { background: var(--blue-bg); border-color: var(--blue-border); color: var(--blue); }
+.btn.suc { background: var(--green-bg); border-color: var(--green-border); color: var(--green); }
+.btn.warn { background: #fffbeb; border-color: #fde68a; color: #92400e; }
+
+/* ── Canvas ── */
+#canvas-wrap {
+  flex: 1;
+  position: relative;
+  background: #f4f6fc;
+  overflow: hidden;
+  min-width: 0;
+}
+#cvs {
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+}
+
+/* ── Mobile portrait layout ── */
+@media (max-width: 600px) {
+  html, body { overflow: auto; }
+  #app { height: auto; min-height: 100dvh; overflow: auto; }
+  #main { flex-direction: column; overflow: visible; }
+  #sidebar {
+    width: 100%;
+    min-width: unset;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto;
+    padding: 10px;
+    gap: 8px;
+    overflow: visible;
+  }
+  #sidebar > div:has(#step-list) { grid-column: 1 / -1; }
+  .sec-label { display: none; }
+  #step-list { flex-direction: row; flex-wrap: wrap; gap: 3px; }
+  .sitem { font-size: 11px; padding: 4px 7px; }
+  #instr { grid-column: 1 / -1; font-size: 12px; min-height: unset; }
+  #fb { grid-column: 1 / -1; }
+  #score-area { grid-column: 1 / -1; }
+  .actions { grid-column: 1 / -1; flex-direction: row; flex-wrap: wrap; margin-top: 0; }
+  .btn { flex: 1; min-width: 70px; padding: 6px 6px; font-size: 11px; }
+  /* Portrait: canvas takes ~56vw height, comfortable scroll below sidebar */
+  #canvas-wrap { height: 56vw; min-height: 220px; max-height: 360px; }
+}
+
+/* ── Mobile landscape — sidebar left, canvas fills remaining height ── */
+@media (max-width: 900px) and (orientation: landscape) and (max-height: 500px) {
+  html, body { overflow: hidden; }
+  #app { height: 100dvh; overflow: hidden; }
+  #main { flex-direction: row; overflow: hidden; height: calc(100dvh - 44px); }
+  #sidebar {
+    width: 180px;
+    min-width: 180px;
+    border-right: 1px solid var(--border);
+    border-bottom: none;
+    display: flex;
+    flex-direction: column;
+    padding: 8px 10px;
+    gap: 6px;
+    overflow-y: auto;
+  }
+  .sec-label { display: block; }
+  #step-list { flex-direction: column; }
+  .sitem { font-size: 11px; padding: 5px 7px; }
+  #instr { font-size: 11px; min-height: unset; }
+  .actions { margin-top: auto; flex-direction: column; }
+  .btn { font-size: 11px; padding: 5px 8px; width: 100%; }
+  /* Canvas fills all available height in landscape */
+  #canvas-wrap { flex: 1; height: 100%; max-height: unset; }
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="header">
+    <h1>Plane Mirror Ray Diagram</h1>
+    <div class="mode-tabs">
+      <button class="tab on" id="tab-tut" onclick="setMode('tutorial')">Tutorial</button>
+      <button class="tab" id="tab-prac" onclick="setMode('practice')">Practice</button>
+    </div>
+  </div>
+  <div id="main">
+    <div id="sidebar">
+      <div>
+        <div class="sec-label">Steps</div>
+        <div id="step-list"></div>
+      </div>
+      <div id="instr"></div>
+      <div id="fb"></div>
+      <div id="score-area">
+        <div id="stars"></div>
+        <div id="score-num"></div>
+        <div id="score-pct"></div>
+      </div>
+      <div class="actions">
+        <button class="btn suc" id="next-btn" style="display:none" onclick="nextRound()">▶ Next round</button>
+        <button class="btn warn" id="replay-btn" style="display:none" onclick="replayTutorial()">↺ Replay tutorial</button>
+        <button class="btn" onclick="undoStep()">↩ Undo</button>
+        <button class="btn" onclick="resetAll()">⟳ Reset</button>
+        <button class="btn pri" id="solve-btn" style="display:none" onclick="showSolution()">Show solution</button>
+      </div>
+    </div>
+    <div id="canvas-wrap">
+      <svg id="cvs" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </marker>
+        </defs>
+        <g id="g-grid"></g>
+        <g id="g-mirror"></g>
+        <g id="g-ghost"></g>
+        <g id="g-normal"></g>
+        <g id="g-rays"></g>
+        <g id="g-labels"></g>
+        <g id="g-preview"></g>
+        <g id="g-pulse"></g>
+        <g id="g-icons"></g>
+        <g id="g-overlay"></g>
+        <g id="g-hit"><rect id="hit-rect" fill="transparent"/></g>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Coordinate system: dynamic, based on SVG size ──
+const svg = document.getElementById('cvs');
+const wrap = document.getElementById('canvas-wrap');
+let VW = 0, VH = 0, G = 0, MX = 0;
+
+function resize() {
+  const nw = wrap.clientWidth, nh = wrap.clientHeight;
+  if (!nw || !nh) return;
+  VW = nw; VH = nh;
+  G = Math.max(20, Math.min(40, Math.floor(Math.min(VW, VH) / 16)));
+  MX = Math.round(VW / 2 / G) * G;
+  svg.setAttribute('viewBox', `0 0 ${VW} ${VH}`);
+  document.getElementById('hit-rect').setAttribute('width', VW);
+  document.getElementById('hit-rect').setAttribute('height', VH);
+  if (S.obj) {
+    // clamp existing positions into new bounds
+    if (S.obj) { S.obj.x = clamp(S.obj.x, G, MX-G); S.obj.y = clamp(S.obj.y, G, VH-G); }
+    if (S.eye) { S.eye.x = clamp(S.eye.x, G, MX-G); S.eye.y = clamp(S.eye.y, G, VH-G); }
+    if (S.img) { S.img.x = clamp(S.img.x, MX+G, VW-G); S.img.y = clamp(S.img.y, G, VH-G); }
+    if (S.ray1 && S.img && S.eye) S.hit = mirrorHit(S.img.x, S.img.y, S.eye.x, S.eye.y);
+    fullRedraw();
+  } else {
+    fullRedraw();
+  }
+}
+
+function repositionAfterResize() {
+  fullRedraw();
+}
+
+function init() {
+  VW = wrap.clientWidth || window.innerWidth - 210;
+  VH = wrap.clientHeight || window.innerHeight - 44;
+  G = Math.max(20, Math.min(40, Math.floor(Math.min(VW, VH) / 16)));
+  MX = Math.round(VW / 2 / G) * G;
+  svg.setAttribute('viewBox', `0 0 ${VW} ${VH}`);
+  document.getElementById('hit-rect').setAttribute('width', VW);
+  document.getElementById('hit-rect').setAttribute('height', VH);
+  resetAll();
+}
+
+const ro = new ResizeObserver(() => {
+  // Debounce slightly so layout is stable
+  clearTimeout(ro._t);
+  ro._t = setTimeout(resize, 16);
+});
+ro.observe(wrap);
+
+// ── Layers ──
+const gGrid = document.getElementById('g-grid');
+const gMirror = document.getElementById('g-mirror');
+const gGhost = document.getElementById('g-ghost');
+const gNormal = document.getElementById('g-normal');
+const gRays = document.getElementById('g-rays');
+const gLabels = document.getElementById('g-labels');
+const gPrev = document.getElementById('g-preview');
+const gPulse = document.getElementById('g-pulse');
+const gIcons = document.getElementById('g-icons');
+const gOverlay = document.getElementById('g-overlay');
+const gHit = document.getElementById('g-hit');
+const instrEl = document.getElementById('instr');
+const fbEl = document.getElementById('fb');
+const stepListEl = document.getElementById('step-list');
+const scoreArea = document.getElementById('score-area');
+const scoreNum = document.getElementById('score-num');
+const scorePct = document.getElementById('score-pct');
+const starsEl = document.getElementById('stars');
+const solveBtn = document.getElementById('solve-btn');
+const nextBtn = document.getElementById('next-btn');
+const replayBtn = document.getElementById('replay-btn');
+
+const TSTEPS = [{s:'Place image'},{s:'Draw image → eye'},{s:'Draw object → mirror'},{s:'Confirm arrows'}];
+const PSTEPS = [{s:'Place image'},{s:'Draw image → eye'},{s:'Draw object → mirror'},{s:'Confirm arrows'}];
+const TINSTR = [
+  'The object and eye are already placed. Click to the right of the mirror to place the virtual image — same distance behind as the object is in front.',
+  'Click the image icon, then drag to the eye to draw the reflected ray.',
+  'Click the object icon, then drag to the mirror surface to draw the incident ray.',
+  'Click anywhere to confirm — arrows and the normal line will appear automatically.',
+];
+const PINSTR = [
+  'Place the virtual image.',
+  'Draw the reflected ray.',
+  'Draw the incident ray.',
+  'Confirm to finish.',
+];
+
+let mode = 'tutorial';
+let step = 0;
+let correct = 0, attempted = 0, hadError = false, done = false;
+let S = {obj:null,eye:null,img:null,hit:null,ray1:false,ray2:false,arrows:false};
+let dragState = null;
+let pulseRAFs = [];
+let overlayTO = null;
+
+// ── Helpers ──
+function el(tag, a={}) {
+  const e = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  for (const [k,v] of Object.entries(a)) e.setAttribute(k, v);
+  return e;
+}
+function snap(v) { return Math.round(v / G) * G; }
+function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+function dist(ax,ay,bx,by) { return Math.sqrt((ax-bx)**2+(ay-by)**2); }
+function svgP(ev) {
+  const r = svg.getBoundingClientRect();
+  return { x: (ev.clientX-r.left)/r.width*VW, y: (ev.clientY-r.top)/r.height*VH };
+}
+function mirrorHit(ax,ay,bx,by) {
+  if (Math.abs(ax-bx) < 0.01) return null;
+  const t = (MX-ax)/(bx-ax);
+  if (t < 0.001 || t > 0.999) return null;
+  return { x: MX, y: ay+t*(by-ay) };
+}
+function rayAngleFromNormal(fx,fy,hx,hy) {
+  return Math.round(Math.atan2(Math.abs(hy-fy), Math.abs(hx-fx)) * 180/Math.PI);
+}
+function iconR() { return Math.max(10, G * 0.4); }
+function fontSize(base) { return Math.max(8, Math.min(base, G * 0.32)); }
+
+// ── Sound ──
+function snd(type) {
+  try {
+    const ctx = new(window.AudioContext||window.webkitAudioContext)();
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    const t = ctx.currentTime;
+    if (type==='place') { o.frequency.value=600; g.gain.setValueAtTime(0.12,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.12); o.start(); o.stop(t+0.12); }
+    else if (type==='ok') { o.frequency.value=523; g.gain.setValueAtTime(0.12,t); o.start(); o.frequency.setValueAtTime(659,t+0.1); o.frequency.setValueAtTime(784,t+0.2); g.gain.exponentialRampToValueAtTime(0.001,t+0.35); o.stop(t+0.35); }
+    else if (type==='err') { o.type='sawtooth'; o.frequency.value=200; g.gain.setValueAtTime(0.07,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.18); o.start(); o.stop(t+0.18); }
+    else if (type==='done') { o.frequency.value=392; g.gain.setValueAtTime(0.12,t); o.start(); [523,659,784,1047].forEach((f,i)=>o.frequency.setValueAtTime(f,t+i*0.1)); g.gain.exponentialRampToValueAtTime(0.001,t+0.55); o.stop(t+0.55); }
+    else if (type==='line') { o.frequency.value=440; g.gain.setValueAtTime(0.06,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.1); o.start(); o.stop(t+0.1); }
+  } catch(e) {}
+}
+
+// ── Grid ──
+function drawGrid() {
+  gGrid.innerHTML = '';
+  gGrid.appendChild(el('rect',{x:MX,y:0,width:VW-MX,height:VH,fill:'rgba(219,234,254,0.45)'}));
+  for (let x=G; x<VW; x+=G) {
+    if (x===MX) continue;
+    gGrid.appendChild(el('line',{x1:x,y1:0,x2:x,y2:VH,stroke:'rgba(148,163,184,0.25)','stroke-width':'0.5'}));
+  }
+  for (let y=G; y<VH; y+=G) {
+    gGrid.appendChild(el('line',{x1:0,y1:y,x2:VW,y2:y,stroke:'rgba(148,163,184,0.25)','stroke-width':'0.5'}));
+  }
+}
+
+function drawMirror() {
+  gMirror.innerHTML = '';
+  const lw = Math.max(1.5, G*0.06);
+  gMirror.appendChild(el('line',{x1:MX,y1:G/2,x2:MX,y2:VH-G/2,stroke:'#2563eb','stroke-width':lw}));
+  for (let y=G; y<VH-G/2; y+=G*0.6) {
+    gMirror.appendChild(el('line',{x1:MX,y1:y,x2:MX+G*0.35,y2:y+G*0.3,stroke:'#93c5fd','stroke-width':'1'}));
+  }
+  const fs = fontSize(11);
+  const ml = el('text',{x:MX+5,y:fs+2,fill:'#1d4ed8','font-size':fs,'font-family':"'DM Sans',sans-serif",'font-weight':'600'});
+  ml.textContent='Mirror'; gMirror.appendChild(ml);
+  const vl = el('text',{x:MX+5,y:VH-4,fill:'#93c5fd','font-size':Math.max(7,fs-2),'font-family':"'DM Sans',sans-serif"});
+  vl.textContent='Virtual region'; gMirror.appendChild(vl);
+}
+
+// ── Ghost ──
+function drawGhost() {
+  gGhost.innerHTML = '';
+  if (mode === 'practice') return;
+  if (step !== 0 || !S.obj) return;
+  const ci = correctImg();
+  gGhost.appendChild(el('line',{x1:S.obj.x,y1:S.obj.y,x2:ci.x,y2:ci.y,stroke:'rgba(109,40,217,0.18)','stroke-width':'1','stroke-dasharray':'4 4'}));
+  gGhost.appendChild(el('circle',{cx:ci.x,cy:ci.y,r:iconR()+2,fill:'rgba(109,40,217,0.05)',stroke:'rgba(109,40,217,0.22)','stroke-width':'1.2','stroke-dasharray':'4 3'}));
+  const gt = el('text',{x:ci.x,y:ci.y+iconR()+fontSize(10)+4,fill:'rgba(91,33,182,0.45)','font-size':Math.max(8,fontSize(10)),'font-family':"'DM Sans',sans-serif",'text-anchor':'middle'});
+  gt.textContent='Image goes here?'; gGhost.appendChild(gt);
+}
+
+// ── Pulse ──
+function setPulse(targets) {
+  clearPulse();
+  targets.forEach(({x,y,color}) => {
+    const r = iconR()+4;
+    const ring = el('circle',{cx:x,cy:y,r,fill:'none',stroke:color,'stroke-width':'1.5',opacity:'0'});
+    const inner = el('circle',{cx:x,cy:y,r,fill:color,opacity:'0.08'});
+    gPulse.appendChild(inner); gPulse.appendChild(ring);
+    let t2=0,dir=1,raf;
+    const tick=()=>{
+      t2+=0.025*dir;
+      if(t2>=1){t2=1;dir=-1;}else if(t2<=0){t2=0;dir=1;}
+      inner.setAttribute('r',r+t2*6); inner.setAttribute('opacity',0.05+t2*0.09);
+      ring.setAttribute('r',r+t2*6); ring.setAttribute('opacity',0.3+t2*0.4);
+      raf=requestAnimationFrame(tick);
+    };
+    raf=requestAnimationFrame(tick);
+    pulseRAFs.push(raf);
+  });
+}
+function clearPulse() { pulseRAFs.forEach(r=>cancelAnimationFrame(r)); pulseRAFs=[]; gPulse.innerHTML=''; }
+function updatePulse() {
+  if (done) { clearPulse(); return; }
+  if (step===1&&S.img) { setPulse([{x:S.img.x,y:S.img.y,color:'#7c3aed'}]); return; }
+  if (step===2&&S.obj) { setPulse([{x:S.obj.x,y:S.obj.y,color:'#b45309'}]); return; }
+  clearPulse();
+}
+
+// ── Completion overlay ──
+function showCompletionOverlay() {
+  gOverlay.innerHTML = '';
+  const pw=Math.min(280, VW*0.7), ph=100;
+  const ox=VW/2-pw/2, oy=VH/2-ph/2;
+  const bg=el('rect',{x:ox,y:oy,width:pw,height:ph,rx:12,fill:'rgba(255,255,255,0.97)',stroke:'#86efac','stroke-width':'1.5'});
+  gOverlay.appendChild(bg);
+  const fs1=Math.min(17,pw*0.065), fs2=Math.min(12,pw*0.045);
+  const t1=el('text',{x:VW/2,y:oy+ph*0.35,fill:'#15803d','font-size':fs1,'font-family':"'DM Sans',sans-serif",'font-weight':'600','text-anchor':'middle'}); t1.textContent='Diagram complete!'; gOverlay.appendChild(t1);
+  const t2=el('text',{x:VW/2,y:oy+ph*0.6,fill:'#374151','font-size':fs2,'font-family':"'DM Sans',sans-serif",'text-anchor':'middle'}); t2.textContent='Angle of incidence = Angle of reflection'; gOverlay.appendChild(t2);
+  const t3=el('text',{x:VW/2,y:oy+ph*0.82,fill:'#6b7280','font-size':fs2*0.9,'font-family':"'DM Sans',sans-serif",'text-anchor':'middle'}); t3.textContent=mode==='practice'?'Click "Next round" to continue.':'Try Practice mode!'; gOverlay.appendChild(t3);
+  let op=0; const fi=()=>{op=Math.min(1,op+0.07);gOverlay.setAttribute('opacity',op);if(op<1)requestAnimationFrame(fi);}; gOverlay.setAttribute('opacity','0'); requestAnimationFrame(fi);
+  overlayTO=setTimeout(()=>{let op2=1;const fo=()=>{op2=Math.max(0,op2-0.04);gOverlay.setAttribute('opacity',op2);if(op2>0)requestAnimationFrame(fo);else gOverlay.innerHTML='';}; requestAnimationFrame(fo);},3000);
+}
+
+// ── Rays ──
+function midArrow(x1,y1,x2,y2,color) {
+  const mx=(x1+x2)/2,my=(y1+y2)/2;
+  const dx=x2-x1,dy=y2-y1,len=Math.sqrt(dx*dx+dy*dy)||1;
+  const ux=dx/len,uy=dy/len,s=Math.max(5,G*0.22);
+  return el('line',{x1:mx-ux*s,y1:my-uy*s,x2:mx+ux*s,y2:my+uy*s,stroke:color,'stroke-width':'2.2','stroke-linecap':'round','marker-end':'url(#ah)'});
+}
+
+function drawRays() {
+  gRays.innerHTML=''; gLabels.innerHTML='';
+  if (!S.hit) return;
+  const hx=S.hit.x, hy=S.hit.y;
+  const lw=Math.max(1.2, G*0.055);
+  const fs=fontSize(9);
+
+  if (S.ray1&&S.img&&S.eye) {
+    gRays.appendChild(el('line',{x1:S.img.x,y1:S.img.y,x2:hx,y2:hy,stroke:'#a78bfa','stroke-width':lw,'stroke-dasharray':'5 4'}));
+    gRays.appendChild(el('line',{x1:hx,y1:hy,x2:S.eye.x,y2:S.eye.y,stroke:'#7c3aed','stroke-width':lw+0.4,'marker-end':'url(#ah)'}));
+    gRays.appendChild(el('circle',{cx:hx,cy:hy,r:Math.max(3,G*0.1),fill:'#7c3aed'}));
+    if (S.arrows) {
+      gRays.appendChild(midArrow(hx,hy,S.eye.x,S.eye.y,'#7c3aed'));
+      const t=el('text',{x:(hx+S.eye.x)/2+5,y:(hy+S.eye.y)/2-5,fill:'#4c1d95','font-size':fs,'font-family':"'DM Sans',sans-serif",'font-weight':'500'}); t.textContent='reflected ray'; gLabels.appendChild(t);
+    }
+  }
+  if (S.ray2&&S.obj&&S.eye) {
+    gRays.appendChild(el('line',{x1:S.obj.x,y1:S.obj.y,x2:hx,y2:hy,stroke:'#d97706','stroke-width':lw+0.4,'marker-end':'url(#ah)'}));
+    gRays.appendChild(el('line',{x1:hx,y1:hy,x2:S.eye.x,y2:S.eye.y,stroke:'#d97706','stroke-width':lw+0.4,'marker-end':'url(#ah)'}));
+    if (S.arrows) {
+      gRays.appendChild(midArrow(S.obj.x,S.obj.y,hx,hy,'#d97706'));
+      gRays.appendChild(midArrow(hx,hy,S.eye.x,S.eye.y,'#d97706'));
+      const t1=el('text',{x:(S.obj.x+hx)/2+4,y:(S.obj.y+hy)/2-5,fill:'#92400e','font-size':fs,'font-family':"'DM Sans',sans-serif",'font-weight':'500'}); t1.textContent='incident ray'; gLabels.appendChild(t1);
+      const t2=el('text',{x:(hx+S.eye.x)/2+4,y:(hy+S.eye.y)/2+fs+3,fill:'#92400e','font-size':fs,'font-family':"'DM Sans',sans-serif",'font-weight':'500'}); t2.textContent='reflected ray'; gLabels.appendChild(t2);
+    }
+  }
+}
+
+// ── Normal & arcs ──
+function drawNormal() {
+  gNormal.innerHTML='';
+  if (!S.arrows||!S.hit||!S.obj||!S.eye) return;
+  const hx=S.hit.x, hy=S.hit.y;
+  const len=Math.min(70, G*1.8);
+  const R=Math.max(20, G*0.75);
+  const fs=fontSize(10);
+
+  gNormal.appendChild(el('line',{x1:hx-len,y1:hy,x2:hx+len,y2:hy,stroke:'#94a3b8','stroke-width':'1.1','stroke-dasharray':'5 3'}));
+  const nl=el('text',{x:hx+len+3,y:hy+fs/2,fill:'#64748b','font-size':Math.max(7,fs-1),'font-family':"'DM Mono',monospace"}); nl.textContent='Normal'; gNormal.appendChild(nl);
+
+  const ai=rayAngleFromNormal(S.obj.x,S.obj.y,hx,hy);
+  const ar=rayAngleFromNormal(S.eye.x,S.eye.y,hx,hy);
+
+  // Incident arc: reversed incoming ray → left normal
+  const incRevAng=Math.atan2(S.obj.y-hy, S.obj.x-hx);
+  const leftNorm=Math.PI;
+  let iDiff=leftNorm-incRevAng;
+  while(iDiff>Math.PI)iDiff-=2*Math.PI;
+  while(iDiff<-Math.PI)iDiff+=2*Math.PI;
+  const iSweep=iDiff>0?1:0;
+  const iP1x=hx+R*Math.cos(incRevAng), iP1y=hy+R*Math.sin(incRevAng);
+  const iP2x=hx+R*Math.cos(leftNorm),  iP2y=hy+R*Math.sin(leftNorm);
+  gNormal.appendChild(el('path',{d:`M${iP1x},${iP1y} A${R},${R} 0 0,${iSweep} ${iP2x},${iP2y}`,fill:'none',stroke:'#b45309','stroke-width':'1.3'}));
+  const iMid=incRevAng+iDiff/2;
+  const ilt=el('text',{x:hx+R*1.8*Math.cos(iMid),y:hy+R*1.8*Math.sin(iMid),fill:'#92400e','font-size':fs,'font-family':"'DM Mono',monospace",'text-anchor':'middle','dominant-baseline':'central'}); ilt.textContent=ai+'°'; gNormal.appendChild(ilt);
+
+  // Reflected arc: left normal → outgoing ray
+  const refOutAng=Math.atan2(S.eye.y-hy, S.eye.x-hx);
+  let rDiff=refOutAng-leftNorm;
+  while(rDiff>Math.PI)rDiff-=2*Math.PI;
+  while(rDiff<-Math.PI)rDiff+=2*Math.PI;
+  const rSweep=rDiff>0?1:0;
+  const rP1x=hx+R*Math.cos(leftNorm), rP1y=hy+R*Math.sin(leftNorm);
+  const rP2x=hx+R*Math.cos(refOutAng), rP2y=hy+R*Math.sin(refOutAng);
+  gNormal.appendChild(el('path',{d:`M${rP1x},${rP1y} A${R},${R} 0 0,${rSweep} ${rP2x},${rP2y}`,fill:'none',stroke:'#15803d','stroke-width':'1.3'}));
+  const rMid=leftNorm+rDiff/2;
+  const rlt=el('text',{x:hx+R*1.8*Math.cos(rMid),y:hy+R*1.8*Math.sin(rMid),fill:'#166534','font-size':fs,'font-family':"'DM Mono',monospace",'text-anchor':'middle','dominant-baseline':'central'}); rlt.textContent=ar+'°'; gNormal.appendChild(rlt);
+
+  const eqL=el('text',{x:hx,y:hy+R+fs+6,fill:'#1e293b','font-size':fs,'font-family':"'DM Mono',monospace",'text-anchor':'middle','font-weight':'500'}); eqL.textContent='i = r  ('+ai+'° = '+ar+'°)'; gNormal.appendChild(eqL);
+}
+
+// ── Icon factories ──
+function makeObj(x,y) {
+  const g=document.createElementNS('http://www.w3.org/2000/svg','g'); g.style.cursor='grab';
+  const r=iconR();
+  g.appendChild(el('circle',{cx:x,cy:y,r,fill:'#fef3c7',stroke:'#d97706','stroke-width':'1.8'}));
+  g.appendChild(el('line',{x1:x,y1:y+r*0.55,x2:x,y2:y-r*0.75,stroke:'#d97706','stroke-width':'2.2','stroke-linecap':'round','marker-end':'url(#ah)'}));
+  const t=el('text',{x,y:y+r+fontSize(10)+2,fill:'#92400e','font-size':fontSize(10),'font-family':"'DM Sans',sans-serif",'text-anchor':'middle'}); t.textContent='Object'; g.appendChild(t);
+  return g;
+}
+function makeEye(x,y) {
+  const g=document.createElementNS('http://www.w3.org/2000/svg','g'); g.style.cursor='grab';
+  const r=iconR();
+  g.appendChild(el('ellipse',{cx:x,cy:y,rx:r,ry:r*0.65,fill:'#f0fdf4',stroke:'#16a34a','stroke-width':'1.8'}));
+  g.appendChild(el('circle',{cx:x,cy:y,r:r*0.35,fill:'#16a34a'}));
+  const t=el('text',{x,y:y+r+fontSize(10)+2,fill:'#14532d','font-size':fontSize(10),'font-family':"'DM Sans',sans-serif",'text-anchor':'middle'}); t.textContent='Eye'; g.appendChild(t);
+  return g;
+}
+function makeImg(x,y) {
+  const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+  const r=iconR();
+  g.appendChild(el('circle',{cx:x,cy:y,r,fill:'#f5f3ff',stroke:'#7c3aed','stroke-width':'1.8','stroke-dasharray':'5 3'}));
+  g.appendChild(el('line',{x1:x,y1:y+r*0.55,x2:x,y2:y-r*0.75,stroke:'#7c3aed','stroke-width':'2','stroke-linecap':'round','marker-end':'url(#ah)'}));
+  const t=el('text',{x,y:y+r+fontSize(10)+2,fill:'#4c1d95','font-size':fontSize(10),'font-family':"'DM Sans',sans-serif",'text-anchor':'middle'}); t.textContent='Image (virtual)'; g.appendChild(t);
+  return g;
+}
+
+function addDrag(g,key,leftOnly) {
+  const start=e=>{
+    if(dragState)return; e.stopPropagation();
+    let active=true;
+    const mv=ev=>{
+      if(!active)return; if(ev.cancelable)ev.preventDefault();
+      const src=ev.touches?ev.touches[0]:ev;
+      const p=svgP(src);
+      let nx=snap(p.x), ny=clamp(snap(p.y),G,VH-G);
+      nx=clamp(nx,G,leftOnly?MX-G:VW-G);
+      S[key]={x:nx,y:ny};
+      if(S.ray1&&S.img&&S.eye) S.hit=mirrorHit(S.img.x,S.img.y,S.eye.x,S.eye.y);
+      fullRedraw();
+    };
+    const up=()=>{active=false;window.removeEventListener('mousemove',mv);window.removeEventListener('mouseup',up);window.removeEventListener('touchmove',mv);window.removeEventListener('touchend',up);};
+    window.addEventListener('mousemove',mv); window.addEventListener('mouseup',up);
+    window.addEventListener('touchmove',mv,{passive:false}); window.addEventListener('touchend',up);
+  };
+  g.addEventListener('mousedown',start);
+  g.addEventListener('touchstart',start,{passive:false});
+}
+
+function drawIcons() {
+  gIcons.innerHTML='';
+  const isTouchDevice = window.matchMedia('(pointer: coarse)').matches;
+  const hitPad = isTouchDevice ? Math.max(36, iconR()+20) : iconR()+4;
+
+  if(S.obj){
+    const g=makeObj(S.obj.x,S.obj.y);
+    // invisible large touch target
+    const ht=el('circle',{cx:S.obj.x,cy:S.obj.y,r:hitPad,fill:'transparent'});
+    g.insertBefore(ht,g.firstChild);
+    addDrag(g,'obj',true);gIcons.appendChild(g);
+  }
+  if(S.eye){
+    const g=makeEye(S.eye.x,S.eye.y);
+    const ht=el('circle',{cx:S.eye.x,cy:S.eye.y,r:hitPad,fill:'transparent'});
+    g.insertBefore(ht,g.firstChild);
+    addDrag(g,'eye',false);gIcons.appendChild(g);
+  }
+  if(S.img){
+    const g=makeImg(S.img.x,S.img.y);
+    // img doesn't use addDrag but needs large hit area for ray-drag detection via pointerDown
+    const ht=el('circle',{cx:S.img.x,cy:S.img.y,r:hitPad,fill:'transparent'});
+    g.insertBefore(ht,g.firstChild);
+    gIcons.appendChild(g);
+  }
+}
+
+function fullRedraw() {
+  drawGrid(); drawMirror(); drawRays(); drawIcons(); drawNormal(); drawGhost(); updatePulse();
+}
+function correctImg() { if(!S.obj)return null; return{x:2*MX-S.obj.x,y:S.obj.y}; }
+
+// ── UI ──
+function setFb(msg,type) { if(!msg){fbEl.className='';fbEl.style.display='none';return;} fbEl.textContent=msg; fbEl.className=type==='ok'?'ok':'err'; }
+function setInstr(t) { instrEl.textContent=t; }
+function renderSteps() {
+  stepListEl.innerHTML='';
+  const steps=mode==='tutorial'?TSTEPS:PSTEPS;
+  steps.forEach((s,i)=>{
+    const d=document.createElement('div');
+    d.className='sitem'+(i===step?' on':i<step?' done':'');
+    d.innerHTML=`<div class="sdot">${i<step?'✓':i+1}</div><span>${s.s}</span>`;
+    stepListEl.appendChild(d);
+  });
+}
+function starsFor(p){return p===100?'★★★':p>=70?'★★☆':p>=40?'★☆☆':'☆☆☆';}
+function updateScore() {
+  if(attempted===0){scoreArea.style.display='none';return;}
+  scoreArea.style.display='block';
+  const p=Math.round(correct/attempted*100);
+  scoreNum.textContent=correct+' / '+attempted;
+  scorePct.textContent=p+'% accuracy';
+  starsEl.textContent=starsFor(p);
+}
+
+function advance() {
+  const steps=mode==='tutorial'?TSTEPS:PSTEPS;
+  if(step<steps.length-1){step++;setFb('');updateUI();}
+  else complete();
+}
+function complete() {
+  done=true; clearPulse();
+  attempted++; if(!hadError)correct++;
+  updateScore();
+  setInstr('Diagram complete! Angle of incidence = angle of reflection.');
+  setFb('Well done — full ray diagram constructed correctly!','ok');
+  snd('done'); showCompletionOverlay();
+  solveBtn.style.display='none';
+  nextBtn.style.display=mode==='practice'?'block':'none';
+  replayBtn.style.display=mode==='tutorial'?'block':'none';
+  renderSteps();
+}
+function updateUI() {
+  renderSteps();
+  const instr=mode==='tutorial'?TINSTR:PINSTR;
+  setInstr(instr[step]||'');
+  solveBtn.style.display=(mode==='practice'&&hadError&&!done&&step>0)?'block':'none';
+  nextBtn.style.display='none'; replayBtn.style.display='none';
+  updatePulse(); drawGhost();
+}
+
+// ── Pointer events ──
+function touchHitR() {
+  // On touch devices fingers need ~44px minimum target; scale with iconR but floor at 36
+  const isTouchDevice = window.matchMedia('(pointer: coarse)').matches;
+  return isTouchDevice ? Math.max(36, iconR() + 20) : iconR() + 10;
+}
+
+function pointerDown(e) {
+  if(e.target.closest('#g-icons'))return;
+  const src=e.touches?e.touches[0]:e;
+  const p=svgP(src);
+  const hitR=touchHitR();
+  if(step===1&&S.img&&dist(p.x,p.y,S.img.x,S.img.y)<hitR){dragState={type:'ray1',x0:S.img.x,y0:S.img.y};if(e.cancelable)e.preventDefault();return;}
+  if(step===2&&S.obj&&dist(p.x,p.y,S.obj.x,S.obj.y)<hitR){dragState={type:'ray2',x0:S.obj.x,y0:S.obj.y};if(e.cancelable)e.preventDefault();return;}
+}
+function pointerMove(e) {
+  if(!dragState)return; if(e.cancelable)e.preventDefault();
+  const src=e.touches?e.touches[0]:e;
+  const p=svgP(src);
+  gPrev.innerHTML='';
+  const col=dragState.type==='ray1'?'#7c3aed':'#d97706';
+  gPrev.appendChild(el('line',{x1:dragState.x0,y1:dragState.y0,x2:p.x,y2:p.y,stroke:col,'stroke-width':'1.6','stroke-dasharray':'5 4',opacity:'0.65'}));
+  gPrev.appendChild(el('circle',{cx:p.x,cy:p.y,r:Math.max(4,G*0.13),fill:col,opacity:'0.4'}));
+}
+function pointerUp(e) {
+  if(!dragState)return;
+  const src=e.changedTouches?e.changedTouches[0]:e;
+  const p=svgP(src);
+  const ds=dragState; dragState=null; gPrev.innerHTML='';
+  const hitR=touchHitR();
+  if(ds.type==='ray1') {
+    if(!S.eye||dist(p.x,p.y,S.eye.x,S.eye.y)>hitR){setFb('Drag all the way from the image to the eye icon.','err');snd('err');hadError=true;if(mode==='practice')solveBtn.style.display='block';return;}
+    const h=mirrorHit(S.img.x,S.img.y,S.eye.x,S.eye.y);
+    if(!h){setFb('The line must cross the mirror. Try repositioning.','err');snd('err');hadError=true;return;}
+    S.hit=h; S.ray1=true; fullRedraw();
+    setFb('Reflected ray drawn. Dotted line shows where light appears to come from.','ok');
+    snd('line'); setTimeout(advance,900);
+  } else {
+    if(Math.abs(p.x-MX)>G*1.1){setFb('Drag to the mirror surface (the blue line).','err');snd('err');hadError=true;if(mode==='practice')solveBtn.style.display='block';return;}
+    if(!S.hit||Math.abs(p.y-S.hit.y)>G*1.8){setFb('The incident ray must hit the same point as the reflected ray.','err');snd('err');hadError=true;if(mode==='practice')solveBtn.style.display='block';return;}
+    S.ray2=true; fullRedraw();
+    setFb('Incident ray drawn! Click anywhere to confirm arrows and normal.','ok');
+    snd('line'); setTimeout(advance,800);
+  }
+}
+
+function handleClick(e) {
+  if(dragState)return; if(e.target.closest('#g-icons'))return;
+  const p=svgP(e);
+  const sx=snap(p.x), sy=clamp(snap(p.y),G,VH-G);
+  if(step===1||step===2)return;
+  if(step===3){S.arrows=true;fullRedraw();setFb('Arrows and normal added. Notice i = r!','ok');snd('ok');setTimeout(complete,900);return;}
+  if(step===0){
+    if(p.x<=MX){setFb('The virtual image forms behind the mirror — click to the right.','err');snd('err');hadError=true;return;}
+    if(!S.obj)return;
+    const ci=correctImg();
+    const d=dist(p.x,p.y,ci.x,ci.y);
+    if(d<=G*2){
+      S.img={x:ci.x,y:ci.y}; fullRedraw();
+      setFb(d<=G?'Correct! Equal distance behind the mirror.':'Close! Snapped to correct position.','ok');
+      snd('ok'); setTimeout(advance,800);
+    } else {
+      S.img={x:Math.max(MX+G,sx),y:sy}; fullRedraw();
+      setFb('Not quite — try again.','err');
+      snd('err'); hadError=true; if(mode==='practice')solveBtn.style.display='block';
+    }
+  }
+}
+
+svg.addEventListener('mousedown',pointerDown);
+svg.addEventListener('mousemove',pointerMove);
+svg.addEventListener('mouseup',pointerUp);
+svg.addEventListener('touchstart',pointerDown,{passive:false});
+svg.addEventListener('touchmove',pointerMove,{passive:false});
+svg.addEventListener('touchend',pointerUp,{passive:false});
+gHit.addEventListener('click',handleClick);
+
+// ── Mode / reset / undo / solution ──
+function setMode(m) {
+  mode=m;
+  document.getElementById('tab-tut').classList.toggle('on',m==='tutorial');
+  document.getElementById('tab-prac').classList.toggle('on',m==='practice');
+  resetAll();
+}
+
+function randomPractice() {
+  const cols=[2,3,4,5,6], rows=[3,4,5,6,7,8,9,10];
+  let ox,oy,ex,ey,tries=0;
+  do {
+    ox=cols[~~(Math.random()*cols.length)]*G; oy=rows[~~(Math.random()*rows.length)]*G;
+    ex=cols[~~(Math.random()*cols.length)]*G; ey=rows[~~(Math.random()*rows.length)]*G;
+    tries++;
+  } while(dist(ox,oy,ex,ey)<G*2&&tries<40);
+  S.obj={x:ox,y:oy}; S.eye={x:ex,y:ey};
+}
+
+function resetAll() {
+  if(overlayTO){clearTimeout(overlayTO);overlayTO=null;} gOverlay.innerHTML='';
+  step=0; done=false; hadError=false; dragState=null;
+  S={obj:null,eye:null,img:null,hit:null,ray1:false,ray2:false,arrows:false};
+  gRays.innerHTML=''; gIcons.innerHTML=''; gNormal.innerHTML=''; gPrev.innerHTML=''; gGhost.innerHTML=''; gLabels.innerHTML='';
+  setFb(''); nextBtn.style.display='none'; replayBtn.style.display='none'; solveBtn.style.display='none';
+  if(mode==='tutorial'){
+    const cols=[3,4], rows=[5,6,7];
+    S.obj={x:cols[~~(Math.random()*cols.length)]*G, y:rows[~~(Math.random()*rows.length)]*G};
+    const erows=[8,9,10];
+    S.eye={x:cols[~~(Math.random()*cols.length)]*G, y:erows[~~(Math.random()*erows.length)]*G};
+  } else {
+    randomPractice();
+  }
+  fullRedraw(); updateUI();
+}
+
+function nextRound() {
+  if(overlayTO){clearTimeout(overlayTO);overlayTO=null;} gOverlay.innerHTML='';
+  step=0; done=false; hadError=false; dragState=null;
+  S={obj:S.obj,eye:S.eye,img:null,hit:null,ray1:false,ray2:false,arrows:false};
+  gRays.innerHTML=''; gIcons.innerHTML=''; gNormal.innerHTML=''; gPrev.innerHTML=''; gLabels.innerHTML=''; gGhost.innerHTML='';
+  setFb(''); nextBtn.style.display='none'; replayBtn.style.display='none';
+  randomPractice(); fullRedraw(); updateUI();
+}
+
+function replayTutorial() { setMode('tutorial'); }
+
+function undoStep() {
+  if(done){done=false;gOverlay.innerHTML='';if(overlayTO){clearTimeout(overlayTO);overlayTO=null;}S.arrows=false;step=3;fullRedraw();updateUI();setFb('');return;}
+  if(step===0&&!S.img)return;
+  dragState=null; gPrev.innerHTML='';
+  if(step===3){step--;S.arrows=false;}
+  else if(step>=2){step=2;S.ray2=false;S.arrows=false;}
+  else if(step>=1){step=1;S.ray1=false;S.hit=null;S.ray2=false;S.arrows=false;}
+  else{S.img=null;hadError=false;}
+  fullRedraw(); updateUI(); setFb('');
+  if(step===0){hadError=false;solveBtn.style.display='none';}
+}
+
+function showSolution() {
+  if(!S.obj)return;
+  S.img=correctImg();
+  S.ray1=true; S.hit=mirrorHit(S.img.x,S.img.y,S.eye.x,S.eye.y);
+  S.ray2=true; S.arrows=true; done=true;
+  step=(mode==='tutorial'?TSTEPS:PSTEPS).length;
+  fullRedraw(); clearPulse();
+  setFb('Solution shown. Reset or try a new round to practise.','err');
+  attempted++; updateScore(); renderSteps();
+  solveBtn.style.display='none';
+  nextBtn.style.display=mode==='practice'?'block':'none';
+  replayBtn.style.display=mode==='tutorial'?'block':'none';
+}
+
+// Boot
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => { injectPWA(); init(); });
+} else {
+  requestAnimationFrame(() => { injectPWA(); init(); });
+}
+
+function injectPWA() {
+  // Inline manifest via data URI so no separate file is needed
+  const manifest = {
+    name: 'Plane Mirror Ray Diagram Simulator',
+    short_name: 'Mirror Sim',
+    description: 'Interactive ray diagram simulator for lower secondary physics.',
+    start_url: '.',
+    display: 'standalone',
+    orientation: 'any',
+    background_color: '#f7f8fc',
+    theme_color: '#f7f8fc',
+    icons: [
+      { src: 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="80" fill="#eff6ff"/><line x1="256" y1="40" x2="256" y2="472" stroke="#2563eb" stroke-width="20" stroke-linecap="round"/><line x1="100" y1="200" x2="256" y2="300" stroke="#d97706" stroke-width="10" stroke-linecap="round"/><line x1="256" y1="300" x2="380" y2="220" stroke="#d97706" stroke-width="10" stroke-linecap="round"/><line x1="350" y1="300" x2="256" y2="300" stroke="#7c3aed" stroke-width="8" stroke-dasharray="18 10" stroke-linecap="round"/></svg>`),
+        sizes: '512x512', type: 'image/svg+xml', purpose: 'any maskable' }
+    ]
+  };
+  const blob = new Blob([JSON.stringify(manifest)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  document.getElementById('pwa-manifest').setAttribute('href', url);
+
+  // Register a minimal service worker for offline caching (inline via blob)
+  if ('serviceWorker' in navigator) {
+    const swCode = `
+const CACHE = 'mirror-sim-v1';
+const ASSETS = [location.href];
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
+});
+self.addEventListener('activate', e => {
+  e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));
+});
+self.addEventListener('fetch', e => {
+  e.respondWith(caches.match(e.request).then(r => r || fetch(e.request).then(res => {
+    const clone = res.clone();
+    caches.open(CACHE).then(c => c.put(e.request, clone));
+    return res;
+  })));
+});`;
+    const swBlob = new Blob([swCode], {type:'application/javascript'});
+    const swUrl = URL.createObjectURL(swBlob);
+    navigator.serviceWorker.register(swUrl, {scope: './'}).catch(()=>{});
+  }
+}
+</script>
+</body>
+</html>

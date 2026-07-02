@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Projectile Motion Simulator — CurioMinds</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --wood-dark: #3d1f00; --wood-mid: #6B3F1F;
+    --gold: #FFD700; --gold-dim: #c8a050;
+    --parchment: #f5e6c0; --parchment-dark: #d4b870; --ink: #2a1400;
+  }
+  html, body { width:100%; min-height:100vh; background:#1a0e05; font-family:'IM Fell English',Georgia,serif; color:var(--parchment); overflow-x:hidden; }
+  body::before { content:''; position:fixed; inset:0; background: repeating-linear-gradient(90deg,rgba(255,180,80,.03) 0,transparent 1px,transparent 40px), repeating-linear-gradient(0deg,rgba(255,180,80,.03) 0,transparent 1px,transparent 40px); pointer-events:none; z-index:0; }
+  #app { position:relative; z-index:1; max-width:980px; margin:0 auto; padding:14px 12px 28px; }
+
+  /* Header */
+  .site-header { text-align:center; padding:14px 0 10px; border-bottom:2px solid var(--gold-dim); margin-bottom:12px; }
+  .site-header h1 { font-family:'Cinzel',serif; font-size:clamp(18px,3.8vw,32px); font-weight:700; color:var(--gold); text-shadow:0 0 18px rgba(255,200,50,.35),2px 2px 4px #000; letter-spacing:2px; }
+  .site-header .subtitle { font-size:13px; color:var(--parchment-dark); margin-top:4px; font-style:italic; }
+
+  /* Canvas */
+  #canvas-wrap { width:100%; border:4px solid var(--wood-dark); border-radius:6px; background:#1e5f9e; line-height:0; overflow:hidden; }
+  #gameCanvas { display:block; width:100%; cursor:crosshair; }
+
+  /* Wood panel */
+  .wood-panel { background:var(--wood-mid); border:3px solid var(--wood-dark); border-radius:8px; padding:10px 14px; position:relative; box-shadow:inset 0 2px 8px rgba(0,0,0,.5),0 4px 12px rgba(0,0,0,.6); margin-top:10px; }
+  .wood-panel::after { content:''; position:absolute; inset:5px; border:1px solid rgba(255,180,80,.12); border-radius:4px; pointer-events:none; }
+
+  /* Controls — single row flex */
+  .controls-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .ctrl-group { display:flex; flex-direction:column; gap:3px; flex:1; min-width:140px; }
+  .ctrl-label { font-family:'Cinzel',serif; font-size:10px; letter-spacing:1px; color:var(--parchment-dark); text-transform:uppercase; }
+  .ctrl-val { font-family:'Cinzel',serif; font-size:16px; font-weight:700; color:var(--gold); text-shadow:1px 1px 3px #000; line-height:1; }
+  .ctrl-input-row { display:flex; align-items:center; gap:5px; }
+  .ctrl-unit { font-size:10px; color:#ddc; white-space:nowrap; }
+  input[type=range] { flex:1; accent-color:var(--gold-dim); cursor:pointer; min-width:0; height:16px; }
+  input[type=number] { width:52px; border:2px solid var(--wood-dark); border-radius:4px; background:#fff8e7; color:var(--ink); font-size:12px; font-family:'IM Fell English',serif; padding:2px 4px; text-align:center; }
+  input[type=number]:focus { outline:2px solid var(--gold-dim); }
+
+  /* Compact buttons */
+  .btn-group { display:flex; flex-direction:column; gap:5px; flex-shrink:0; }
+  .btn { border-radius:5px; border:2px solid; cursor:pointer; font-family:'Cinzel',serif; font-weight:700; letter-spacing:.5px; font-size:12px; padding:6px 13px; text-shadow:1px 1px 2px #000; box-shadow:1px 1px 4px rgba(0,0,0,.5); transition:transform .08s,filter .08s; white-space:nowrap; }
+  .btn:hover { filter:brightness(1.15); transform:scale(1.03); }
+  .btn:active { transform:scale(.96); }
+  .btn:disabled { opacity:.5; cursor:not-allowed; transform:none; filter:none; }
+  .btn-fire  { background:linear-gradient(180deg,#c8400a,#7a1f00); color:var(--gold); border-color:#3d1000; }
+  .btn-reset { background:linear-gradient(180deg,#5a8a3a,#2d4d1a); color:#e0f0c0; border-color:#1a3008; }
+
+  /* Zoom row */
+  .zoom-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding-top:8px; margin-top:8px; border-top:1px solid rgba(255,200,80,.2); }
+  .zoom-label { font-family:'Cinzel',serif; font-size:10px; letter-spacing:1px; color:var(--parchment-dark); text-transform:uppercase; white-space:nowrap; }
+  #zoomSlider { flex:1; min-width:100px; max-width:280px; accent-color:var(--gold-dim); cursor:pointer; }
+  .zoom-val { font-family:'Cinzel',serif; font-size:13px; font-weight:700; color:var(--gold); min-width:40px; }
+  .zoom-hint { font-size:11px; color:#bba870; font-style:italic; }
+
+  /* Message bar */
+  .msg-bar { font-family:'IM Fell English',serif; font-size:13px; font-weight:bold; padding:6px 12px; border-radius:5px; text-align:center; min-height:30px; margin-top:8px; transition:background .3s; }
+  .msg-idle { background:rgba(0,0,0,.25); color:var(--parchment); border:1px solid transparent; }
+  .msg-miss { background:#5a1010; color:#ffb0a0; border:1px solid #a03020; }
+  .msg-hit  { background:#0d3a10; color:#a0ffb0; border:1px solid #308050; }
+
+  /* Parchment panel */
+  .parchment-panel { background:var(--parchment); border:2px solid #8B6914; border-radius:6px; padding:12px 16px; color:var(--ink); box-shadow:inset 0 1px 6px rgba(139,105,20,.2); position:relative; margin-top:10px; }
+  .parchment-panel::before { content:''; position:absolute; inset:4px; border:1px solid rgba(139,105,20,.18); border-radius:3px; pointer-events:none; }
+  .eq-title { font-family:'Cinzel',serif; font-size:13px; font-weight:700; color:#5a3000; margin-bottom:8px; letter-spacing:1px; }
+  .eq-formula { font-size:14px; color:#2a1400; margin:3px 0; font-style:italic; }
+  .eq-vals { display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+  .eq-val-box { background:rgba(139,105,20,.1); border:1px solid var(--gold-dim); border-radius:4px; padding:6px 12px; text-align:center; flex:1; min-width:88px; }
+  .eq-val-label { font-size:10px; color:#7a5010; display:block; font-family:'Cinzel',serif; letter-spacing:.5px; }
+  .eq-val-num { font-size:17px; font-weight:bold; color:#3d1f00; }
+
+  /* Credit */
+  .credit { text-align:center; font-size:12px; color:#a07040; margin-top:8px; font-style:italic; }
+  .credit a { color:var(--gold-dim); text-decoration:none; }
+  .credit a:hover { text-decoration:underline; color:var(--gold); }
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="site-header">
+    <h1>⚔ Projectile Motion Simulator ⚔</h1>
+    <p class="subtitle">A medieval physics experiment — adjust angle &amp; speed to strike the castle</p>
+  </header>
+
+  <div id="canvas-wrap"><canvas id="gameCanvas"></canvas></div>
+
+  <div class="wood-panel">
+    <div class="controls-row">
+      <div class="ctrl-group">
+        <div class="ctrl-label">Launch Angle</div>
+        <div class="ctrl-input-row">
+          <input type="range" id="angleSlider" min="5" max="85" value="45" step="1">
+          <input type="number" id="angleInput"  min="5" max="85" value="45" step="1">
+          <span class="ctrl-unit">°</span>
+        </div>
+        <div class="ctrl-val" id="angleDisp">45°</div>
+      </div>
+      <div class="ctrl-group">
+        <div class="ctrl-label">Initial Speed (v₀)</div>
+        <div class="ctrl-input-row">
+          <input type="range" id="speedSlider" min="10" max="120" value="60" step="1">
+          <input type="number" id="speedInput"  min="10" max="120" value="60" step="1">
+          <span class="ctrl-unit">m/s</span>
+        </div>
+        <div class="ctrl-val" id="speedDisp">60 m/s</div>
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-fire"  id="fireBtn">🔥 Fire!</button>
+        <button class="btn btn-reset" id="resetBtn">↺ Reset</button>
+      </div>
+    </div>
+
+    <div class="zoom-row">
+      <span class="zoom-label">🔭 Zoom</span>
+      <input type="range" id="zoomSlider" min="25" max="100" value="100" step="5">
+      <span class="zoom-val" id="zoomDisp">100%</span>
+      <span class="zoom-hint">Zoom out to see a distant castle</span>
+    </div>
+
+    <div class="msg-bar msg-idle" id="msgBar">Adjust angle &amp; speed, then fire!</div>
+  </div>
+
+  <div class="parchment-panel">
+    <div class="eq-title">📜 Projectile Motion Equations</div>
+    <div class="eq-formula">Range: R = v₀² · sin(2θ) / g</div>
+    <div class="eq-formula">Max Height: H = v₀² · sin²(θ) / (2g)</div>
+    <div class="eq-formula">Time of Flight: T = 2v₀ · sin(θ) / g</div>
+    <div class="eq-vals">
+      <div class="eq-val-box"><span class="eq-val-label">Range (R)</span><span class="eq-val-num" id="eqR">—</span></div>
+      <div class="eq-val-box"><span class="eq-val-label">Max Height (H)</span><span class="eq-val-num" id="eqH">—</span></div>
+      <div class="eq-val-box"><span class="eq-val-label">Time of Flight (T)</span><span class="eq-val-num" id="eqT">—</span></div>
+      <div class="eq-val-box"><span class="eq-val-label">Castle Distance</span><span class="eq-val-num" id="eqD">—</span></div>
+    </div>
+  </div>
+
+  <div class="credit">
+    Created by Mr Lau Chin Hang &nbsp;|&nbsp;
+    <a href="https://www.instagram.com/curiominds.inc" target="_blank" rel="noopener">@curiominds.inc</a>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════
+   WORLD COORDINATE SYSTEM
+   Everything is in METRES.
+   CAT_X_M = catapult x in world metres
+   WORLD canvas renders at CANVAS_W × CANVAS_H px.
+   zoom applies ctx.scale so the WHOLE scene shrinks.
+═══════════════════════════════════ */
+const canvas = document.getElementById('gameCanvas');
+const ctx    = canvas.getContext('2d');
+const wrap   = document.getElementById('canvas-wrap');
+
+const G           = 9.81;
+const CANVAS_W    = 960;     // fixed pixel width of the logical canvas
+const CANVAS_H    = 420;     // fixed pixel height
+const BASE_SCALE  = 3.8;     // px per metre at 100% zoom — enough to show ~220 m
+const GROUND_FRAC = 0.76;    // fraction of canvas height that is sky
+const CAT_X_M     = 22;      // catapult world x in metres
+
+// zoomPct: 25–100. Actual draw scale = BASE_SCALE * (zoomPct/100)
+// Lower zoom → smaller px/m → more metres visible
+let zoomPct = 100;
+
+let angle = 45, speed = 60;
+let castleDist = randDist();   // in world metres from origin (0 = launch point ground)
+let castleHP = 3;
+
+// All particle / rubble positions stored in WORLD METRES
+let rubble = [], clouds = [], boulderParts = [], trail = [];
+let rockWorldPos = null;          // {wx, wy} in metres
+let firing = false, animId = null, t_anim = 0;
+let shakeX = 0, shakeY = 0, shakeFrames = 0;
+
+/* ─── helpers ─── */
+function randDist() { return 100 + Math.floor(Math.random() * 130); }
+
+function getS() { return BASE_SCALE * (zoomPct / 100); }
+
+// Convert world metres → canvas pixels (using current zoom)
+function mToPx(wx, wy) {
+  const S  = getS();
+  const gy = CANVAS_H * GROUND_FRAC;
+  return { px: CAT_X_M * BASE_SCALE + (wx - 0) * S,   // CAT_X_M is always at fixed screen x
+           py: gy - wy * S };
+}
+// The catapult is pinned at screen x = CAT_X_M * BASE_SCALE (constant)
+// Everything else (castle, rock, rubble) moves with zoom because S changes
+// BUT the catapult also moves if we do that — we want catapult fixed on screen.
+// Solution: translate so world x=0 maps to a fixed screen position.
+// We'll use a world origin draw offset.
+
+// Simpler: define screen origin = world(0,0) = ground under catapult.
+// mToPx: screenX = ORIGIN_PX + wx * S,  screenY = GROUND_PY - wy * S
+const ORIGIN_PX = 85;   // screen x of world origin (under catapult)
+
+function w2s(wx, wy) {
+  const S  = getS();
+  const gy = CANVAS_H * GROUND_FRAC;
+  return { sx: ORIGIN_PX + wx * S, sy: gy - wy * S };
+}
+
+/* ─── canvas sizing ─── */
+function resizeCanvas() {
+  const cw = wrap.clientWidth || CANVAS_W;
+  canvas.width  = CANVAS_W;
+  canvas.height = CANVAS_H;
+  canvas.style.width  = cw + 'px';
+  canvas.style.height = Math.round(CANVAS_H * cw / CANVAS_W) + 'px';
+}
+
+/* ─── controls ─── */
+function syncControls(src) {
+  if (src[0] === 'a') {
+    if (src === 'aS') angle = +document.getElementById('angleSlider').value;
+    else { angle = Math.max(5, Math.min(85, +document.getElementById('angleInput').value || 45)); document.getElementById('angleSlider').value = angle; }
+    document.getElementById('angleInput').value = angle;
+    document.getElementById('angleDisp').textContent = angle + '°';
+  } else {
+    if (src === 'sS') speed = +document.getElementById('speedSlider').value;
+    else { speed = Math.max(10, Math.min(120, +document.getElementById('speedInput').value || 60)); document.getElementById('speedSlider').value = speed; }
+    document.getElementById('speedInput').value = speed;
+    document.getElementById('speedDisp').textContent = speed + ' m/s';
+  }
+  updateEq(); if (!firing) drawScene();
+}
+document.getElementById('angleSlider').addEventListener('input', () => syncControls('aS'));
+document.getElementById('angleInput').addEventListener('input',  () => syncControls('aN'));
+document.getElementById('speedSlider').addEventListener('input', () => syncControls('sS'));
+document.getElementById('speedInput').addEventListener('input',  () => syncControls('sN'));
+
+document.getElementById('zoomSlider').addEventListener('input', function() {
+  zoomPct = +this.value;
+  document.getElementById('zoomDisp').textContent = zoomPct + '%';
+  if (!firing) drawScene();
+});
+
+function updateEq() {
+  const th = angle * Math.PI / 180;
+  document.getElementById('eqR').textContent = (speed*speed*Math.sin(2*th)/G).toFixed(1) + ' m';
+  document.getElementById('eqH').textContent = (speed*speed*Math.sin(th)**2/(2*G)).toFixed(1) + ' m';
+  document.getElementById('eqT').textContent = (2*speed*Math.sin(th)/G).toFixed(2) + ' s';
+  document.getElementById('eqD').textContent = castleDist + ' m';
+}
+
+/* ─── clouds ─── */
+function initClouds() {
+  clouds = [];
+  // store cloud x in world metres so they zoom correctly
+  for (let i = 0; i < 9; i++)
+    clouds.push({ xm: -10 + i * 30, ym: CANVAS_H*(1-GROUND_FRAC)*0.5 + Math.random()*40, wm: 18 + Math.random()*14, spd: 0.02 + Math.random()*0.03 });
+}
+initClouds();
+
+/* ════════════════════════════════════
+   DRAW — everything uses w2s() so zoom affects all elements equally
+════════════════════════════════════ */
+
+function drawBg() {
+  const W = CANVAS_W, H = CANVAS_H;
+  const gy = H * GROUND_FRAC;
+
+  // Sky
+  const sk = ctx.createLinearGradient(0,0,0,gy);
+  sk.addColorStop(0,'#1e5f9e'); sk.addColorStop(1,'#7ec8e8');
+  ctx.fillStyle = sk; ctx.fillRect(0,0,W,gy);
+
+  // Clouds (world position → screen)
+  clouds.forEach(c => {
+    const {sx,sy} = w2s(c.xm, 0);
+    const S = getS();
+    const cw = c.wm * S, ch = c.wm * S * 0.4;
+    ctx.save(); ctx.fillStyle = 'rgba(255,255,255,0.88)';
+    ctx.beginPath();
+    ctx.ellipse(sx, sy - c.ym, cw*.5, cw*.21, 0, 0, Math.PI*2);
+    ctx.ellipse(sx - cw*.22, sy - c.ym + 5, cw*.28, cw*.17, 0, 0, Math.PI*2);
+    ctx.ellipse(sx + cw*.22, sy - c.ym + 5, cw*.28, cw*.17, 0, 0, Math.PI*2);
+    ctx.fill(); ctx.restore();
+  });
+
+  // Far hills — drawn in screen space but tile across full width
+  ctx.fillStyle = '#3a7a25';
+  ctx.beginPath(); ctx.moveTo(0, gy);
+  for (let x = 0; x <= W; x += 30) ctx.lineTo(x, gy - 14 - Math.sin(x*.018)*13 - Math.cos(x*.03)*7);
+  ctx.lineTo(W, gy); ctx.closePath(); ctx.fill();
+
+  // Ground
+  const gr = ctx.createLinearGradient(0,gy,0,H);
+  gr.addColorStop(0,'#5aaa3c'); gr.addColorStop(.25,'#4a8a2c'); gr.addColorStop(1,'#365020');
+  ctx.fillStyle = gr; ctx.fillRect(0,gy,W,H-gy);
+  ctx.fillStyle = '#7a5514'; ctx.fillRect(0,gy,W,5);
+
+  // Grass tufts — screen space so they always fill ground width
+  for (let i = 0; i < W; i += 14) {
+    ctx.fillStyle = i%28===0 ? '#6ab848':'#4a9e2e';
+    ctx.beginPath(); ctx.moveTo(i,gy); ctx.lineTo(i+5,gy-8); ctx.lineTo(i+10,gy); ctx.fill();
+  }
+}
+
+function drawCatapult() {
+  // Catapult is at world x = CAT_X_M (metres from origin = 0 which IS the catapult)
+  // So catapult world position = (0, 0) ground → screen = (ORIGIN_PX, GROUND_PY)
+  const {sx:bx, sy:by_} = w2s(0, 0);
+  const by = CANVAS_H * GROUND_FRAC;  // ground y fixed
+
+  ctx.save(); ctx.lineCap = 'round';
+  [-22,22].forEach(dx => {
+    ctx.fillStyle='#5a3010'; ctx.strokeStyle='#2a1005'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.arc(bx+dx,by-2,11,0,Math.PI*2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle='#3a1e08'; ctx.beginPath(); ctx.arc(bx+dx,by-2,4,0,Math.PI*2); ctx.fill();
+  });
+  ctx.fillStyle='#7B4E2C'; ctx.strokeStyle='#3d1f00'; ctx.lineWidth=3;
+  ctx.fillRect(bx-30,by-20,60,20); ctx.strokeRect(bx-30,by-20,60,20);
+  ctx.strokeStyle='rgba(0,0,0,.12)'; ctx.lineWidth=1;
+  for (let i=-24;i<24;i+=8){ctx.beginPath();ctx.moveTo(bx+i,by-20);ctx.lineTo(bx+i,by);ctx.stroke();}
+  ctx.fillStyle='#6B3F1F'; ctx.strokeStyle='#3d1f00'; ctx.lineWidth=2;
+  ctx.fillRect(bx-5,by-62,10,62); ctx.strokeRect(bx-5,by-62,10,62);
+  ctx.fillStyle='#a07030'; ctx.strokeStyle='#3d1f00'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.arc(bx,by-22,8,0,Math.PI*2); ctx.fill(); ctx.stroke();
+
+  const rad=angle*Math.PI/180;
+  const px=bx, py=by-22;
+  const tipX=px+Math.cos(Math.PI-rad)*52, tipY=py-Math.sin(rad)*52;
+  const bkX=px-Math.cos(Math.PI-rad)*24, bkY=py+Math.sin(rad)*24;
+  ctx.lineWidth=8; ctx.strokeStyle='#5a2d00'; ctx.beginPath(); ctx.moveTo(bkX,bkY); ctx.lineTo(tipX,tipY); ctx.stroke();
+  ctx.lineWidth=6; ctx.strokeStyle='#8B5E3C'; ctx.beginPath(); ctx.moveTo(bkX,bkY); ctx.lineTo(tipX,tipY); ctx.stroke();
+  ctx.fillStyle='#888'; ctx.strokeStyle='#444'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.arc(bkX,bkY,10,0,Math.PI*2); ctx.fill(); ctx.stroke();
+
+  if (!firing) {
+    ctx.strokeStyle='#a08050'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(tipX,tipY); ctx.lineTo(tipX+6,tipY+14); ctx.stroke();
+    ctx.fillStyle='#555'; ctx.strokeStyle='#222'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.arc(tipX+6,tipY+14,9,0,Math.PI*2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,.1)'; ctx.beginPath(); ctx.arc(tipX+3,tipY+10,3,0,Math.PI*2); ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawTrajectoryPreview() {
+  const S = getS();
+  const gy = CANVAS_H * GROUND_FRAC;
+  const th = angle*Math.PI/180, vx = speed*Math.cos(th), vy = speed*Math.sin(th);
+  let wx=0, wy=0, t=0;
+  ctx.save(); ctx.setLineDash([6,8]); ctx.lineWidth=2; ctx.strokeStyle='rgba(255,255,100,.52)'; ctx.beginPath();
+  let started=false;
+  while (wy >= 0 && ORIGIN_PX + wx*S < CANVAS_W+20) {
+    const {sx,sy} = w2s(wx, wy);
+    if (!started){ctx.moveTo(sx,sy);started=true;}else ctx.lineTo(sx,sy);
+    t+=0.08; wx=vx*t; wy=vy*t-0.5*G*t*t;
+  }
+  ctx.stroke(); ctx.setLineDash([]); ctx.restore();
+}
+
+function drawCastle() {
+  if (castleHP<=0) return;
+  const {sx:cx} = w2s(castleDist, 0);
+  const gy = CANVAS_H * GROUND_FRAC;
+  if (cx > CANVAS_W+80 || cx < -80) return;
+  const cw=96, ch=76, x=cx-cw/2, y=gy-ch;
+
+  ctx.save();
+  const wallCol = castleHP===3?'#aaa8a0':castleHP===2?'#b09060':'#907878';
+  const darkCol = castleHP===3?'#888780':castleHP===2?'#906040':'#705060';
+
+  ctx.fillStyle=wallCol; ctx.strokeStyle='#555'; ctx.lineWidth=1.5;
+  ctx.fillRect(x,y,cw,ch); ctx.strokeRect(x,y,cw,ch);
+  for(let row=0;row<Math.ceil(ch/14);row++){
+    const off=row%2===0?0:10;
+    for(let col=-10;col<cw+10;col+=20){ctx.strokeStyle='rgba(0,0,0,.18)';ctx.lineWidth=.8;ctx.strokeRect(x+col+off,y+row*14,18,13);}
+  }
+  const tW=26,tH=52;
+  [[x-7,y-tH+20],[x+cw-tW+7,y-tH+20]].forEach(([tx,ty])=>{
+    ctx.fillStyle=wallCol;ctx.strokeStyle='#555';ctx.lineWidth=1.5;
+    ctx.fillRect(tx,ty,tW,tH+(gy-y-ch)+ch);ctx.strokeRect(tx,ty,tW,tH+(gy-y-ch)+ch);
+    for(let m=0;m<3;m++){ctx.fillStyle=darkCol;ctx.fillRect(tx+2+m*8,ty-7,6,9);ctx.strokeStyle='#444';ctx.lineWidth=1;ctx.strokeRect(tx+2+m*8,ty-7,6,9);}
+    ctx.fillStyle='#222';ctx.fillRect(tx+tW/2-2,ty+10,4,10);
+    ctx.beginPath();ctx.arc(tx+tW/2,ty+10,2,Math.PI,0);ctx.fill();
+  });
+  for(let m=0;m<6;m++){ctx.fillStyle=darkCol;ctx.fillRect(x+4+m*15,y-7,10,9);ctx.strokeStyle='#444';ctx.lineWidth=1;ctx.strokeRect(x+4+m*15,y-7,10,9);}
+  const gx=cx-11,gh=38;
+  ctx.fillStyle='#1a1008';ctx.fillRect(gx,gy-gh,22,gh);
+  ctx.beginPath();ctx.arc(cx,gy-gh,11,Math.PI,0);ctx.fill();
+  ctx.strokeStyle='rgba(80,60,20,.8)';ctx.lineWidth=2;
+  for(let i=0;i<4;i++){ctx.beginPath();ctx.moveTo(gx+i*7,gy-gh);ctx.lineTo(gx+i*7,gy);ctx.stroke();}
+  for(let j=0;j<3;j++){ctx.beginPath();ctx.moveTo(gx,gy-gh+j*12);ctx.lineTo(gx+22,gy-gh+j*12);ctx.stroke();}
+  ctx.strokeStyle='#a07030';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(cx-14,y-2);ctx.lineTo(cx-14,y-32);ctx.stroke();
+  ctx.fillStyle='#c00';ctx.beginPath();ctx.moveTo(cx-14,y-32);ctx.lineTo(cx+8,y-22);ctx.lineTo(cx-14,y-12);ctx.fill();
+  ctx.fillStyle='rgba(0,0,0,.4)';
+  [[x+10,y+22],[x+cw-22,y+22]].forEach(([wx2,wy2])=>{ctx.fillRect(wx2,wy2,13,16);ctx.beginPath();ctx.arc(wx2+6.5,wy2,6.5,Math.PI,0);ctx.fill();});
+  if(castleHP<3){
+    ctx.strokeStyle='#333';ctx.lineWidth=1.5;
+    for(let i=0;i<(3-castleHP)*4;i++){const rx=x+10+Math.random()*(cw-20),ry=y+8+Math.random()*(ch-16);ctx.beginPath();ctx.moveTo(rx,ry);ctx.lineTo(rx+12-Math.random()*24,ry+8-Math.random()*16);ctx.stroke();}
+  }
+  ctx.fillStyle='#e0c060';ctx.font='bold 12px Georgia';ctx.textAlign='center';
+  ctx.fillText('HP: '+'♥'.repeat(castleHP),cx,y-12);
+  ctx.restore();
+}
+
+function drawRubble() {
+  const gy = CANVAS_H * GROUND_FRAC;
+  rubble.forEach(r => {
+    const {sx,sy} = w2s(r.wxm, 0);
+    const screenY = gy - r.ym * getS();
+    ctx.save(); ctx.fillStyle=r.c; ctx.translate(sx, screenY); ctx.rotate(r.rot);
+    ctx.fillRect(-r.s/2,-r.s/2,r.s,r.s); ctx.restore();
+  });
+}
+
+function drawDistanceMarker() {
+  const gy = CANVAS_H * GROUND_FRAC;
+  const {sx:catSX} = w2s(0, 0);
+  const {sx:castSX} = w2s(castleDist, 0);
+
+  if (castSX > CANVAS_W + 20) {
+    // off screen — show label
+    ctx.save(); ctx.fillStyle='#FFD700'; ctx.font='bold 13px Georgia'; ctx.textAlign='right';
+    ctx.fillText('Castle: '+castleDist+' m  ▶', CANVAS_W-10, gy-10);
+    ctx.restore(); return;
+  }
+  ctx.save();
+  ctx.setLineDash([5,5]); ctx.strokeStyle='rgba(255,220,0,.75)'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(catSX, gy+16); ctx.lineTo(castSX, gy+16); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='rgba(0,0,0,.6)';
+  [[catSX,1],[castSX,-1]].forEach(([ax,dir])=>{
+    ctx.beginPath();ctx.moveTo(ax,gy+16);ctx.lineTo(ax+dir*7,gy+11);ctx.lineTo(ax+dir*7,gy+21);ctx.fill();
+  });
+  ctx.fillStyle='#FFD700'; ctx.font='bold 13px Georgia'; ctx.textAlign='center';
+  ctx.fillText(castleDist+' m', (catSX+castSX)/2, gy+33);
+  ctx.restore();
+}
+
+function drawBoulderParts() {
+  const gy = CANVAS_H * GROUND_FRAC;
+  boulderParts.forEach(p => {
+    const {sx,sy} = w2s(p.wxm, p.wym);
+    ctx.save(); ctx.fillStyle=p.c; ctx.translate(sx,sy); ctx.rotate(p.rot);
+    ctx.beginPath(); ctx.arc(0,0,p.r,0,Math.PI*2); ctx.fill(); ctx.restore();
+  });
+}
+
+function drawRock() {
+  if (!rockWorldPos) return;
+  const {sx,sy} = w2s(rockWorldPos.wx, rockWorldPos.wy);
+  ctx.fillStyle='#444'; ctx.beginPath(); ctx.arc(sx,sy,9,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='#222'; ctx.lineWidth=1.5; ctx.stroke();
+  ctx.fillStyle='rgba(255,255,255,.1)'; ctx.beginPath(); ctx.arc(sx-3,sy-3,3,0,Math.PI*2); ctx.fill();
+}
+
+function drawTrail() {
+  if (trail.length < 2) return;
+  ctx.save();
+  for (let i=1; i<trail.length; i++) {
+    const a = i/trail.length*0.65;
+    const p0 = w2s(trail[i-1].wx, trail[i-1].wy);
+    const p1 = w2s(trail[i].wx,   trail[i].wy);
+    ctx.strokeStyle=`rgba(210,160,60,${a})`; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(p0.sx,p0.sy); ctx.lineTo(p1.sx,p1.sy); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawZoomBadge() {
+  if (zoomPct >= 100) return;
+  const W=CANVAS_W;
+  ctx.save();
+  ctx.fillStyle='rgba(0,0,0,.55)';
+  ctx.beginPath(); ctx.roundRect(W-112,8,104,24,4); ctx.fill();
+  ctx.fillStyle='#FFD700'; ctx.font='bold 12px Georgia'; ctx.textAlign='center';
+  ctx.fillText('🔭 '+zoomPct+'% zoom', W-60, 25);
+  ctx.restore();
+}
+
+/* ════════════════════════════════════
+   MAIN DRAW
+════════════════════════════════════ */
+function drawScene() {
+  canvas.width = CANVAS_W; canvas.height = CANVAS_H;
+  ctx.save();
+  if (shakeFrames > 0) {
+    shakeX = (Math.random()-.5)*8; shakeY = (Math.random()-.5)*8;
+    ctx.translate(shakeX, shakeY); shakeFrames--;
+  }
+  drawBg();
+  drawRubble();
+  drawDistanceMarker();
+  if (!firing) drawTrajectoryPreview();
+  drawTrail();
+  drawBoulderParts();
+  drawRock();
+  drawCatapult();
+  drawCastle();
+  drawZoomBadge();
+  ctx.restore();
+}
+
+/* ════════════════════════════════════
+   GAME LOGIC
+════════════════════════════════════ */
+function spawnRubble(castleWx) {
+  for (let i=0; i<20; i++) {
+    rubble.push({
+      wxm: castleWx + (Math.random()-.5)*25,
+      ym:  Math.random()*6,
+      s:   5+Math.random()*12, rot: Math.random()*Math.PI,
+      c: ['#999','#b0a060','#777','#bbb','#888'][Math.floor(Math.random()*5)]
+    });
+  }
+}
+
+function setMsg(html, type) {
+  const bar = document.getElementById('msgBar');
+  bar.innerHTML = html;
+  bar.className = 'msg-bar '+(type==='hit'?'msg-hit':type==='miss'?'msg-miss':'msg-idle');
+}
+
+function animate() {
+  const th = angle*Math.PI/180, vx = speed*Math.cos(th), vy = speed*Math.sin(th);
+  t_anim += 0.04;
+  const wx = vx*t_anim;
+  const wy = vy*t_anim - 0.5*G*t_anim*t_anim;
+  rockWorldPos = {wx, wy};
+  trail.push({wx, wy}); if (trail.length>50) trail.shift();
+
+  // Update boulder parts in world coords
+  boulderParts.forEach(p => {
+    p.wxm += p.vwx * 0.04;
+    p.wym += p.vwy * 0.04; p.vwy -= G * 0.04;
+    p.rot += p.vr;
+  });
+  const gy = CANVAS_H * GROUND_FRAC;
+  boulderParts = boulderParts.filter(p => {
+    const {sy} = w2s(p.wxm, p.wym);
+    return sy < CANVAS_H + 40;
+  });
+
+  // Move clouds in world metres
+  clouds.forEach(c => { c.xm += c.spd; if (c.xm > 260) c.xm = -40; });
+
+  // Hit detection in world metres
+  const distToX = Math.abs(wx - castleDist);
+  const hitX = distToX < 15;   // 15 m tolerance
+  const hitY = wy <= 0 && wy > -8;
+
+  if (wy < -0.5 && t_anim > 0.5) {
+    // Missed — landed
+    rockWorldPos = null; firing = false;
+    document.getElementById('fireBtn').disabled = false;
+    setMsg('💨 MISS! Adjust angle &amp; speed and try again.', 'miss');
+    drawScene(); return;
+  }
+
+  // Check hit at any point during flight when crossing castle x
+  if (wx >= castleDist - 15 && wx <= castleDist + 15 && wy >= -8 && wy <= 30 && t_anim > 0.3) {
+    rockWorldPos = null; firing = false;
+    document.getElementById('fireBtn').disabled = false;
+    shakeFrames = 14;
+    castleHP = Math.max(0, castleHP - 1);
+    // Boulder parts in world metres/s velocities
+    for (let i=0; i<12; i++) boulderParts.push({
+      wxm: wx, wym: wy,
+      vwx: (Math.random()-.5)*15, vwy: 8+Math.random()*12,
+      r: 3+Math.random()*5, vr: (Math.random()-.5)*.3,
+      c: ['#555','#777','#888','#aaa'][Math.floor(Math.random()*4)]
+    });
+    spawnRubble(castleDist);
+    if (castleHP <= 0) {
+      setMsg('🏰 The castle CRUMBLES! A new fortress rises...', 'hit');
+      setTimeout(()=>{
+        castleDist=randDist(); castleHP=3; rubble=[]; trail=[];
+        updateEq(); setMsg('New castle spotted! Adjust your aim!','idle'); drawScene();
+      }, 2400);
+    } else {
+      setMsg('💥 DIRECT HIT! Castle damaged! ('+castleHP+' HP left)', 'hit');
+    }
+    drawScene(); return;
+  }
+
+  drawScene(); animId = requestAnimationFrame(animate);
+}
+
+document.getElementById('fireBtn').addEventListener('click', () => {
+  if (firing) return;
+  if (animId) cancelAnimationFrame(animId);
+  trail=[]; boulderParts=[]; t_anim=0; rockWorldPos=null; firing=true;
+  document.getElementById('fireBtn').disabled = true;
+  setMsg('💨 Projectile away!', 'idle'); animate();
+});
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  if (animId) cancelAnimationFrame(animId);
+  firing=false; rockWorldPos=null; trail=[]; boulderParts=[]; t_anim=0;
+  castleHP=3; castleDist=randDist(); rubble=[];
+  document.getElementById('fireBtn').disabled = false;
+  setMsg('Adjust angle &amp; speed, then fire!', 'idle');
+  updateEq(); drawScene();
+});
+
+window.addEventListener('resize', () => { resizeCanvas(); if (!firing) drawScene(); });
+
+resizeCanvas(); updateEq(); drawScene();
+</script>
+</body>
+</html>
