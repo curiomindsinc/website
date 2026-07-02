@@ -1,0 +1,2229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Build Your Own Solar System — CurioMinds</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&family=Exo+2:wght@300;400;500&display=swap');
+
+  :root {
+    --bg: #04060f;
+    --panel-bg: rgba(8,14,32,0.92);
+    --panel-border: rgba(80,160,255,0.15);
+    --accent: #4fa3ff;
+    --accent2: #a78bfa;
+    --warn: #f97316;
+    --success: #22c55e;
+    --danger: #ef4444;
+    --text: #c8d8f0;
+    --text-dim: #5a7090;
+    --font-head: 'Orbitron', monospace;
+    --font-body: 'Exo 2', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: #04060f;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+    user-select: none;
+  }
+
+  #nebula-bg {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    pointer-events: none;
+    z-index: 0;
+    background: #04060f;
+  }
+
+  #main-canvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    z-index: 1;
+    cursor: crosshair;
+    background: transparent;
+  }
+
+  @media (max-width: 700px) {
+    #main-canvas {
+      top: 44px;
+      bottom: 56px;
+      width: 100vw;
+      height: calc(100vh - 44px - 56px);
+    }
+    #nebula-bg {
+      top: 44px;
+      bottom: 56px;
+      width: 100vw;
+      height: calc(100vh - 44px - 56px);
+    }
+  }
+
+  /* ── TOP BAR ── */
+  #top-bar {
+    position: fixed;
+    top: 0; left: 200px; right: 260px;
+    height: 52px;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 16px;
+    background: var(--panel-bg);
+    border-bottom: 1px solid var(--panel-border);
+    backdrop-filter: blur(12px);
+  }
+
+  #sim-title {
+    font-family: var(--font-head);
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--accent);
+    margin-right: 12px;
+    white-space: nowrap;
+  }
+
+  .ctrl-btn {
+    background: rgba(79,163,255,0.08);
+    border: 1px solid rgba(79,163,255,0.2);
+    color: var(--text);
+    border-radius: 6px;
+    padding: 5px 12px;
+    font-family: var(--font-body);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .ctrl-btn:hover { background: rgba(79,163,255,0.18); border-color: var(--accent); }
+  .ctrl-btn.active { background: rgba(79,163,255,0.25); border-color: var(--accent); color: var(--accent); }
+
+  .sep { width: 1px; height: 24px; background: var(--panel-border); margin: 0 4px; }
+
+  #time-display {
+    font-family: var(--font-head);
+    font-size: 10px;
+    color: var(--accent2);
+    margin-left: 8px;
+  }
+
+  /* ── LEFT PALETTE ── */
+  #left-panel {
+    position: fixed;
+    top: 0; left: 0;
+    width: 200px;
+    height: 100vh;
+    background: var(--panel-bg);
+    border-right: 1px solid var(--panel-border);
+    backdrop-filter: blur(12px);
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  #left-panel-title {
+    font-family: var(--font-head);
+    font-size: 9px;
+    letter-spacing: 3px;
+    color: var(--text-dim);
+    padding: 14px 14px 8px;
+    border-bottom: 1px solid var(--panel-border);
+  }
+
+  .palette-section { padding: 10px 10px 0; }
+  .palette-section-label {
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+  }
+
+  .palette-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    border-radius: 8px;
+    cursor: grab;
+    border: 1px solid transparent;
+    transition: all 0.15s;
+    margin-bottom: 4px;
+    font-size: 12px;
+  }
+  .palette-item:active { cursor: grabbing; }
+  .palette-item:hover {
+    background: rgba(79,163,255,0.08);
+    border-color: rgba(79,163,255,0.2);
+  }
+  .palette-item.selected {
+    background: rgba(79,163,255,0.15);
+    border-color: var(--accent);
+  }
+  .palette-icon {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* ── RIGHT PANEL ── */
+  #right-panel {
+    position: fixed;
+    top: 0; right: 0;
+    width: 260px;
+    height: 100vh;
+    background: var(--panel-bg);
+    border-left: 1px solid var(--panel-border);
+    backdrop-filter: blur(12px);
+    z-index: 10;
+    overflow-y: auto;
+  }
+
+  #right-panel-title {
+    font-family: var(--font-head);
+    font-size: 9px;
+    letter-spacing: 3px;
+    color: var(--text-dim);
+    padding: 14px 14px 8px;
+    border-bottom: 1px solid var(--panel-border);
+  }
+
+  .info-block { padding: 12px 14px; border-bottom: 1px solid var(--panel-border); }
+  .info-label { font-size: 9px; letter-spacing: 2px; color: var(--text-dim); margin-bottom: 4px; text-transform: uppercase; }
+  .info-value { font-size: 14px; font-weight: 500; color: var(--text); }
+  .info-value.accent { color: var(--accent); }
+  .info-value.success { color: var(--success); }
+  .info-value.warn { color: var(--warn); }
+  .info-value.danger { color: var(--danger); }
+
+  .hab-bar-wrap { margin-top: 6px; height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; }
+  .hab-bar { height: 100%; border-radius: 3px; transition: width 0.5s, background 0.5s; }
+
+  .stat-row { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 12px; }
+  .stat-row span:last-child { color: var(--accent); }
+
+  /* ── ACHIEVEMENTS ── */
+  #achievements-btn {
+    position: fixed;
+    bottom: 36px; right: 10px;
+    z-index: 20;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    color: var(--accent2);
+    font-family: var(--font-head);
+    font-size: 9px;
+    letter-spacing: 1px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+  }
+  #achievements-btn:hover { border-color: var(--accent2); }
+
+  #achievements-panel {
+    position: fixed;
+    bottom: 70px; right: 270px;
+    width: 280px;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 12px;
+    padding: 14px;
+    z-index: 20;
+    display: none;
+    backdrop-filter: blur(12px);
+  }
+  #achievements-panel.open { display: block; }
+  #achievements-panel h3 {
+    font-family: var(--font-head);
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+  .ach-item { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; opacity: 0.35; transition: opacity 0.3s; }
+  .ach-item.unlocked { opacity: 1; }
+  .ach-icon { font-size: 18px; }
+  .ach-name { font-size: 11px; font-weight: 600; }
+  .ach-desc { font-size: 10px; color: var(--text-dim); }
+
+  /* ── TOAST ── */
+  #toast {
+    position: fixed;
+    top: 70px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    background: rgba(8,14,32,0.95);
+    border: 1px solid var(--accent2);
+    border-radius: 10px;
+    padding: 10px 18px;
+    z-index: 100;
+    font-family: var(--font-head);
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: var(--accent2);
+    opacity: 0;
+    transition: opacity 0.4s, transform 0.4s;
+    pointer-events: none;
+    text-align: center;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ── HINT POPUP ── */
+  #hint-popup {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(8,14,32,0.96);
+    border: 1px solid rgba(167,139,250,0.3);
+    border-radius: 12px;
+    padding: 12px 20px;
+    max-width: 380px;
+    z-index: 50;
+    display: none;
+    backdrop-filter: blur(12px);
+  }
+  #hint-popup.show { display: block; animation: fadeUp 0.3s ease; }
+  #hint-title { font-family: var(--font-head); font-size: 10px; letter-spacing: 2px; color: var(--accent2); margin-bottom: 4px; }
+  #hint-text { font-size: 12px; color: var(--text); line-height: 1.5; }
+  #hint-close { position: absolute; top: 8px; right: 10px; cursor: pointer; color: var(--text-dim); font-size: 14px; }
+
+  @keyframes fadeUp { from { opacity:0; transform: translateX(-50%) translateY(10px); } to { opacity:1; transform: translateX(-50%) translateY(0); } }
+
+  /* ── GUIDE OVERLAY ── */
+  #guide-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(2,4,12,0.88);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(6px);
+  }
+  #guide-box {
+    background: var(--panel-bg);
+    border: 1px solid var(--accent);
+    border-radius: 18px;
+    padding: 36px 44px;
+    max-width: 480px;
+    text-align: center;
+  }
+  #guide-box h1 { font-family: var(--font-head); font-size: 18px; color: var(--accent); margin-bottom: 6px; letter-spacing: 2px; }
+  #guide-box .sub { font-size: 12px; color: var(--text-dim); margin-bottom: 28px; letter-spacing: 1px; }
+  .guide-step { display: none; }
+  .guide-step.active { display: block; }
+  .guide-step p { font-size: 14px; line-height: 1.7; color: var(--text); margin-bottom: 20px; }
+  .guide-step .step-icon { font-size: 48px; margin-bottom: 12px; }
+  #guide-next {
+    background: var(--accent);
+    color: #030810;
+    border: none;
+    padding: 10px 28px;
+    border-radius: 8px;
+    font-family: var(--font-head);
+    font-size: 11px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  #guide-next:hover { opacity: 0.85; }
+  #guide-skip { background: none; border: none; color: var(--text-dim); font-size: 11px; cursor: pointer; margin-top: 10px; display: block; margin-left: auto; margin-right: auto; }
+  #guide-skip:hover { color: var(--text); }
+
+  /* ── ORBIT SPEED PLACEMENT POPUP ── */
+  #placement-popup {
+    position: fixed;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    z-index: 50;
+    display: none;
+    width: 220px;
+    backdrop-filter: blur(10px);
+  }
+  #placement-popup .pp-title { font-family: var(--font-head); font-size: 9px; letter-spacing: 2px; color: var(--accent); margin-bottom: 8px; }
+  #placement-popup label { font-size: 11px; color: var(--text-dim); display: block; margin-bottom: 3px; }
+  #placement-popup input[type=range] { width: 100%; margin-bottom: 8px; accent-color: var(--accent); }
+  #pp-confirm { width: 100%; background: var(--accent); color: #030810; border: none; padding: 6px; border-radius: 6px; font-family: var(--font-head); font-size: 9px; letter-spacing: 1px; cursor: pointer; }
+
+  /* ── CREDIT ── */
+  #credit {
+    position: fixed;
+    bottom: 8px; left: 50%; transform: translateX(-50%);
+    font-size: 10px;
+    color: var(--text-dim);
+    z-index: 10;
+    letter-spacing: 1px;
+  }
+  #credit a { color: var(--accent); text-decoration: none; }
+  #credit a:hover { text-decoration: underline; }
+
+  /* ── DELETE BTN ── */
+  #delete-btn {
+    position: fixed;
+    bottom: 36px; left: 210px;
+    z-index: 20;
+    background: rgba(239,68,68,0.1);
+    border: 1px solid rgba(239,68,68,0.5);
+    color: #ef4444;
+    font-family: var(--font-body);
+    font-size: 11px;
+    padding: 5px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: none;
+    transition: background 0.15s;
+  }
+  #delete-btn:hover { background: rgba(239,68,68,0.3); border-color: #ef4444; }
+
+  #reset-confirm {
+    position: fixed;
+    top: 50%; left: 50%; transform: translate(-50%,-50%);
+    background: var(--panel-bg);
+    border: 1px solid var(--warn);
+    border-radius: 12px;
+    padding: 24px 32px;
+    z-index: 300;
+    text-align: center;
+    display: none;
+    backdrop-filter: blur(12px);
+  }
+  #reset-confirm p { font-size: 13px; margin-bottom: 16px; }
+  #reset-confirm button { margin: 0 6px; padding: 7px 18px; border-radius: 6px; font-family: var(--font-head); font-size: 9px; letter-spacing: 1px; cursor: pointer; border: none; }
+  #rc-yes { background: var(--warn); color: #000; }
+  #rc-no { background: rgba(255,255,255,0.08); color: var(--text); }
+
+  /* ── MOBILE LAYOUT ── */
+  @media (max-width: 700px) {
+    #left-panel {
+      top: auto;
+      bottom: 56px;
+      left: 0; right: 0;
+      width: 100%;
+      height: auto;
+      max-height: 0;
+      overflow: hidden;
+      border-right: none;
+      border-top: 1px solid var(--panel-border);
+      transition: max-height 0.3s ease;
+      flex-direction: row;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+    #left-panel.mobile-open {
+      max-height: 120px;
+    }
+    #left-panel-title { display: none; }
+    .palette-section {
+      display: flex;
+      flex-direction: row;
+      padding: 8px 6px 0;
+      flex-shrink: 0;
+    }
+    .palette-section-label { display: none; }
+    .palette-item {
+      flex-direction: column;
+      align-items: center;
+      padding: 6px 8px;
+      font-size: 9px;
+      gap: 4px;
+      min-width: 52px;
+    }
+    .palette-item div:last-child > div:last-child { display: none; }
+    .palette-icon { width: 28px; height: 28px; }
+
+    #right-panel {
+      display: none;
+    }
+    #right-panel.mobile-open {
+      display: flex;
+      flex-direction: column;
+      top: auto;
+      bottom: 56px;
+      right: 0; left: 0;
+      width: 100%;
+      height: 220px;
+      border-left: none;
+      border-top: 1px solid var(--panel-border);
+    }
+
+    #top-bar {
+      left: 0; right: 0;
+      top: 0;
+      height: 44px;
+      padding: 0 8px;
+      gap: 4px;
+      overflow-x: auto;
+      flex-wrap: nowrap;
+    }
+    #sim-title { display: none; }
+    .sep { display: none; }
+    .ctrl-btn { padding: 4px 8px; font-size: 11px; flex-shrink: 0; }
+    #time-display { font-size: 9px; flex-shrink: 0; }
+
+    #mobile-tab-bar {
+      display: flex !important;
+    }
+    #achievements-btn { display: none; }
+    #delete-btn {
+      bottom: 64px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    #credit { bottom: 60px; font-size: 9px; display: none; }
+    #hint-popup { bottom: 130px; max-width: 90vw; }
+  }
+
+  /* ── MOBILE TAB BAR ── */
+  #mobile-tab-bar {
+    display: none;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 56px;
+    background: var(--panel-bg);
+    border-top: 1px solid var(--panel-border);
+    backdrop-filter: blur(12px);
+    z-index: 30;
+    align-items: stretch;
+  }
+  .mob-tab {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    font-size: 9px;
+    color: var(--text-dim);
+    cursor: pointer;
+    border: none;
+    background: none;
+    transition: color 0.15s;
+    letter-spacing: 1px;
+    font-family: var(--font-body);
+  }
+  .mob-tab .tab-icon { font-size: 18px; line-height: 1; }
+  .mob-tab.active { color: var(--accent); }
+  .mob-tab:hover { color: var(--text); }
+
+  /* scroll custom */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(79,163,255,0.2); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<!-- NEBULA BACKGROUND -->
+<canvas id="nebula-bg"></canvas>
+
+<!-- MAIN SIM CANVAS -->
+<canvas id="main-canvas"></canvas>
+
+<!-- GUIDE OVERLAY -->
+<div id="guide-overlay">
+  <div id="guide-box">
+    <h1>BUILD YOUR OWN<br>SOLAR SYSTEM</h1>
+    <div class="sub">A CURIOMINDS SIMULATION</div>
+    <div class="guide-step active" id="gs0">
+      <div class="step-icon">⭐</div>
+      <p>Welcome, Cosmic Architect.<br>You are about to build a solar system from scratch — and discover just how rare a stable, life-bearing world truly is.</p>
+    </div>
+    <div class="guide-step" id="gs1">
+      <div class="step-icon">🌟</div>
+      <p>A <strong>starter solar system</strong> — modelled on our own — is already waiting for you. Press Play to watch it in motion, then <strong>drag objects</strong> from the left panel onto the canvas to add your own.</p>
+    </div>
+    <div class="guide-step" id="gs2">
+      <div class="step-icon">🪐</div>
+      <p><strong>Drag a planet</strong> from the left panel and drop it anywhere. A circular orbital velocity is auto-calculated. You can fine-tune the speed before confirming placement.</p>
+    </div>
+    <div class="guide-step" id="gs3">
+      <div class="step-icon">💥</div>
+      <p>Experiment freely — add stars, crash planets, break the system. The chaos will teach you how <strong>extraordinarily fine-tuned</strong> a life-bearing world must be.</p>
+    </div>
+    <button id="guide-next">NEXT →</button>
+    <button id="guide-skip">Skip intro</button>
+  </div>
+</div>
+
+<!-- TOP BAR -->
+<div id="top-bar">
+  <div id="sim-title">SOLAR SYSTEM</div>
+  <div class="sep"></div>
+  <button class="ctrl-btn" id="btn-play">▶ Play</button>
+  <button class="ctrl-btn" id="btn-pause">⏸ Pause</button>
+  <div class="sep"></div>
+  <button class="ctrl-btn" id="btn-1x" onclick="setSpeed(1)">1×</button>
+  <button class="ctrl-btn" id="btn-2x" onclick="setSpeed(2)">2×</button>
+  <button class="ctrl-btn" id="btn-10x" onclick="setSpeed(10)">10×</button>
+  <button class="ctrl-btn" id="btn-50x" onclick="setSpeed(50)">50×</button>
+  <div class="sep"></div>
+  <button class="ctrl-btn" onclick="showResetConfirm()">↺ Reset</button>
+  <div id="time-display">T+ 0.0s</div>
+</div>
+
+<!-- LEFT PALETTE -->
+<div id="left-panel">
+  <div id="left-panel-title">OBJECTS</div>
+
+  <div class="palette-section">
+    <div class="palette-section-label">Stars</div>
+    <div class="palette-item" data-type="red_dwarf" onclick="selectPalette(this)">
+      <div class="palette-icon" style="background:radial-gradient(circle,#ff6b35,#8b1a00);box-shadow:0 0 8px #ff4400;"></div>
+      <div><div style="font-size:12px;">Red Dwarf</div><div style="font-size:10px;color:var(--text-dim);">Small, cool</div></div>
+    </div>
+    <div class="palette-item" data-type="yellow_star" onclick="selectPalette(this)">
+      <div class="palette-icon" style="background:radial-gradient(circle,#fffacd,#f5a623);box-shadow:0 0 8px #ffcc00;"></div>
+      <div><div style="font-size:12px;">Yellow Star</div><div style="font-size:10px;color:var(--text-dim);">Like our Sun</div></div>
+    </div>
+    <div class="palette-item" data-type="blue_giant" onclick="selectPalette(this)">
+      <div class="palette-icon" style="background:radial-gradient(circle,#aad4ff,#1a6fff);box-shadow:0 0 10px #4488ff;"></div>
+      <div><div style="font-size:12px;">Blue Giant</div><div style="font-size:10px;color:var(--text-dim);">Massive, hot</div></div>
+    </div>
+    <div class="palette-item" data-type="binary_star" onclick="selectPalette(this)">
+      <div class="palette-icon" style="position:relative;background:transparent;">
+        <div style="position:absolute;width:14px;height:14px;background:radial-gradient(circle,#fffacd,#f5a623);border-radius:50%;top:2px;left:2px;box-shadow:0 0 6px #ffcc00;"></div>
+        <div style="position:absolute;width:12px;height:12px;background:radial-gradient(circle,#ff9966,#cc3300);border-radius:50%;top:7px;left:9px;box-shadow:0 0 5px #ff4400;"></div>
+      </div>
+      <div style="padding-left:6px;"><div style="font-size:12px;">Binary Pair</div><div style="font-size:10px;color:var(--text-dim);">Twin stars</div></div>
+    </div>
+  </div>
+
+  <div class="palette-section" style="margin-top:10px;">
+    <div class="palette-section-label">Planets</div>
+    <div class="palette-item" data-type="rocky" onclick="selectPalette(this)">
+      <div class="palette-icon" style="background:radial-gradient(circle,#c8a87a,#6b4423);box-shadow:0 0 4px #aa7744;"></div>
+      <div><div style="font-size:12px;">Rocky</div><div style="font-size:10px;color:var(--text-dim);">Dense, small</div></div>
+    </div>
+    <div class="palette-item" data-type="gas_giant" onclick="selectPalette(this)">
+      <div class="palette-icon" style="background:radial-gradient(circle,#e8c98a,#c2783a);box-shadow:0 0 4px #cc9955;"></div>
+      <div><div style="font-size:12px;">Gas Giant</div><div style="font-size:10px;color:var(--text-dim);">Large, light</div></div>
+    </div>
+    <div class="palette-item" data-type="ice_world" onclick="selectPalette(this)">
+      <div class="palette-icon" style="background:radial-gradient(circle,#d0eeff,#5599cc);box-shadow:0 0 4px #88ccff;"></div>
+      <div><div style="font-size:12px;">Ice World</div><div style="font-size:10px;color:var(--text-dim);">Frozen</div></div>
+    </div>
+    <div class="palette-item" data-type="lava_world" onclick="selectPalette(this)">
+      <div class="palette-icon" style="background:radial-gradient(circle,#ff9933,#991100);box-shadow:0 0 5px #ff4400;"></div>
+      <div><div style="font-size:12px;">Lava World</div><div style="font-size:10px;color:var(--text-dim);">Volcanic</div></div>
+    </div>
+    <div class="palette-item" data-type="ocean_world" onclick="selectPalette(this)">
+      <div class="palette-icon" style="background:radial-gradient(circle,#44aaff,#005599);box-shadow:0 0 4px #0088ff;"></div>
+      <div><div style="font-size:12px;">Ocean World</div><div style="font-size:10px;color:var(--text-dim);">Water-rich</div></div>
+    </div>
+    <div class="palette-item" data-type="earthlike" onclick="selectPalette(this)">
+      <div class="palette-icon" style="background:radial-gradient(circle,#66cc44,#225511);box-shadow:0 0 4px #44aa22;"></div>
+      <div><div style="font-size:12px;">Earth-like</div><div style="font-size:10px;color:var(--text-dim);">Potentially habitable</div></div>
+    </div>
+  </div>
+
+  <div class="palette-section" style="margin-top:10px;">
+    <div class="palette-section-label">Other</div>
+    <div class="palette-item" data-type="moon" onclick="selectPalette(this)">
+      <div class="palette-icon" style="background:radial-gradient(circle,#aaaaaa,#444444);box-shadow:0 0 3px #888888;"></div>
+      <div><div style="font-size:12px;">Moon</div><div style="font-size:10px;color:var(--text-dim);">Small rocky</div></div>
+    </div>
+    <div class="palette-item" data-type="asteroid" onclick="selectPalette(this)">
+      <div class="palette-icon" style="background:radial-gradient(circle,#998866,#332200);width:16px;height:16px;border-radius:30%;"></div>
+      <div><div style="font-size:12px;">Asteroid</div><div style="font-size:10px;color:var(--text-dim);">Tiny debris</div></div>
+    </div>
+    <div class="palette-item" data-type="comet" onclick="selectPalette(this)">
+      <div class="palette-icon" style="background:radial-gradient(circle,#ccffee,#007755);border-radius:50% 50% 50% 30%;box-shadow:0 0 5px #00ffaa;"></div>
+      <div><div style="font-size:12px;">Comet</div><div style="font-size:10px;color:var(--text-dim);">Icy wanderer</div></div>
+    </div>
+  </div>
+  <div style="height:20px;"></div>
+</div>
+
+<!-- RIGHT PANEL -->
+<div id="right-panel">
+  <div id="right-panel-title">OBJECT INFO</div>
+  <div id="rp-content">
+    <div class="info-block" style="color:var(--text-dim);font-size:12px;line-height:1.6;">
+      Click any object in the simulation to inspect its properties.
+      <br><br>
+      <strong style="color:var(--text);">Drag</strong> objects from the left panel and drop them onto the canvas to place them.
+    </div>
+  </div>
+</div>
+
+<!-- DELETE BTN -->
+<button id="delete-btn" onclick="deleteSelected()">🗑 Delete Selected</button>
+
+<!-- ACHIEVEMENTS -->
+<button id="achievements-btn" onclick="toggleAchievements()">🏆 ACHIEVEMENTS</button>
+<div id="achievements-panel">
+  <h3>ACHIEVEMENTS</h3>
+  <div id="ach-list"></div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- HINT POPUP -->
+<div id="hint-popup">
+  <span id="hint-close" onclick="closeHint()">✕</span>
+  <div id="hint-title">SYSTEM NOTE</div>
+  <div id="hint-text"></div>
+</div>
+
+<!-- PLACEMENT POPUP -->
+<div id="placement-popup">
+  <div class="pp-title">ORBITAL VELOCITY</div>
+  <label>Speed multiplier</label>
+  <input type="range" id="pp-speed" min="0.1" max="3" step="0.05" value="1">
+  <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;" id="pp-speed-label">1.0× circular orbit</div>
+  <button id="pp-confirm" onclick="confirmPlacement()">PLACE OBJECT</button>
+</div>
+
+<!-- RESET CONFIRM -->
+<div id="reset-confirm">
+  <p>Reset the entire simulation?<br><span style="color:var(--text-dim);font-size:11px;">All objects will be removed.</span></p>
+  <button id="rc-yes" onclick="resetSim()">RESET</button>
+  <button id="rc-no" onclick="document.getElementById('reset-confirm').style.display='none'">CANCEL</button>
+</div>
+
+<!-- MOBILE TAB BAR -->
+<div id="mobile-tab-bar">
+  <button class="mob-tab active" id="mob-tab-sim" onclick="mobileTab('sim')">
+    <span class="tab-icon">🌌</span>SIM
+  </button>
+  <button class="mob-tab" id="mob-tab-objects" onclick="mobileTab('objects')">
+    <span class="tab-icon">🪐</span>OBJECTS
+  </button>
+  <button class="mob-tab" id="mob-tab-info" onclick="mobileTab('info')">
+    <span class="tab-icon">📊</span>INFO
+  </button>
+  <button class="mob-tab" id="mob-tab-ach" onclick="mobileTab('ach')">
+    <span class="tab-icon">🏆</span>AWARDS
+  </button>
+</div>
+
+<!-- CREDIT -->
+<div id="credit">
+  Created by <strong>Mr Lau Chin Hang</strong> &nbsp;·&nbsp; <a href="https://www.instagram.com/curiominds.inc" target="_blank">@curiominds.inc</a>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// SOLAR SYSTEM SIMULATOR — CurioMinds
+// ═══════════════════════════════════════════════════════════
+
+const canvas = document.getElementById('main-canvas');
+const ctx = canvas.getContext('2d');
+const nebCanvas = document.getElementById('nebula-bg');
+const nebCtx = nebCanvas.getContext('2d');
+
+// ── WORLD SETTINGS ──
+const G = 500; // gravitational constant (scaled)
+const SOFTENING = 8;   // small softening — only prevents exact-overlap singularity
+const SOFTENING2 = SOFTENING * SOFTENING;
+const MAX_MAJOR = 14;
+const SUBSTEPS = 4;    // sub-steps per frame for stability
+
+// ── SIMULATION STATE ──
+let bodies = [];
+let particles = [];
+let bodyIdCounter = 0;
+let simRunning = false;
+let simSpeed = 1;
+let simTime = 0;
+let selectedBody = null;
+let placingType = null;
+let pendingPlacement = null; // {x, y, type}
+
+// ── VELOCITY ARROW (post-placement direction setter) ──
+let velocityArrow = null; // { body, active, sx, sy, ex, ey }
+// When a body is just placed (non-star), user can drag an arrow to set velocity direction+magnitude
+
+// ── CAMERA ──
+let cam = { x: 0, y: 0, zoom: 1 };
+let isDraggingCam = false;
+let lastMouse = { x: 0, y: 0 };
+
+// ── ACHIEVEMENTS ──
+const ACHIEVEMENTS = [
+  { id: 'first_breath', icon: '🌱', name: 'First Breath', desc: 'Create your first habitable planet', unlocked: false },
+  { id: 'twin_suns', icon: '☀️', name: 'Twin Suns', desc: 'Place a binary star system', unlocked: false },
+  { id: 'balanced_cosmos', icon: '⚖️', name: 'Balanced Cosmos', desc: 'Maintain a stable orbit for 60 seconds', unlocked: false },
+  { id: 'genesis', icon: '🧬', name: 'Genesis', desc: 'Support life in a multi-planet system', unlocked: false },
+  { id: 'fragile_paradise', icon: '💔', name: 'Fragile Paradise', desc: 'Lose a habitable world to instability', unlocked: false },
+  { id: 'chain_reaction', icon: '💥', name: 'Chain Reaction', desc: 'Trigger 3 collisions in a row', unlocked: false },
+];
+
+let stableOrbitTimer = {}; // bodyId -> seconds in stable orbit
+let consecutiveCollisions = 0;
+let lastCollisionTime = 0;
+let hadHabitablePlanet = false;
+let twinSunPlaced = false;
+
+// ── BODY DEFINITIONS ──
+const BODY_DEFS = {
+  red_dwarf:   { type:'star', label:'Red Dwarf',   mass:800,  radius:22, color:'#ff5522', glow:'#ff4400', habZone:{min:50,max:110}, temp:3200, luminosity:0.04 },
+  yellow_star: { type:'star', label:'Yellow Star',  mass:1200, radius:30, color:'#ffe066', glow:'#ffcc00', habZone:{min:120,max:220}, temp:5800, luminosity:1.0  },
+  blue_giant:  { type:'star', label:'Blue Giant',   mass:2500, radius:44, color:'#88ccff', glow:'#4488ff', habZone:{min:300,max:500}, temp:25000,luminosity:10000},
+  binary_star: { type:'binary',label:'Binary Star', mass:1000, radius:26, color:'#ffe8aa', glow:'#ffaa44', habZone:{min:150,max:300}, temp:5000, luminosity:1.5  },
+  rocky:       { type:'planet',label:'Rocky',       mass:50,   radius:8,  color:'#c89060', glow:'#aa7744', density:5.5 },
+  gas_giant:   { type:'planet',label:'Gas Giant',   mass:300,  radius:22, color:'#e8b870', glow:'#cc9944', density:1.3 },
+  ice_world:   { type:'planet',label:'Ice World',   mass:60,   radius:10, color:'#aaddff', glow:'#88bbff', density:2.0 },
+  lava_world:  { type:'planet',label:'Lava World',  mass:70,   radius:9,  color:'#ff6622', glow:'#ff3300', density:5.0 },
+  ocean_world: { type:'planet',label:'Ocean World', mass:80,   radius:11, color:'#2299ff', glow:'#0077cc', density:3.0 },
+  earthlike:   { type:'planet',label:'Earth-like',  mass:60,   radius:9,  color:'#44bb44', glow:'#22aa22', density:5.2 },
+  moon:        { type:'minor', label:'Moon',        mass:5,    radius:4,  color:'#aaaaaa', glow:'#777777' },
+  asteroid:    { type:'minor', label:'Asteroid',    mass:1,    radius:3,  color:'#887766', glow:'#665544' },
+  comet:       { type:'minor', label:'Comet',       mass:2,    radius:3,  color:'#88ffcc', glow:'#00ffaa' },
+};
+
+// ── NEBULA BACKGROUND ──
+let nebStars = [];
+let nebulaTime = 0;
+
+function initNebula() {
+  nebStars = [];
+  const w = nebCanvas.width || window.innerWidth;
+  const h = nebCanvas.height || window.innerHeight;
+  for (let i = 0; i < 280; i++) {
+    nebStars.push({
+      x: Math.random() * w,
+      y: Math.random() * h,
+      r: Math.random() * 1.5 + 0.2,
+      a: Math.random(),
+      speed: Math.random() * 0.3 + 0.05,
+      twinkleOffset: Math.random() * Math.PI * 2
+    });
+  }
+}
+
+function drawNebula(dt) {
+  nebulaTime += dt * 0.2;
+  nebCtx.clearRect(0, 0, nebCanvas.width, nebCanvas.height);
+  // Always fill dark so no white flash on mobile
+  nebCtx.fillStyle = '#04060f';
+  nebCtx.fillRect(0, 0, nebCanvas.width, nebCanvas.height);
+
+  // Deep nebula clouds
+  const cx = nebCanvas.width * 0.5, cy = nebCanvas.height * 0.5;
+  const clouds = [
+    { x: cx * 0.4, y: cy * 0.5, r: 350, color: 'rgba(30,20,80,0.18)' },
+    { x: cx * 1.5, y: cy * 1.3, r: 280, color: 'rgba(20,50,80,0.15)' },
+    { x: cx * 0.7, y: cy * 1.7, r: 220, color: 'rgba(50,15,60,0.12)' },
+    { x: cx * 1.3, y: cy * 0.3, r: 200, color: 'rgba(15,40,60,0.12)' },
+  ];
+  clouds.forEach(c => {
+    const g = nebCtx.createRadialGradient(c.x, c.y, 0, c.x, c.y, c.r);
+    g.addColorStop(0, c.color);
+    g.addColorStop(1, 'transparent');
+    nebCtx.fillStyle = g;
+    nebCtx.beginPath();
+    nebCtx.arc(c.x, c.y, c.r, 0, Math.PI * 2);
+    nebCtx.fill();
+  });
+
+  // Stars
+  nebStars.forEach(s => {
+    const twinkle = 0.5 + 0.5 * Math.sin(nebulaTime * s.speed + s.twinkleOffset);
+    nebCtx.beginPath();
+    nebCtx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    nebCtx.fillStyle = `rgba(200,220,255,${s.a * twinkle})`;
+    nebCtx.fill();
+  });
+}
+
+// ── RESIZE ──
+function resize() {
+  canvas.width = canvas.clientWidth || window.innerWidth;
+  canvas.height = canvas.clientHeight || window.innerHeight;
+  nebCanvas.width = canvas.width;
+  nebCanvas.height = canvas.height;
+  initNebula();
+}
+function resize() {
+  const cr = canvas.getBoundingClientRect();
+  const w = Math.round(cr.width)  || window.innerWidth;
+  const h = Math.round(cr.height) || window.innerHeight;
+  canvas.width  = w;
+  canvas.height = h;
+  nebCanvas.width  = w;
+  nebCanvas.height = h;
+  initNebula();
+}
+window.addEventListener('resize', resize);
+
+// ── WORLD <-> SCREEN COORDS ──
+function worldToScreen(wx, wy) {
+  const cx = canvas.width / 2, cy = canvas.height / 2;
+  return { x: cx + (wx - cam.x) * cam.zoom, y: cy + (wy - cam.y) * cam.zoom };
+}
+function screenToWorld(sx, sy) {
+  const cx = canvas.width / 2, cy = canvas.height / 2;
+  return { x: (sx - cx) / cam.zoom + cam.x, y: (sy - cy) / cam.zoom + cam.y };
+}
+
+// ── PALETTE DRAG & DROP ──
+// We support two interaction modes:
+//   1. Drag from palette → drop on canvas (true drag & drop)
+//   2. Click palette item → click canvas to place (fallback / mobile)
+
+let dragGhost = null; // floating ghost element while dragging from palette
+let draggingPaletteType = null;
+
+document.querySelectorAll('.palette-item').forEach(el => {
+  // Mouse drag start
+  el.addEventListener('mousedown', e => {
+    if (e.button !== 0) return;
+    draggingPaletteType = el.dataset.type;
+    placingType = el.dataset.type;
+    document.querySelectorAll('.palette-item').forEach(i => i.classList.remove('selected'));
+    el.classList.add('selected');
+    createGhost(el, e.clientX, e.clientY);
+    e.preventDefault();
+  });
+
+  // Touch drag start
+  el.addEventListener('touchstart', e => {
+    draggingPaletteType = el.dataset.type;
+    placingType = el.dataset.type;
+    document.querySelectorAll('.palette-item').forEach(i => i.classList.remove('selected'));
+    el.classList.add('selected');
+    createGhost(el, e.touches[0].clientX, e.touches[0].clientY);
+  }, { passive: true });
+
+  // Click to select (for click-then-place on canvas)
+  el.addEventListener('click', () => selectPalette(el));
+});
+
+function createGhost(sourceEl, x, y) {
+  if (dragGhost) dragGhost.remove();
+  const icon = sourceEl.querySelector('.palette-icon');
+  dragGhost = document.createElement('div');
+  dragGhost.style.cssText = `
+    position:fixed; pointer-events:none; z-index:9999;
+    width:32px; height:32px; border-radius:50%;
+    background:${icon ? icon.style.background : '#888'};
+    box-shadow:${icon ? icon.style.boxShadow : '0 0 8px #fff'};
+    opacity:0.85; transform:translate(-50%,-50%);
+    transition: opacity 0.1s;
+  `;
+  dragGhost.style.left = x + 'px';
+  dragGhost.style.top = y + 'px';
+  document.body.appendChild(dragGhost);
+}
+
+function moveGhost(x, y) {
+  if (!dragGhost) return;
+  dragGhost.style.left = x + 'px';
+  dragGhost.style.top = y + 'px';
+  // Dim ghost if over panel areas
+  const overPanel = x < 200 || x > window.innerWidth - 260;
+  dragGhost.style.opacity = overPanel ? '0.3' : '0.85';
+}
+
+function dropGhost(x, y) {
+  if (!dragGhost) return;
+  dragGhost.remove();
+  dragGhost = null;
+  if (!draggingPaletteType) return;
+  // Only place if dropped on canvas area (not on panels)
+  if (x < 200 || x > window.innerWidth - 260 || y < 52) {
+    draggingPaletteType = null;
+    return;
+  }
+  const wp = screenToWorld(x, y);
+  const isStar = ['red_dwarf', 'yellow_star', 'blue_giant', 'binary_star'].includes(draggingPaletteType);
+  if (isStar) {
+    placeBody(draggingPaletteType, wp.x, wp.y, 1);
+  } else {
+    showPlacementPopup(wp.x, wp.y, x, y);
+    placingType = draggingPaletteType;
+  }
+  draggingPaletteType = null;
+}
+
+// Global mouse move/up for drag
+window.addEventListener('mousemove', e => {
+  if (draggingPaletteType) { moveGhost(e.clientX, e.clientY); return; }
+  if (velocityArrow && velocityArrow.dragging) {
+    velocityArrow.ex = e.clientX; velocityArrow.ey = e.clientY;
+    return;
+  }
+  if (isDraggingCam) {
+    cam.x -= (e.clientX - lastMouse.x) / cam.zoom;
+    cam.y -= (e.clientY - lastMouse.y) / cam.zoom;
+    lastMouse = { x: e.clientX, y: e.clientY };
+  }
+  if (isDraggingBody) {
+    const wp = screenToWorld(e.clientX, e.clientY);
+    isDraggingBody.x = wp.x;
+    isDraggingBody.y = wp.y;
+    isDraggingBody.vx = 0;
+    isDraggingBody.vy = 0;
+    isDraggingBody.trail = [];
+  }
+});
+window.addEventListener('mouseup', e => {
+  if (draggingPaletteType) { dropGhost(e.clientX, e.clientY); return; }
+  if (velocityArrow && velocityArrow.dragging) {
+    commitVelocityArrow(e.clientX, e.clientY);
+    return;
+  }
+  if (e.button === mouseBtn) isDraggingCam = false;
+  mouseBtn = -1;
+  isDraggingBody = null;
+});
+
+// Global touch move/end for drag
+window.addEventListener('touchmove', e => {
+  if (draggingPaletteType) {
+    moveGhost(e.touches[0].clientX, e.touches[0].clientY);
+    e.preventDefault();
+    return;
+  }
+  if (velocityArrow && velocityArrow.dragging && e.touches.length === 1) {
+    velocityArrow.ex = e.touches[0].clientX;
+    velocityArrow.ey = e.touches[0].clientY;
+    e.preventDefault();
+    return;
+  }
+  if (e.touches.length === 1 && touchStart && !isDraggingBody) {
+    cam.x -= (e.touches[0].clientX - touchStart.x) / cam.zoom;
+    cam.y -= (e.touches[0].clientY - touchStart.y) / cam.zoom;
+    touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  }
+  if (e.touches.length === 2) {
+    const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+    cam.zoom = Math.min(4, Math.max(0.1, cam.zoom * (d / touchDist)));
+    touchDist = d;
+  }
+  if (isDraggingBody) {
+    const wp = screenToWorld(e.touches[0].clientX, e.touches[0].clientY);
+    isDraggingBody.x = wp.x;
+    isDraggingBody.y = wp.y;
+    isDraggingBody.vx = 0; isDraggingBody.vy = 0;
+    isDraggingBody.trail = [];
+  }
+}, { passive: false });
+window.addEventListener('touchend', e => {
+  if (draggingPaletteType && e.changedTouches.length > 0) {
+    dropGhost(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+    return;
+  }
+  if (velocityArrow && velocityArrow.dragging && e.changedTouches.length > 0) {
+    commitVelocityArrow(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+    return;
+  }
+  isDraggingBody = null;
+  touchStart = null;
+});
+
+// ── CANVAS MOUSE / TOUCH (body interaction + camera pan) ──
+canvas.addEventListener('mousedown', onMouseDown);
+canvas.addEventListener('wheel', onWheel, { passive: false });
+canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+// Dragging an existing body on canvas
+let isDraggingBody = null;
+
+let mouseBtn = -1;
+function onMouseDown(e) {
+  if (draggingPaletteType) return;
+  // If in velocity arrow mode, start the arrow drag
+  if (velocityArrow && velocityArrow.active) {
+    const sp = worldToScreen(velocityArrow.body.x, velocityArrow.body.y);
+    velocityArrow.sx = sp.x; velocityArrow.sy = sp.y;
+    velocityArrow.ex = e.clientX; velocityArrow.ey = e.clientY;
+    velocityArrow.dragging = true;
+    return;
+  }
+  mouseBtn = e.button;
+  if (e.button === 1 || e.button === 2) {
+    isDraggingCam = true;
+    lastMouse = { x: e.clientX, y: e.clientY };
+    e.preventDefault();
+    return;
+  }
+  if (e.button === 0) {
+    const grabbed = bodyAt(e.clientX, e.clientY);
+    if (placingType && !draggingPaletteType && !grabbed) {
+      const wp = screenToWorld(e.clientX, e.clientY);
+      showPlacementPopup(wp.x, wp.y, e.clientX, e.clientY);
+      return;
+    }
+    if (grabbed) {
+      isDraggingBody = grabbed;
+      selectedBody = grabbed;
+      document.getElementById('delete-btn').style.display = 'block';
+      updateRightPanel(grabbed);
+    } else {
+      isDraggingCam = true;
+      lastMouse = { x: e.clientX, y: e.clientY };
+      selectBodyAt(e.clientX, e.clientY);
+    }
+  }
+}
+
+function onWheel(e) {
+  e.preventDefault();
+  const factor = e.deltaY > 0 ? 0.9 : 1.1;
+  cam.zoom = Math.min(4, Math.max(0.1, cam.zoom * factor));
+}
+
+// Touch on canvas
+let touchStart = null, touchDist = 0;
+canvas.addEventListener('touchstart', e => {
+  if (draggingPaletteType) return;
+  if (e.touches.length === 1) {
+    // Velocity arrow drag start
+    if (velocityArrow && velocityArrow.active) {
+      const sp = worldToScreen(velocityArrow.body.x, velocityArrow.body.y);
+      velocityArrow.sx = sp.x; velocityArrow.sy = sp.y;
+      velocityArrow.ex = e.touches[0].clientX; velocityArrow.ey = e.touches[0].clientY;
+      velocityArrow.dragging = true;
+      return;
+    }
+    touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    if (placingType && !draggingPaletteType) {
+      const wp = screenToWorld(e.touches[0].clientX, e.touches[0].clientY);
+      showPlacementPopup(wp.x, wp.y, e.touches[0].clientX, e.touches[0].clientY);
+      return;
+    }
+    const grabbed = bodyAt(e.touches[0].clientX, e.touches[0].clientY);
+    if (grabbed) {
+      isDraggingBody = grabbed;
+      selectedBody = grabbed;
+      document.getElementById('delete-btn').style.display = 'block';
+      updateRightPanel(grabbed);
+    } else {
+      selectBodyAt(e.touches[0].clientX, e.touches[0].clientY);
+    }
+  }
+  if (e.touches.length === 2) {
+    touchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+  }
+}, { passive: true });
+
+function bodyAt(sx, sy) {
+  const wp = screenToWorld(sx, sy);
+  let closest = null, minDist = Infinity;
+  bodies.forEach(b => {
+    const d = Math.hypot(b.x - wp.x, b.y - wp.y);
+    const hitR = (b.radius + 10) / cam.zoom;
+    if (d < hitR && d < minDist) { minDist = d; closest = b; }
+  });
+  return closest;
+}
+
+// ── PLACEMENT ──
+function showPlacementPopup(wx, wy, sx, sy) {
+  pendingPlacement = { wx, wy };
+  const popup = document.getElementById('placement-popup');
+  const isStar = ['red_dwarf', 'yellow_star', 'blue_giant', 'binary_star'].includes(placingType);
+  popup.style.display = 'block';
+  // Position popup near click
+  const px = Math.min(sx, window.innerWidth - 240);
+  const py = Math.min(sy, window.innerHeight - 120);
+  popup.style.left = px + 'px';
+  popup.style.top = py + 'px';
+  document.getElementById('pp-speed').value = 1;
+  document.getElementById('pp-speed-label').textContent = '1.0× circular orbit';
+}
+
+function showArrowHint() {
+  showHint('SET VELOCITY', 'Drag from the planet to set its direction and speed. Release to confirm. Press Escape or click without dragging to keep the auto-calculated orbit.');
+}
+
+function commitVelocityArrow(ex, ey) {
+  if (!velocityArrow || !velocityArrow.active) return;
+  const { body, sx, sy } = velocityArrow;
+  const dx = ex - sx, dy = ey - sy;
+  const len = Math.hypot(dx, dy);
+  if (len > 8) {
+    // Map arrow length to velocity: 100px = 1× circular velocity reference
+    const sp = worldToScreen(body.x, body.y);
+    const stars = bodies.filter(b => b.id !== body.id && (b.bodyType === 'star' || b.bodyType === 'binary'));
+    let baseV = 50; // fallback when no reference star (e.g. placing the first star)
+    if (stars.length > 0) {
+      const nearest = stars.reduce((a, b2) => Math.hypot(a.x-body.x,a.y-body.y) < Math.hypot(b2.x-body.x,b2.y-body.y) ? a : b2);
+      const dist = Math.hypot(body.x - nearest.x, body.y - nearest.y);
+      if (dist > 0) baseV = Math.sqrt(G * nearest.mass / dist);
+    }
+    // Arrow length 100px screen = 1× circular orbit velocity
+    const magnitude = (len / 100) * baseV;
+    body.vx = (dx / len) * magnitude;
+    body.vy = (dy / len) * magnitude;
+    body.trail = [];
+  }
+  velocityArrow = null;
+  closeHint();
+}
+
+function cancelVelocityArrow() {
+  velocityArrow = null;
+  closeHint();
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') cancelVelocityArrow();
+  if ((e.key === 'Delete' || e.key === 'Backspace') && selectedBody) {
+    e.preventDefault();
+    deleteSelected();
+  }
+});
+
+document.getElementById('pp-speed').addEventListener('input', function() {
+  document.getElementById('pp-speed-label').textContent = parseFloat(this.value).toFixed(2) + '× circular orbit';
+});
+
+function confirmPlacement() {
+  if (!pendingPlacement) return;
+  document.getElementById('placement-popup').style.display = 'none';
+  const speedMult = parseFloat(document.getElementById('pp-speed').value);
+  const body = placeBody(placingType, pendingPlacement.wx, pendingPlacement.wy, speedMult);
+  pendingPlacement = null;
+  // Enter velocity arrow mode for all bodies
+  if (body) {
+    const sp = worldToScreen(body.x, body.y);
+    velocityArrow = { body, active: true, sx: sp.x, sy: sp.y, ex: sp.x, ey: sp.y };
+    canvas.style.cursor = 'crosshair';
+    showArrowHint();
+  }
+}
+
+function placeBody(type, wx, wy, speedMult = 1) {
+  if (!BODY_DEFS[type]) return;
+  const def = BODY_DEFS[type];
+  const majorCount = bodies.filter(b => b.bodyType !== 'minor').length;
+  if (majorCount >= MAX_MAJOR && def.type !== 'minor') {
+    showHint('OBJECT LIMIT', 'Maximum major bodies reached. Remove some to add more.');
+    return;
+  }
+
+  let vx = 0, vy = 0;
+  if (def.type === 'planet' || def.type === 'minor') {
+    // Find nearest star for orbital velocity
+    const stars = bodies.filter(b => b.bodyType === 'star' || b.bodyType === 'binary');
+    if (stars.length > 0) {
+      let nearest = stars.reduce((a, b) => {
+        const da = Math.hypot(a.x - wx, a.y - wy);
+        const db = Math.hypot(b.x - wx, b.y - wy);
+        return da < db ? a : b;
+      });
+      const dx = wx - nearest.x, dy = wy - nearest.y;
+      const r = Math.hypot(dx, dy);
+      const vCirc = Math.sqrt(G * nearest.mass / r);
+      const angle = Math.atan2(dy, dx);
+      vx = -Math.sin(angle) * vCirc * speedMult;
+      vy = Math.cos(angle) * vCirc * speedMult;
+    }
+  }
+
+  const body = {
+    id: bodyIdCounter++,
+    subtype: type,
+    bodyType: def.type === 'star' ? 'star' : def.type === 'binary' ? 'binary' : (def.type === 'minor' ? 'minor' : 'planet'),
+    label: def.label,
+    x: wx, y: wy,
+    vx, vy,
+    mass: def.mass,
+    radius: def.radius,
+    color: def.color,
+    glow: def.glow,
+    habZone: def.habZone || null,
+    temp: def.temp || null,
+    luminosity: def.luminosity || null,
+    habitability: 0,
+    orbitHistory: [],
+    stableTime: 0,
+    collisionCount: 0,
+    hasHadLife: false,
+    trail: [],
+    rotation: Math.random() * Math.PI * 2,
+    rotSpeed: (Math.random() - 0.5) * 0.02,
+  };
+
+  if (type === 'binary_star') {
+    // Add companion star offset
+    const companion = {
+      ...body,
+      id: bodyIdCounter++,
+      x: wx + 60, y: wy + 30,
+      vx: vx * 0.5 + 2, vy: vy * 0.5 - 2,
+      mass: def.mass * 0.7,
+      radius: def.radius * 0.8,
+      color: '#ff9966',
+      glow: '#ff6633',
+    };
+    bodies.push(companion);
+    if (!twinSunPlaced) {
+      twinSunPlaced = true;
+      unlockAchievement('twin_suns');
+    }
+  }
+
+  bodies.push(body);
+  updateRightPanel(body);
+  checkHints(body);
+  return body;
+}
+
+// ── BODY SELECTION ──
+function selectBodyAt(sx, sy) {
+  const closest = bodyAt(sx, sy);
+  selectedBody = closest;
+  document.getElementById('delete-btn').style.display = closest ? 'block' : 'none';
+  if (closest) updateRightPanel(closest);
+  else clearRightPanel();
+}
+
+function deleteSelected() {
+  if (!selectedBody) return;
+  bodies = bodies.filter(b => b.id !== selectedBody.id);
+  selectedBody = null;
+  document.getElementById('delete-btn').style.display = 'none';
+  clearRightPanel();
+}
+
+// ── PHYSICS ──
+function computeAccels() {
+  for (let i = 0; i < bodies.length; i++) {
+    bodies[i]._ax = 0; bodies[i]._ay = 0;
+    const isStar = bodies[i].bodyType === 'star' || bodies[i].bodyType === 'binary';
+    for (let j = 0; j < bodies.length; j++) {
+      if (i === j) continue;
+      // Stars are only pulled by other stars, not by planets/minor bodies
+      const jIsStar = bodies[j].bodyType === 'star' || bodies[j].bodyType === 'binary';
+      if (isStar && !jIsStar) continue;
+      const dx = bodies[j].x - bodies[i].x;
+      const dy = bodies[j].y - bodies[i].y;
+      // Use larger softening for star-star pairs to prevent force spikes at close range
+      const jIsStar2 = bodies[j].bodyType === 'star' || bodies[j].bodyType === 'binary';
+      const soft2 = (isStar && jIsStar2) ? Math.pow(bodies[i].radius + bodies[j].radius, 2) : SOFTENING2;
+      const dist2 = dx * dx + dy * dy + soft2;
+      const invDist = 1.0 / Math.sqrt(dist2);
+      const force = G * bodies[j].mass * invDist * invDist * invDist;
+      bodies[i]._ax += force * dx;
+      bodies[i]._ay += force * dy;
+    }
+  }
+}
+
+function physicsStep(dt) {
+  const scaledDt = dt * simSpeed;
+  const subDt = scaledDt / SUBSTEPS;
+  simTime += scaledDt;
+
+  for (let s = 0; s < SUBSTEPS; s++) {
+    // Velocity Verlet step 1: save old accels then update positions
+    computeAccels();
+    bodies.forEach(b => {
+      b._ax0 = b._ax; b._ay0 = b._ay;
+      b.x += b.vx * subDt + 0.5 * b._ax * subDt * subDt;
+      b.y += b.vy * subDt + 0.5 * b._ay * subDt * subDt;
+    });
+    // Recompute accels at new positions
+    computeAccels();
+    // Velocity Verlet step 2: update velocities with average acceleration
+    bodies.forEach(b => {
+      b.vx += 0.5 * (b._ax0 + b._ax) * subDt;
+      b.vy += 0.5 * (b._ay0 + b._ay) * subDt;
+    });
+  }
+
+  // Trail + rotation + escape check
+  const toRemove = new Set();
+  bodies.forEach(b => {
+    // Remove any body that has gone non-finite (numerical explosion)
+    if (!isFinite(b.x) || !isFinite(b.y) || !isFinite(b.vx) || !isFinite(b.vy)) {
+      toRemove.add(b.id); return;
+    }
+    b.rotation += b.rotSpeed;
+    b.trail.push({ x: b.x, y: b.y });
+    if (b.trail.length > 160) b.trail.shift();
+    // Escape: more than 3500 units from origin (moons exempt — they orbit planets)
+    if (Math.hypot(b.x, b.y) > 3500 && b.bodyType !== 'star' && b.subtype !== 'moon') toRemove.add(b.id);
+  });
+  if (toRemove.size) bodies = bodies.filter(b => !toRemove.has(b.id));
+
+  // Collision detection
+  checkCollisions();
+
+  // Habitability
+  bodies.filter(b => b.bodyType === 'planet').forEach(b => {
+    updateHabitability(b, scaledDt);
+  });
+
+  // Particles
+  particles.forEach(p => {
+    p.x += p.vx * scaledDt;
+    p.y += p.vy * scaledDt;
+    p.life -= scaledDt;
+    p.vx *= 0.97; p.vy *= 0.97;
+  });
+  particles = particles.filter(p => p.life > 0);
+
+  // Achievements: stable orbit
+  bodies.filter(b => b.bodyType === 'planet').forEach(b => {
+    if (b.habitability > 50) {
+      stableOrbitTimer[b.id] = (stableOrbitTimer[b.id] || 0) + scaledDt;
+      if (stableOrbitTimer[b.id] > 60 && !ACHIEVEMENTS.find(a => a.id === 'balanced_cosmos').unlocked) {
+        unlockAchievement('balanced_cosmos');
+      }
+    } else {
+      stableOrbitTimer[b.id] = 0;
+    }
+  });
+
+  const habCount = bodies.filter(b => b.bodyType === 'planet' && b.habitability > 60).length;
+  if (habCount >= 2 && !ACHIEVEMENTS.find(a => a.id === 'genesis').unlocked) unlockAchievement('genesis');
+
+  document.getElementById('time-display').textContent = `T+ ${simTime.toFixed(1)}s`;
+  if (selectedBody) updateRightPanel(selectedBody);
+}
+
+function checkCollisions() {
+  const toRemove = new Set();
+  for (let i = 0; i < bodies.length; i++) {
+    for (let j = i + 1; j < bodies.length; j++) {
+      const a = bodies[i], b = bodies[j];
+      if (toRemove.has(a.id) || toRemove.has(b.id)) continue;
+      const dist = Math.hypot(a.x - b.x, a.y - b.y);
+      const minDist = (a.radius + b.radius) * 0.75;
+      if (dist < minDist) {
+        // Collision!
+        const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+        spawnExplosion(mx, my, Math.min(a.mass + b.mass, 300));
+
+        const now = simTime;
+        if (now - lastCollisionTime < 3) {
+          consecutiveCollisions++;
+          if (consecutiveCollisions >= 3 && !ACHIEVEMENTS.find(ac => ac.id === 'chain_reaction').unlocked) {
+            unlockAchievement('chain_reaction');
+          }
+        } else {
+          consecutiveCollisions = 1;
+        }
+        lastCollisionTime = now;
+
+        // Was either habitable?
+        if ((a.bodyType === 'planet' && a.hasHadLife) || (b.bodyType === 'planet' && b.hasHadLife)) {
+          unlockAchievement('fragile_paradise');
+        }
+
+        // Larger absorbs smaller
+        const [bigger, smaller] = a.mass >= b.mass ? [a, b] : [b, a];
+        bigger.mass += smaller.mass * 0.7;
+        bigger.radius = Math.min(bigger.radius + smaller.radius * 0.2, 60);
+        const totalM = bigger.mass + smaller.mass;
+        bigger.vx = (bigger.vx * bigger.mass + smaller.vx * smaller.mass) / totalM;
+        bigger.vy = (bigger.vy * bigger.mass + smaller.vy * smaller.mass) / totalM;
+        toRemove.add(smaller.id);
+
+        // Screen shake
+        screenShake(Math.min(smaller.mass * 0.1, 8));
+      }
+    }
+  }
+  bodies = bodies.filter(b => !toRemove.has(b.id));
+  if (selectedBody && toRemove.has(selectedBody.id)) {
+    selectedBody = null;
+    clearRightPanel();
+    document.getElementById('delete-btn').style.display = 'none';
+  }
+}
+
+let shakeX = 0, shakeY = 0, shakeMag = 0;
+function screenShake(mag) { shakeMag = Math.max(shakeMag, mag); }
+
+function spawnExplosion(x, y, strength) {
+  const count = Math.min(Math.floor(strength * 0.3 + 8), 40);
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = (Math.random() * strength * 0.3 + 20);
+    particles.push({
+      x, y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      life: 0.8 + Math.random() * 0.8,
+      maxLife: 1.6,
+      r: 1 + Math.random() * 3,
+      color: `hsl(${30 + Math.random() * 40}, 100%, ${50 + Math.random() * 30}%)`,
+    });
+  }
+}
+
+// ── HABITABILITY ──
+function updateHabitability(planet, dt) {
+  const stars = bodies.filter(b => b.bodyType === 'star' || b.bodyType === 'binary');
+  if (stars.length === 0) { planet.habitability = Math.max(0, planet.habitability - dt * 5); return; }
+
+  let score = 0;
+  let primaryStar = null;
+  let minDist = Infinity;
+  stars.forEach(s => {
+    const d = Math.hypot(planet.x - s.x, planet.y - s.y);
+    if (d < minDist) { minDist = d; primaryStar = s; }
+  });
+
+  if (!primaryStar) return;
+  const dist = minDist;
+  const hz = primaryStar.habZone;
+
+  if (hz && dist >= hz.min && dist <= hz.max) {
+    const center = (hz.min + hz.max) / 2;
+    const width = (hz.max - hz.min) / 2;
+    score = 100 * (1 - Math.abs(dist - center) / width);
+  } else if (hz) {
+    if (dist < hz.min) score = Math.max(0, 40 - (hz.min - dist) * 0.5);
+    else score = Math.max(0, 40 - (dist - hz.max) * 0.3);
+  }
+
+  // Penalize proximity to multiple stars (gravitational instability)
+  if (stars.length >= 2) score *= 0.7;
+
+  // Penalize if gas giant (not habitable surface)
+  if (planet.subtype === 'gas_giant') score = 0;
+  if (planet.subtype === 'lava_world') score *= 0.1;
+  if (planet.subtype === 'ice_world') score *= 0.3;
+  if (planet.subtype === 'ocean_world') score *= 0.8;
+  if (planet.subtype === 'earthlike') score *= 1.2;
+  score = Math.min(100, score);
+
+  // Smooth transition
+  planet.habitability += (score - planet.habitability) * Math.min(dt * 0.5, 0.1);
+
+  if (planet.habitability > 65) {
+    planet.hasHadLife = true;
+    hadHabitablePlanet = true;
+    if (!ACHIEVEMENTS.find(a => a.id === 'first_breath').unlocked) {
+      unlockAchievement('first_breath');
+    }
+  }
+}
+
+// ── HINTS ──
+const HINT_COOLDOWN = {}; // hintId -> last shown time
+function checkHints(newBody) {
+  const stars = bodies.filter(b => b.bodyType === 'star' || b.bodyType === 'binary');
+  if (newBody.bodyType === 'planet' && stars.length === 0) {
+    showHint('NO STAR DETECTED', 'Without a star, this planet has no heat source. Place a star first — it defines the habitable zone where liquid water (and life!) can exist.');
+  }
+  if (newBody.bodyType === 'star' && bodies.filter(b=>b.bodyType==='star'||b.bodyType==='binary').length >= 2) {
+    showHint('BINARY SYSTEM', 'Two or more stars create gravitational chaos. The habitable zone becomes unstable, making it very hard for planets to maintain circular orbits — and life.');
+  }
+}
+
+function showHint(title, text, id) {
+  if (id && HINT_COOLDOWN[id] && (simTime - HINT_COOLDOWN[id]) < 30) return;
+  if (id) HINT_COOLDOWN[id] = simTime;
+  document.getElementById('hint-title').textContent = title;
+  document.getElementById('hint-text').textContent = text;
+  const el = document.getElementById('hint-popup');
+  el.classList.add('show');
+  el.style.display = 'block';
+}
+function closeHint() {
+  const el = document.getElementById('hint-popup');
+  el.classList.remove('show');
+  setTimeout(() => el.style.display = 'none', 300);
+}
+
+// ── RIGHT PANEL ──
+function updateRightPanel(body) {
+  if (!body) return;
+  const rp = document.getElementById('rp-content');
+  const habColor = body.habitability > 65 ? 'success' : body.habitability > 35 ? 'warn' : 'danger';
+  const habLabel = body.habitability > 65 ? 'HABITABLE' : body.habitability > 35 ? 'MARGINAL' : 'HOSTILE';
+
+  let tempEst = '—';
+  if (body.bodyType === 'planet') {
+    const stars = bodies.filter(b => b.bodyType === 'star' || b.bodyType === 'binary');
+    if (stars.length > 0) {
+      const nearest = stars.reduce((a, b2) => Math.hypot(a.x-body.x,a.y-body.y) < Math.hypot(b2.x-body.x,b2.y-body.y) ? a : b2);
+      const dist = Math.hypot(body.x - nearest.x, body.y - nearest.y);
+      const lum = nearest.luminosity || 1;
+      const tempK = Math.round(278 * Math.pow(lum, 0.25) * Math.pow(1 / (dist / 150), 0.5));
+      tempEst = `~${tempK} K`;
+    }
+  } else if (body.bodyType === 'star' || body.bodyType === 'binary') {
+    tempEst = `${body.temp?.toLocaleString() || '—'} K`;
+  }
+
+  const speed = Math.hypot(body.vx, body.vy).toFixed(1);
+
+  let habHTML = '';
+  if (body.bodyType === 'planet') {
+    habHTML = `
+      <div class="info-block">
+        <div class="info-label">Habitability</div>
+        <div class="info-value ${habColor}">${habLabel} — ${Math.round(body.habitability)}%</div>
+        <div class="hab-bar-wrap"><div class="hab-bar" style="width:${body.habitability}%;background:${body.habitability>65?'#22c55e':body.habitability>35?'#f97316':'#ef4444'}"></div></div>
+      </div>`;
+  }
+
+  let habZoneHTML = '';
+  if (body.habZone) {
+    habZoneHTML = `
+      <div class="info-block">
+        <div class="info-label">Habitable Zone</div>
+        <div class="stat-row"><span>Inner edge</span><span>${body.habZone.min} AU</span></div>
+        <div class="stat-row"><span>Outer edge</span><span>${body.habZone.max} AU</span></div>
+      </div>`;
+  }
+
+  rp.innerHTML = `
+    <div class="info-block">
+      <div class="info-label">Object</div>
+      <div class="info-value accent">${body.label}</div>
+      <div style="font-size:11px;color:var(--text-dim);margin-top:2px;">${body.bodyType.toUpperCase()}</div>
+    </div>
+    <div class="info-block">
+      <div class="info-label">Properties</div>
+      <div class="stat-row"><span>Mass</span><span>${body.mass.toFixed(0)}</span></div>
+      <div class="stat-row"><span>Radius</span><span>${body.radius.toFixed(0)} px</span></div>
+      <div class="stat-row"><span>Speed</span><span>${speed} u/s</span></div>
+      <div class="stat-row"><span>Temperature</span><span>${tempEst}</span></div>
+    </div>
+    ${habHTML}
+    ${habZoneHTML}
+    <div class="info-block">
+      <div class="info-label">Position</div>
+      <div class="stat-row"><span>X</span><span>${body.x.toFixed(0)}</span></div>
+      <div class="stat-row"><span>Y</span><span>${body.y.toFixed(0)}</span></div>
+    </div>
+  `;
+}
+
+function clearRightPanel() {
+  document.getElementById('rp-content').innerHTML = `
+    <div class="info-block" style="color:var(--text-dim);font-size:12px;line-height:1.6;">
+      Click any object to inspect it.
+    </div>`;
+}
+
+// ── ACHIEVEMENTS ──
+function unlockAchievement(id) {
+  const ach = ACHIEVEMENTS.find(a => a.id === id);
+  if (!ach || ach.unlocked) return;
+  ach.unlocked = true;
+  renderAchievements();
+  showToast(`${ach.icon} ${ach.name}: ${ach.desc}`);
+}
+
+function renderAchievements() {
+  const list = document.getElementById('ach-list');
+  list.innerHTML = ACHIEVEMENTS.map(a => `
+    <div class="ach-item ${a.unlocked ? 'unlocked' : ''}">
+      <span class="ach-icon">${a.icon}</span>
+      <div>
+        <div class="ach-name">${a.name}</div>
+        <div class="ach-desc">${a.desc}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleAchievements() {
+  document.getElementById('achievements-panel').classList.toggle('open');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ── TIME / CONTROLS ──
+document.getElementById('btn-play').addEventListener('click', () => {
+  simRunning = true;
+  document.getElementById('btn-play').classList.add('active');
+  document.getElementById('btn-pause').classList.remove('active');
+});
+document.getElementById('btn-pause').addEventListener('click', () => {
+  simRunning = false;
+  document.getElementById('btn-pause').classList.add('active');
+  document.getElementById('btn-play').classList.remove('active');
+});
+
+function setSpeed(s) {
+  simSpeed = s;
+  ['1x','2x','10x','50x'].forEach(k => document.getElementById(`btn-${k}`).classList.remove('active'));
+  document.getElementById(`btn-${s}x`).classList.add('active');
+}
+
+function showResetConfirm() { document.getElementById('reset-confirm').style.display = 'block'; }
+function resetSim() {
+  bodies = []; particles = [];
+  simTime = 0; selectedBody = null;
+  stableOrbitTimer = {};
+  consecutiveCollisions = 0; lastCollisionTime = 0;
+  hadHabitablePlanet = false; twinSunPlaced = false;
+  simRunning = false;
+  document.getElementById('btn-play').classList.remove('active');
+  document.getElementById('btn-pause').classList.remove('active');
+  document.getElementById('reset-confirm').style.display = 'none';
+  document.getElementById('delete-btn').style.display = 'none';
+  clearRightPanel();
+  spawnStarterSystem();
+}
+
+// ── RENDERING ──
+function drawHabZone(star) {
+  if (!star.habZone) return;
+  const sp = worldToScreen(star.x, star.y);
+  const zoneInner = star.habZone.min * cam.zoom;
+  const zoneOuter = star.habZone.max * cam.zoom;
+
+  ctx.save();
+  const g = ctx.createRadialGradient(sp.x, sp.y, zoneInner, sp.x, sp.y, zoneOuter);
+  g.addColorStop(0, 'rgba(100,200,80,0)');
+  g.addColorStop(0.3, 'rgba(100,200,80,0.06)');
+  g.addColorStop(0.7, 'rgba(100,200,80,0.06)');
+  g.addColorStop(1, 'rgba(100,200,80,0)');
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.arc(sp.x, sp.y, zoneOuter, 0, Math.PI * 2);
+  ctx.arc(sp.x, sp.y, zoneInner, 0, Math.PI * 2, true);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawTrail(body) {
+  if (body.trail.length < 2) return;
+  ctx.save();
+  ctx.beginPath();
+  const sp0 = worldToScreen(body.trail[0].x, body.trail[0].y);
+  ctx.moveTo(sp0.x, sp0.y);
+  for (let i = 1; i < body.trail.length; i++) {
+    const sp = worldToScreen(body.trail[i].x, body.trail[i].y);
+    const alpha = (i / body.trail.length) * 0.25;
+    ctx.strokeStyle = body.color + Math.floor(alpha * 255).toString(16).padStart(2,'0');
+    ctx.lineWidth = 1;
+    ctx.lineTo(sp.x, sp.y);
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawBody(body) {
+  if (!isFinite(body.x) || !isFinite(body.y)) return;
+  const sp = worldToScreen(body.x, body.y);
+  const r = body.radius * cam.zoom;
+  if (r < 0.5) return;
+
+  ctx.save();
+
+  // ── GLOW ──
+  const glowR = r * (body.bodyType === 'star' ? 3.5 : 2.2);
+  const grd = ctx.createRadialGradient(sp.x, sp.y, r * 0.3, sp.x, sp.y, glowR);
+  grd.addColorStop(0, body.glow + 'bb');
+  grd.addColorStop(0.5, body.glow + '33');
+  grd.addColorStop(1, 'transparent');
+  ctx.fillStyle = grd;
+  ctx.beginPath();
+  ctx.arc(sp.x, sp.y, glowR, 0, Math.PI * 2);
+  ctx.fill();
+
+  // ── CLIP to circle ──
+  ctx.beginPath();
+  ctx.arc(sp.x, sp.y, r, 0, Math.PI * 2);
+  ctx.clip();
+
+  // ── BASE GRADIENT ──
+  const bg = ctx.createRadialGradient(sp.x - r * 0.35, sp.y - r * 0.35, 0, sp.x, sp.y, r);
+  bg.addColorStop(0, lightenColor(body.color, 50));
+  bg.addColorStop(0.6, body.color);
+  bg.addColorStop(1, darkenColor(body.color, 50));
+  ctx.fillStyle = bg;
+  ctx.fillRect(sp.x - r, sp.y - r, r * 2, r * 2);
+
+  // ── PER-SUBTYPE TEXTURE ──
+  const rot = body.rotation || 0;
+
+  if (body.subtype === 'earthlike' || body.label?.startsWith('Earth')) {
+    // Ocean base already drawn. Add green continents.
+    ctx.fillStyle = '#1a6fd4';
+    ctx.fillRect(sp.x - r, sp.y - r, r * 2, r * 2);
+    // Continents as irregular blobs using seeded positions
+    const continents = [
+      { ox: 0.1, oy: -0.2, rx: 0.55, ry: 0.35 },
+      { ox: -0.4, oy: 0.15, rx: 0.38, ry: 0.28 },
+      { ox: 0.3, oy: 0.35, rx: 0.32, ry: 0.22 },
+      { ox: -0.15, oy: -0.5, rx: 0.28, ry: 0.18 },
+      { ox: 0.5, oy: -0.1, rx: 0.22, ry: 0.30 },
+    ];
+    continents.forEach(c => {
+      const cx = sp.x + (c.ox * Math.cos(rot) - c.oy * Math.sin(rot)) * r;
+      const cy = sp.y + (c.ox * Math.sin(rot) + c.oy * Math.cos(rot)) * r;
+      const g2 = ctx.createRadialGradient(cx, cy, 0, cx, cy, c.rx * r);
+      g2.addColorStop(0, '#3aaa44cc');
+      g2.addColorStop(0.5, '#2a8833aa');
+      g2.addColorStop(1, 'transparent');
+      ctx.fillStyle = g2;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, c.rx * r, c.ry * r, rot * 0.5, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    // Ice caps
+    const capG = ctx.createRadialGradient(sp.x, sp.y - r, 0, sp.x, sp.y - r, r * 0.55);
+    capG.addColorStop(0, 'rgba(240,248,255,0.9)');
+    capG.addColorStop(1, 'transparent');
+    ctx.fillStyle = capG;
+    ctx.fillRect(sp.x - r, sp.y - r, r * 2, r * 2);
+    const capG2 = ctx.createRadialGradient(sp.x, sp.y + r, 0, sp.x, sp.y + r, r * 0.4);
+    capG2.addColorStop(0, 'rgba(240,248,255,0.8)');
+    capG2.addColorStop(1, 'transparent');
+    ctx.fillStyle = capG2;
+    ctx.fillRect(sp.x - r, sp.y - r, r * 2, r * 2);
+    // Atmosphere rim
+    ctx.restore();
+    ctx.save();
+    const atmG = ctx.createRadialGradient(sp.x, sp.y, r * 0.85, sp.x, sp.y, r * 1.25);
+    atmG.addColorStop(0, 'transparent');
+    atmG.addColorStop(0.6, 'rgba(80,160,255,0.18)');
+    atmG.addColorStop(1, 'transparent');
+    ctx.fillStyle = atmG;
+    ctx.beginPath();
+    ctx.arc(sp.x, sp.y, r * 1.25, 0, Math.PI * 2);
+    ctx.fill();
+
+  } else if (body.subtype === 'moon' || body.label === 'Moon') {
+    // Grey base done. Add craters.
+    const craters = [
+      { ox: 0.25, oy: -0.3, r: 0.22 },
+      { ox: -0.35, oy: 0.2, r: 0.18 },
+      { ox: 0.1, oy: 0.4, r: 0.14 },
+      { ox: -0.1, oy: -0.15, r: 0.10 },
+      { ox: 0.45, oy: 0.15, r: 0.12 },
+      { ox: -0.4, oy: -0.35, r: 0.10 },
+    ];
+    craters.forEach(c => {
+      const cx = sp.x + c.ox * r;
+      const cy = sp.y + c.oy * r;
+      const cr2 = c.r * r;
+      ctx.fillStyle = 'rgba(60,60,70,0.55)';
+      ctx.beginPath(); ctx.arc(cx, cy, cr2, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = 'rgba(180,180,190,0.3)';
+      ctx.lineWidth = 0.5;
+      ctx.beginPath(); ctx.arc(cx, cy, cr2, 0, Math.PI * 2); ctx.stroke();
+    });
+
+  } else if (body.subtype === 'gas_giant' || body.label === 'Jupiter' || body.label === 'Saturn') {
+    // Horizontal cloud bands
+    const bands = body.label === 'Jupiter'
+      ? ['#c8a87a','#a07040','#d4b888','#8a5a30','#c0985a','#b87848']
+      : ['#e8d8a0','#c0a860','#d8c888','#b09050','#d0c070'];
+    const bCount = bands.length;
+    for (let i = 0; i < bCount; i++) {
+      const y0 = sp.y - r + (i / bCount) * r * 2;
+      const bh = r * 2 / bCount;
+      ctx.fillStyle = bands[i] + 'cc';
+      ctx.fillRect(sp.x - r, y0, r * 2, bh + 1);
+    }
+    // Swirl on Jupiter
+    if (body.label === 'Jupiter' && r > 8) {
+      ctx.fillStyle = 'rgba(180,80,50,0.4)';
+      ctx.beginPath();
+      ctx.ellipse(sp.x + r * 0.15, sp.y + r * 0.2, r * 0.28, r * 0.14, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+  } else if (body.subtype === 'rocky') {
+    // Rocky surface: dark patches
+    const patches = [
+      { ox: 0.2, oy: -0.25, r: 0.3 }, { ox: -0.3, oy: 0.3, r: 0.25 },
+      { ox: 0.35, oy: 0.35, r: 0.2 }, { ox: -0.15, oy: -0.4, r: 0.18 },
+    ];
+    patches.forEach(p => {
+      ctx.fillStyle = 'rgba(0,0,0,0.2)';
+      ctx.beginPath();
+      ctx.ellipse(sp.x + p.ox * r, sp.y + p.oy * r, p.r * r, p.r * r * 0.7, rot, 0, Math.PI*2);
+      ctx.fill();
+    });
+
+  } else if (body.subtype === 'lava_world') {
+    // Lava cracks
+    for (let i = 0; i < 5; i++) {
+      const a = (i / 5) * Math.PI * 2 + rot;
+      ctx.strokeStyle = 'rgba(255,220,50,0.6)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(sp.x, sp.y);
+      ctx.lineTo(sp.x + Math.cos(a) * r * 0.9, sp.y + Math.sin(a) * r * 0.9);
+      ctx.stroke();
+    }
+
+  } else if (body.subtype === 'ice_world') {
+    // Ice cracks / highlights
+    ctx.strokeStyle = 'rgba(200,235,255,0.4)';
+    ctx.lineWidth = 0.8;
+    for (let i = 0; i < 4; i++) {
+      const a = (i / 4) * Math.PI * 2 + rot * 0.3;
+      ctx.beginPath();
+      ctx.moveTo(sp.x + Math.cos(a) * r * 0.2, sp.y + Math.sin(a) * r * 0.2);
+      ctx.lineTo(sp.x + Math.cos(a) * r * 0.85, sp.y + Math.sin(a) * r * 0.85);
+      ctx.stroke();
+    }
+
+  } else if (body.subtype === 'ocean_world') {
+    // Wave-like bands
+    ctx.strokeStyle = 'rgba(100,200,255,0.25)';
+    ctx.lineWidth = 1;
+    for (let i = -3; i <= 3; i++) {
+      ctx.beginPath();
+      ctx.arc(sp.x, sp.y + i * r * 0.28, r * 0.9, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  }
+
+  ctx.restore();
+  ctx.save();
+
+  // ── SATURN RINGS (drawn outside clip) ──
+  if (body.label === 'Saturn' && r > 5) {
+    const ringInner = r * 1.35;
+    const ringOuter = r * 2.1;
+    const rg = ctx.createRadialGradient(sp.x, sp.y, ringInner, sp.x, sp.y, ringOuter);
+    rg.addColorStop(0, 'rgba(210,190,130,0.15)');
+    rg.addColorStop(0.3, 'rgba(210,190,130,0.55)');
+    rg.addColorStop(0.6, 'rgba(180,160,100,0.45)');
+    rg.addColorStop(1, 'rgba(210,190,130,0.05)');
+    ctx.fillStyle = rg;
+    ctx.beginPath();
+    ctx.ellipse(sp.x, sp.y, ringOuter, ringOuter * 0.22, 0.3, 0, Math.PI * 2);
+    ctx.arc(sp.x, sp.y, ringInner, 0, Math.PI * 2, true);
+    ctx.fill();
+  }
+
+  // ── HIGHLIGHT SHEEN ──
+  const shine = ctx.createRadialGradient(sp.x - r * 0.4, sp.y - r * 0.4, 0, sp.x, sp.y, r);
+  shine.addColorStop(0, 'rgba(255,255,255,0.18)');
+  shine.addColorStop(0.45, 'transparent');
+  ctx.fillStyle = shine;
+  ctx.beginPath();
+  ctx.arc(sp.x, sp.y, r, 0, Math.PI * 2);
+  ctx.fill();
+
+  // ── HABITABILITY RING ──
+  if (body.bodyType === 'planet' && body.habitability > 30) {
+    const alpha = body.habitability / 100;
+    const ringColor = body.habitability > 65 ? '#22c55e' : '#f97316';
+    ctx.strokeStyle = ringColor + Math.floor(alpha * 200).toString(16).padStart(2, '0');
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(sp.x, sp.y, r + 4, 0, Math.PI * 2); ctx.stroke();
+    if (body.habitability > 65) {
+      ctx.strokeStyle = ringColor + '33';
+      ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.arc(sp.x, sp.y, r + 8, 0, Math.PI * 2); ctx.stroke();
+    }
+  }
+
+  // ── SELECTED ──
+  if (selectedBody && selectedBody.id === body.id) {
+    ctx.strokeStyle = 'rgba(79,163,255,0.7)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.arc(sp.x, sp.y, r + 10, 0, Math.PI * 2); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // ── LABEL ──
+  if (cam.zoom > 0.3) {
+    ctx.fillStyle = 'rgba(200,220,255,0.65)';
+    ctx.font = `${Math.max(9, Math.min(13, 11 * cam.zoom))}px 'Exo 2', sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText(body.label, sp.x, sp.y + r + 14);
+  }
+
+  ctx.restore();
+}
+
+function drawParticles() {
+  particles.forEach(p => {
+    const sp = worldToScreen(p.x, p.y);
+    const alpha = p.life / p.maxLife;
+    ctx.fillStyle = p.color.replace(')', `,${alpha})`).replace('hsl', 'hsla');
+    ctx.beginPath();
+    ctx.arc(sp.x, sp.y, p.r * cam.zoom, 0, Math.PI * 2);
+    ctx.fill();
+  });
+}
+
+function lightenColor(hex, pct) {
+  const n = parseInt(hex.replace('#',''), 16);
+  const r = Math.min(255, (n>>16)+pct), g = Math.min(255, ((n>>8)&0xff)+pct), b = Math.min(255, (n&0xff)+pct);
+  return `rgb(${r},${g},${b})`;
+}
+function darkenColor(hex, pct) {
+  const n = parseInt(hex.replace('#',''), 16);
+  const r = Math.max(0, (n>>16)-pct), g = Math.max(0, ((n>>8)&0xff)-pct), b = Math.max(0, (n&0xff)-pct);
+  return `rgb(${r},${g},${b})`;
+}
+
+// ── VELOCITY ARROW DRAWING ──
+function drawVelocityArrow() {
+  if (!velocityArrow || !velocityArrow.active) return;
+  const { body, sx, sy, ex, ey, dragging } = velocityArrow;
+
+  // Body highlight pulse
+  const sp = worldToScreen(body.x, body.y);
+  const r = body.radius * cam.zoom;
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,200,80,0.6)';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.arc(sp.x, sp.y, r + 10 + 4 * Math.sin(Date.now() * 0.006), 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  if (!dragging) {
+    // Show crosshair prompt
+    ctx.fillStyle = 'rgba(255,200,80,0.7)';
+    ctx.font = '11px Exo 2, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('DRAG TO SET VELOCITY →', sp.x, sp.y - r - 20);
+    ctx.restore();
+    return;
+  }
+
+  const dx = ex - sx, dy = ey - sy;
+  const len = Math.hypot(dx, dy);
+  if (len < 4) { ctx.restore(); return; }
+
+  const nx = dx / len, ny = dy / len;
+
+  // Dashed line from body centre to arrow tip
+  const gradient = ctx.createLinearGradient(sp.x, sp.y, ex, ey);
+  gradient.addColorStop(0, 'rgba(255,200,80,0.2)');
+  gradient.addColorStop(1, 'rgba(255,200,80,0.9)');
+  ctx.strokeStyle = gradient;
+  ctx.lineWidth = 2;
+  ctx.setLineDash([6, 4]);
+  ctx.beginPath();
+  ctx.moveTo(sp.x, sp.y);
+  ctx.lineTo(ex, ey);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Arrowhead
+  const headLen = 14;
+  const headAngle = 0.45;
+  ctx.fillStyle = 'rgba(255,200,80,0.95)';
+  ctx.beginPath();
+  ctx.moveTo(ex, ey);
+  ctx.lineTo(ex - headLen * Math.cos(Math.atan2(dy, dx) - headAngle),
+             ey - headLen * Math.sin(Math.atan2(dy, dx) - headAngle));
+  ctx.lineTo(ex - headLen * Math.cos(Math.atan2(dy, dx) + headAngle),
+             ey - headLen * Math.sin(Math.atan2(dy, dx) + headAngle));
+  ctx.closePath();
+  ctx.fill();
+
+  // Speed label
+  const stars = bodies.filter(b => b.id !== body.id && (b.bodyType === 'star' || b.bodyType === 'binary'));
+  let pct = '';
+  if (stars.length > 0) {
+    const nearest = stars.reduce((a, b2) => Math.hypot(a.x-body.x,a.y-body.y) < Math.hypot(b2.x-body.x,b2.y-body.y) ? a : b2);
+    const dist = Math.hypot(body.x - nearest.x, body.y - nearest.y);
+    const baseV = dist > 0 ? Math.sqrt(G * nearest.mass / dist) : 1;
+    const magnitude = (len / 100) * baseV;
+    const ratio = magnitude / baseV;
+    pct = `${(ratio * 100).toFixed(0)}% of circular orbit`;
+    if (ratio > 1.4) pct += ' — escape likely!';
+    else if (ratio < 0.6) pct += ' — will spiral inward';
+  }
+  ctx.fillStyle = 'rgba(255,220,100,0.9)';
+  ctx.font = 'bold 11px Exo 2, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText(pct, ex + 10, ey + 4);
+  ctx.restore();
+}
+
+// ── MAIN LOOP ──
+let lastTime = 0;
+function loop(now) {
+  const dt = Math.min((now - lastTime) / 1000, 0.05);
+  lastTime = now;
+
+  // Nebula (independent of sim)
+  drawNebula(dt);
+
+  // Screen shake decay
+  if (shakeMag > 0.1) {
+    shakeX = (Math.random() - 0.5) * shakeMag * 2;
+    shakeY = (Math.random() - 0.5) * shakeMag * 2;
+    shakeMag *= 0.85;
+  } else { shakeX = 0; shakeY = 0; }
+
+  ctx.save();
+  ctx.translate(shakeX, shakeY);
+  ctx.clearRect(-10, -10, canvas.width + 20, canvas.height + 20);
+
+  // Draw hab zones first
+  bodies.filter(b => b.bodyType === 'star' || b.bodyType === 'binary').forEach(drawHabZone);
+
+  // Draw trails
+  bodies.forEach(drawTrail);
+
+  // Draw particles
+  drawParticles();
+
+  // Draw bodies
+  bodies.forEach(drawBody);
+
+  ctx.restore();
+
+  // Draw velocity arrow overlay — outside shake transform (screen-space UI)
+  drawVelocityArrow();
+
+  if (simRunning) physicsStep(dt);
+
+  requestAnimationFrame(loop);
+}
+
+// ── GUIDE FLOW ──
+let guideStep = 0;
+const guideSteps = 4;
+document.getElementById('guide-next').addEventListener('click', advanceGuide);
+document.getElementById('guide-skip').addEventListener('click', closeGuide);
+
+function advanceGuide() {
+  guideStep++;
+  if (guideStep >= guideSteps) { closeGuide(); return; }
+  document.querySelectorAll('.guide-step').forEach((el, i) => {
+    el.classList.toggle('active', i === guideStep);
+  });
+  if (guideStep === guideSteps - 1) {
+    document.getElementById('guide-next').textContent = 'START BUILDING →';
+  }
+}
+function closeGuide() {
+  document.getElementById('guide-overlay').style.display = 'none';
+}
+
+// ── PALETTE CLICK FALLBACK ──
+function selectPalette(el) {
+  document.querySelectorAll('.palette-item').forEach(e => e.classList.remove('selected'));
+  el.classList.add('selected');
+  placingType = el.dataset.type;
+}
+
+// ── STARTER SOLAR SYSTEM ──
+// Habitable zone: min 120, max 220 → centre ~170. Earth placed at 170.
+// Moon orbits Earth at radius 22 with Earth-relative circular velocity.
+// Escape limit raised to 3500 to accommodate Neptune at 2700.
+function spawnStarterSystem() {
+  bodies = [];
+  bodyIdCounter = 0;
+
+  const SUN_MASS = 1200;
+
+  const sun = {
+    id: bodyIdCounter++, subtype: 'yellow_star', bodyType: 'star',
+    label: 'The Sun', x: 0, y: 0, vx: 0, vy: 0,
+    mass: SUN_MASS, radius: 30, color: '#ffe066', glow: '#ffcc00',
+    habZone: { min: 120, max: 220 }, temp: 5800, luminosity: 1.0,
+    habitability: 0, trail: [], rotation: 0, rotSpeed: 0.005,
+    hasHadLife: false, stableTime: 0,
+  };
+  bodies.push(sun);
+
+  // Helper: circular orbit speed around the sun
+  const vOrbit = dist => Math.sqrt(G * SUN_MASS / dist);
+
+  // [subtype, dist, color, glow, mass, radius, label]
+  // Masses kept well below 1% of SUN_MASS so planet-planet gravity exists
+  // but does not catastrophically destabilise orbits (real Jupiter ~0.1% of Sun).
+  const planetData = [
+    ['rocky',     55,   '#b5b0aa', '#888080',  1,   4,  'Mercury'],
+    ['rocky',     95,   '#e8c97a', '#c8a040',  4,   7,  'Venus'  ],
+    ['earthlike', 170,  '#2a7fd4', '#1a5fa0',  5,   9,  'Earth'  ],
+    ['rocky',     260,  '#cc5533', '#992200',  2,   6,  'Mars'   ],
+    ['gas_giant', 560,  '#c8a87a', '#a07040',  12,  22, 'Jupiter'],
+    ['gas_giant', 1020, '#e0d0a0', '#b0a060',  7,   18, 'Saturn' ],
+    ['ice_world', 2050, '#aaddff', '#6699cc',  3,   13, 'Uranus' ],
+    ['ice_world', 3200, '#4477ff', '#2244aa',  3,   12, 'Neptune'],
+  ];
+
+  let earthBody = null;
+
+  planetData.forEach(([subtype, dist, color, glow, mass, radius, label]) => {
+    const angle = Math.random() * Math.PI * 2;
+    const px = Math.cos(angle) * dist;
+    const py = Math.sin(angle) * dist;
+    const vc  = vOrbit(dist);
+    // Perpendicular to radius = circular orbit direction
+    const vx = -Math.sin(angle) * vc;
+    const vy =  Math.cos(angle) * vc;
+    const planet = {
+      id: bodyIdCounter++, subtype, bodyType: 'planet',
+      label, x: px, y: py, vx, vy,
+      mass, radius, color, glow,
+      habZone: null, temp: null, luminosity: null,
+      habitability: 0, trail: [],
+      rotation: Math.random() * Math.PI * 2,
+      rotSpeed: (Math.random() - 0.5) * 0.03,
+      hasHadLife: false, stableTime: 0,
+    };
+    bodies.push(planet);
+    if (label.startsWith('Earth')) earthBody = planet;
+  });
+
+}
+
+// ── MOBILE TAB SWITCHING ──
+function mobileTab(tab) {
+  const leftPanel = document.getElementById('left-panel');
+  const rightPanel = document.getElementById('right-panel');
+  const achPanel = document.getElementById('achievements-panel');
+  // Reset all
+  leftPanel.classList.remove('mobile-open');
+  rightPanel.classList.remove('mobile-open');
+  achPanel.classList.remove('open');
+  achPanel.style.cssText = '';
+  document.querySelectorAll('.mob-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(`mob-tab-${tab}`)?.classList.add('active');
+
+  if (tab === 'objects') {
+    leftPanel.classList.add('mobile-open');
+  } else if (tab === 'info') {
+    rightPanel.classList.add('mobile-open');
+  } else if (tab === 'ach') {
+    // Show achievements inline above tab bar
+    achPanel.style.cssText = `
+      display:block; position:fixed; bottom:56px; left:0; right:0;
+      width:100%; border-radius:0; border-left:none; border-right:none;
+      max-height:200px; overflow-y:auto;
+    `;
+    achPanel.classList.add('open');
+  }
+}
+
+// ── INIT ──
+renderAchievements();
+setSpeed(1);
+spawnStarterSystem();
+// Resize after one frame (CSS settled), then start loop
+requestAnimationFrame(() => {
+  resize();
+  requestAnimationFrame(loop);
+});
+</script>
+</body>
+</html>
