@@ -1,0 +1,17 @@
+{
+  "name": "curiominds-tools",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Build-time asset scripts for curiomindsinc.pages.dev (not deployed)",
+  "scripts": {
+    "shoot": "node shoot.js",
+    "reshoot": "node reshoot.js",
+    "webp": "node towebp.js",
+    "og": "node og.js",
+    "thumbs": "node shoot.js && node reshoot.js && node towebp.js"
+  },
+  "dependencies": {
+    "playwright": "^1.49.0",
+    "sharp": "^0.33.0"
+  }
+}

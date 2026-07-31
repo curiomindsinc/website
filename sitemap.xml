@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://curiomindsinc.pages.dev/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/about.html</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+
+  <!-- Physics -->
+  <url><loc>https://curiomindsinc.pages.dev/Physics/light-reflection-simulation.html</loc><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Physics/ray_diagram_simulator.html</loc><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Physics/brownian_motion.html</loc><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Physics/heat-conduction-simulator.html</loc><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Physics/catapult_simulator.html</loc><priority>0.8</priority></url>
+
+  <!-- Chemistry -->
+  <url><loc>https://curiomindsinc.pages.dev/Chemistry/buildformula.html</loc><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Chemistry/chem-balancer-v2.html</loc><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Chemistry/particle_simulator.html</loc><priority>0.8</priority></url>
+
+  <!-- Biology -->
+  <url><loc>https://curiomindsinc.pages.dev/Biology/monster_genetics_lab_v4.html</loc><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Biology/maltase-simulation.html</loc><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Biology/bioflow_final.html</loc><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Biology/osmosis-simulation.html</loc><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Biology/heart_detective_v5.html</loc><priority>0.8</priority></url>
+
+  <!-- Earth Science -->
+  <url><loc>https://curiomindsinc.pages.dev/Earth%20Science/tectonics/onogoro_final.html</loc><priority>0.8</priority></url>
+
+  <!-- Astronomy -->
+  <url><loc>https://curiomindsinc.pages.dev/Astronomy/solar-system-simulator.html</loc><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Astronomy/wayfinder/wayfinder_v9.html</loc><priority>0.8</priority></url>
+</urlset>
