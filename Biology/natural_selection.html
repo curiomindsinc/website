@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Natural Selection Simulator — Curiominds.inc</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Grotesk:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+    </script>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --navy:          #0F1E3C;
+            --navy-mid:      #1B2D4F;
+            --navy-light:    #2D4270;
+            --navy-border:   rgba(255,255,255,0.09);
+            --cream:         #F7F2E8;
+            --cream-dark:    #EDE6D6;
+            --cream-border:  rgba(15,30,60,0.11);
+            --coral:         #E8633F;
+            --coral-light:   #F0825A;
+            --magenta:       #C4175A;
+            --magenta-light: #E01F6A;
+            --text-light:    #F0EAD6;
+            --text-muted:    #7A96BE;
+            --text-dim:      rgba(240,234,214,0.45);
+            --font-head:     'Syne', sans-serif;
+            --font-body:     'Space Grotesk', sans-serif;
+            --font-mono:     'Courier New', monospace;
+            --glass-bg:      rgba(7, 13, 32, 0.88);
+            --glass-border:  rgba(255,255,255,0.09);
+        }
+
+        html, body { height: 100%; font-family: var(--font-body); overflow: hidden; }
+
+        /* ── Full-screen canvas ───────────────────────────── */
+        #canvas-wrap {
+            position: fixed; inset: 0; z-index: 0;
+        }
+        #three-canvas { display: block; width: 100%; height: 100%; }
+
+        /* ── Glass mixin ─────────────────────────────────── */
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+        }
+
+        /* ── Title pill (top center) ─────────────────────── */
+        #title-pill {
+            position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
+            z-index: 10; display: flex; align-items: center; gap: 10px;
+            padding: 8px 14px 8px 10px; border-radius: 100px;
+            white-space: nowrap;
+        }
+        .logo-mark {
+            width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0;
+            background: linear-gradient(135deg, var(--coral), var(--magenta));
+            font-family: var(--font-head); font-weight: 800; font-size: 10px;
+            color: white; display: flex; align-items: center; justify-content: center;
+        }
+        .title-name {
+            font-family: var(--font-head); font-weight: 700; font-size: 13px;
+            color: var(--cream); letter-spacing: 0.2px;
+        }
+        .title-divider {
+            width: 1px; height: 16px; background: var(--glass-border);
+        }
+        .env-hud-dot {
+            width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+        }
+        .env-hud-dot.grassland { background: #4ADE80; }
+        .env-hud-dot.snow      { background: #93C5FD; }
+        #env-hud-name {
+            font-size: 11px; font-weight: 600; color: var(--text-muted);
+            letter-spacing: 0.8px; text-transform: uppercase;
+        }
+        .btn-guide {
+            display: flex; align-items: center; gap: 5px;
+            padding: 5px 10px; border-radius: 20px;
+            background: rgba(255,255,255,0.07); border: 1px solid var(--glass-border);
+            color: var(--text-muted); font-family: var(--font-body);
+            font-size: 11px; cursor: pointer; transition: all 0.2s;
+        }
+        .btn-guide:hover { color: var(--coral); border-color: rgba(232,99,63,0.4); }
+        .guide-icon {
+            width: 14px; height: 14px; border-radius: 50%;
+            border: 1.5px solid currentColor; font-size: 8px; font-weight: 700;
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
+
+        /* ── Controls toggle (bottom-left) ───────────────── */
+        @keyframes ctrl-glow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(232,99,63,0); }
+            50%       { box-shadow: 0 0 0 10px rgba(232,99,63,0.55), 0 0 32px 8px rgba(232,99,63,0.35); }
+        }
+        @keyframes arrow-bounce {
+            0%, 100% { transform: translateY(0); }
+            50%       { transform: translateY(10px); }
+        }
+        #controls-arrow {
+            position: fixed; bottom: 60px; left: 126px; z-index: 110;
+            pointer-events: none; opacity: 0; transition: opacity 0.35s;
+        }
+        #controls-arrow.visible { opacity: 1; animation: arrow-bounce 0.9s ease-in-out infinite; }
+        #controls-toggle {
+            position: fixed; bottom: 20px; left: 20px; z-index: 110;
+            display: flex; align-items: center; gap: 8px;
+            padding: 9px 14px; border-radius: 10px;
+            font-family: var(--font-body); font-size: 11px; font-weight: 600;
+            letter-spacing: 1.5px; text-transform: uppercase;
+            color: var(--text-muted); cursor: pointer; border: none;
+            transition: color 0.2s, border-color 0.2s;
+        }
+        #controls-toggle:not(.open) { animation: ctrl-glow 2.4s ease-in-out infinite; }
+        #controls-toggle:hover { color: var(--cream); }
+        #controls-toggle.open  { color: var(--coral); border-color: rgba(232,99,63,0.3); }
+        .toggle-arrow { font-size: 10px; transition: transform 0.3s; }
+        #controls-toggle.open .toggle-arrow { transform: rotate(180deg); }
+
+        /* ── Controls panel (expands upward from toggle) ─── */
+        #controls-panel {
+            position: fixed; bottom: 64px; left: 20px; z-index: 10;
+            width: 262px; border-radius: 14px;
+            max-height: 0; overflow: hidden; opacity: 0;
+            transition: max-height 0.38s cubic-bezier(0.4,0,0.2,1), opacity 0.25s;
+        }
+        #controls-panel.open { max-height: 680px; opacity: 1; }
+
+        .ctrl-inner { padding: 14px; display: flex; flex-direction: column; gap: 14px; }
+
+        .ctrl-section { display: flex; flex-direction: column; gap: 10px; }
+        .ctrl-label {
+            font-family: var(--font-head); font-size: 9px; font-weight: 700;
+            letter-spacing: 2.5px; text-transform: uppercase; color: var(--text-muted);
+            display: flex; align-items: center; gap: 7px;
+        }
+        .ctrl-label::before {
+            content: ''; display: inline-block; width: 3px; height: 10px;
+            background: var(--coral); border-radius: 2px; flex-shrink: 0;
+        }
+
+        /* Env cards */
+        .env-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+        .env-card {
+            position: relative; background: rgba(255,255,255,0.04);
+            border: 2px solid transparent; border-radius: 10px;
+            padding: 0; cursor: pointer; overflow: hidden;
+            transition: border-color 0.2s, transform 0.15s;
+        }
+        .env-card:hover { transform: translateY(-1px); }
+        .env-card.active { border-color: var(--coral); }
+        .env-card.active .env-label { color: var(--cream); }
+        .env-art { height: 52px; width: 100%; position: relative; overflow: hidden; }
+        .env-art.grassland {
+            background: linear-gradient(180deg, #6AB8E8 0%, #9BCFE8 40%, #5BAD50 40%, #4A9B3F 100%);
+        }
+        .env-art.grassland::before {
+            content: ''; position: absolute; top: 6px; right: 8px;
+            width: 11px; height: 11px; background: #FFD54F; border-radius: 50%;
+            box-shadow: 0 0 8px rgba(255,213,79,0.7);
+        }
+        .env-art.grassland::after {
+            content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 6px;
+            background: repeating-linear-gradient(90deg, #3D8233 0px, #3D8233 3px, #4A9B3F 3px, #4A9B3F 5px, transparent 5px, transparent 8px);
+        }
+        .env-art.snow {
+            background: linear-gradient(180deg, #B8CCE8 0%, #D0E0F0 50%, #EEF4FA 50%, #F8FBFF 100%);
+        }
+        .env-art.snow::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 10px;
+            background-image: radial-gradient(circle, rgba(255,255,255,0.95) 1.5px, transparent 1.5px), radial-gradient(circle, rgba(255,255,255,0.7) 1px, transparent 1px);
+            background-size: 14px 12px, 9px 10px; background-position: 0 4px, 5px 0;
+        }
+        .env-art.snow::after {
+            content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 12px;
+            background: radial-gradient(ellipse 28px 13px at 20% 100%, white 90%, transparent 100%), radial-gradient(ellipse 22px 10px at 55% 100%, #EEF4FA 90%, transparent 100%), radial-gradient(ellipse 26px 11px at 88% 100%, white 90%, transparent 100%);
+        }
+        .env-label {
+            display: block; font-size: 10.5px; font-weight: 600;
+            color: var(--text-muted); padding: 6px 0; text-align: center;
+            letter-spacing: 0.3px; transition: color 0.2s;
+        }
+        .env-active-tag {
+            display: none; position: absolute; top: 4px; left: 4px;
+            background: var(--coral); color: white; font-size: 7px; font-weight: 700;
+            letter-spacing: 0.5px; padding: 2px 5px; border-radius: 3px; text-transform: uppercase;
+        }
+        .env-card.active .env-active-tag { display: block; }
+
+        /* Risk bars (inside controls, under env) */
+        .risk-rows { display: flex; flex-direction: column; gap: 7px; }
+        .risk-row {
+            display: grid; grid-template-columns: 38px 1fr 30px;
+            align-items: center; gap: 7px; font-size: 10px; font-weight: 600;
+            color: var(--text-muted);
+        }
+        .risk-track { height: 5px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; }
+        .risk-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+        .risk-fill.danger { background: var(--coral); }
+        .risk-fill.safe   { background: #22C55E; }
+        .risk-pct { font-family: var(--font-mono); font-size: 10px; font-weight: 700; text-align: right; }
+        .risk-pct.danger { color: var(--coral); }
+        .risk-pct.safe   { color: #22C55E; }
+
+        /* Status pill */
+        .status-pill {
+            display: flex; align-items: center; gap: 6px;
+            padding: 5px 11px; border-radius: 20px;
+            background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border);
+            font-size: 9.5px; letter-spacing: 1.5px; text-transform: uppercase;
+            color: var(--text-muted); transition: all 0.3s; align-self: flex-start;
+        }
+        .status-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--text-muted); transition: all 0.3s; }
+        .status-pill.running .status-dot { background: #4ADE80; animation: blink 1.2s infinite; }
+        .status-pill.paused  .status-dot { background: var(--coral); }
+        .status-pill.running { color: #4ADE80; border-color: rgba(74,222,128,0.25); }
+        .status-pill.paused  { color: var(--coral); border-color: rgba(232,99,63,0.25); }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.35} }
+
+        /* Sim buttons */
+        .sim-controls { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+        .btn-primary {
+            background: var(--coral); color: white; border: none;
+            border-radius: 8px; padding: 9px 12px;
+            font-family: var(--font-body); font-size: 12px; font-weight: 600;
+            cursor: pointer; transition: background 0.2s, transform 0.1s;
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+        }
+        .btn-primary:hover { background: var(--coral-light); }
+        .btn-primary:active { transform: scale(0.97); }
+        .btn-icon-only {
+            background: rgba(255,255,255,0.06); color: var(--text-muted);
+            border: 1px solid var(--glass-border); border-radius: 8px;
+            padding: 9px 10px; cursor: pointer; transition: all 0.2s;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .btn-icon-only:hover { color: var(--text-light); border-color: rgba(255,255,255,0.2); }
+
+        /* Sliders */
+        .slider-group { display: flex; flex-direction: column; gap: 7px; }
+        .slider-label {
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 11.5px; color: var(--text-light);
+        }
+        .slider-label-left { display: flex; align-items: center; gap: 5px; }
+        .slider-badge {
+            background: rgba(255,255,255,0.07); border: 1px solid var(--glass-border);
+            border-radius: 4px; padding: 2px 6px;
+            font-size: 10px; font-weight: 600; color: var(--coral); font-family: var(--font-mono);
+        }
+        input[type=range] {
+            -webkit-appearance: none; width: 100%; height: 3px;
+            border-radius: 2px; background: rgba(255,255,255,0.1); outline: none; cursor: pointer;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%;
+            background: var(--coral); border: 2px solid rgba(7,13,32,0.9);
+            box-shadow: 0 0 0 2px rgba(232,99,63,0.3); cursor: grab; transition: transform 0.15s;
+        }
+        input[type=range]::-webkit-slider-thumb:active { cursor: grabbing; transform: scale(1.2); }
+        input[type=range].locked { opacity: 0.3; pointer-events: none; }
+
+        .mix-preview { display: flex; justify-content: space-between; }
+        .mix-tag { display: flex; align-items: center; gap: 4px; font-size: 10.5px; color: var(--text-dim); }
+        .mix-dot { width: 7px; height: 7px; border-radius: 50%; }
+        .mix-dot.white-dot { background: #D8D0C0; border: 1px solid rgba(255,255,255,0.2); }
+        .mix-dot.brown-dot { background: #8B5E3C; }
+        .mix-count { color: var(--coral); font-weight: 600; font-family: var(--font-mono); }
+
+        /* ── Stats column (bottom-right) ─────────────────── */
+        #right-col {
+            position: fixed; bottom: 20px; right: 20px; z-index: 10;
+            width: 240px; display: flex; flex-direction: column-reverse;
+        }
+
+        #stats-panel { border-radius: 14px; padding: 14px; }
+
+        .gen-row {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 12px; padding-bottom: 12px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+        .gen-eye {
+            font-size: 8px; font-weight: 700; letter-spacing: 2.5px;
+            text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px;
+        }
+        .gen-digits { display: flex; gap: 2px; }
+        .gen-digit {
+            font-family: var(--font-mono); font-size: 22px; font-weight: 700;
+            color: var(--cream); width: 17px; text-align: center;
+            background: rgba(0,0,0,0.3); border-radius: 3px; padding: 2px 2px; line-height: 1;
+        }
+        .gen-status { align-self: flex-end; }
+
+        .pop-row {
+            display: flex; align-items: center; justify-content: space-around;
+            margin-bottom: 12px; padding-bottom: 12px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+        .pop-item { display: flex; align-items: center; gap: 8px; }
+        .pop-number {
+            font-family: var(--font-head); font-size: 26px; font-weight: 800; line-height: 1;
+        }
+        .pop-number.white-n { color: var(--cream); }
+        .pop-number.brown-n { color: var(--coral); }
+        .pop-sub { font-size: 9px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); margin-top: 2px; }
+        .pop-divider { width: 1px; height: 40px; background: var(--glass-border); }
+        .rabbit-svg { width: 24px; height: 30px; flex-shrink: 0; }
+
+        .hawk-row {
+            display: flex; align-items: center; gap: 9px;
+            margin-bottom: 12px; padding-bottom: 12px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+        .hawk-svg { width: 32px; height: 22px; flex-shrink: 0; }
+        .hawk-stat-label { font-size: 8.5px; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 2px; }
+        .hawk-stat-val { font-family: var(--font-head); font-size: 13px; font-weight: 700; color: var(--cream); }
+        .kills-badge {
+            margin-left: auto; background: var(--magenta); color: white;
+            font-size: 9px; font-weight: 700; padding: 3px 8px; border-radius: 6px; white-space: nowrap;
+        }
+
+        /* Chart toggle */
+        .chart-toggle-btn {
+            width: 100%; display: flex; align-items: center; gap: 8px;
+            padding: 7px 0; background: none; border: none;
+            font-family: var(--font-body); font-size: 13px; font-weight: 700;
+            letter-spacing: 0.3px; color: var(--text-muted); cursor: pointer; transition: color 0.2s;
+        }
+        .chart-toggle-btn:hover { color: var(--coral); }
+        .chart-toggle-btn svg { flex-shrink: 0; }
+        .chart-onoff {
+            margin-left: auto; flex-shrink: 0;
+            width: 34px; height: 18px; border-radius: 9px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.12);
+            position: relative; transition: background 0.25s, border-color 0.25s;
+        }
+        .chart-onoff.on {
+            background: rgba(232,99,63,0.45);
+            border-color: rgba(232,99,63,0.5);
+        }
+        .chart-onoff-thumb {
+            width: 12px; height: 12px; border-radius: 50%;
+            background: var(--text-muted);
+            position: absolute; top: 2px; left: 2px;
+            transition: transform 0.25s, background 0.25s;
+        }
+        .chart-onoff.on .chart-onoff-thumb {
+            transform: translateX(16px);
+            background: var(--cream);
+        }
+
+        #chart-panel {
+            border-radius: 14px; max-height: 0; overflow: hidden; opacity: 0;
+            transition: max-height 0.35s cubic-bezier(0.4,0,0.2,1), opacity 0.25s, margin-bottom 0.35s;
+        }
+        #chart-panel.open { max-height: 220px; opacity: 1; margin-bottom: 8px; }
+        .chart-inner { padding: 12px 12px 8px; }
+        .chart-label {
+            font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+            color: var(--text-muted); margin-bottom: 8px;
+        }
+        .chart-wrap { height: 158px; position: relative; }
+
+        /* ── Hawk HUD (bottom center) ────────────────────── */
+        #hawk-hud-wrap {
+            position: fixed; bottom: 72px; left: 50%; transform: translateX(-50%);
+            z-index: 10; pointer-events: none;
+        }
+        .hawk-hud {
+            background: var(--glass-bg); backdrop-filter: blur(14px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px; padding: 5px 16px;
+            font-size: 10.5px; color: var(--text-muted);
+            letter-spacing: 0.3px; transition: all 0.3s; white-space: nowrap;
+        }
+        .hawk-hud.attacking { border-color: rgba(232,99,63,0.5); color: var(--coral); }
+
+        /* ── Attribution (bottom center) ────────────────── */
+        #attribution {
+            position: fixed; bottom: 8px; left: 50%; transform: translateX(-50%);
+            z-index: 10; padding: 8px 16px; border-radius: 14px;
+            font-size: 10px; color: var(--text-muted); letter-spacing: 0.5px;
+            text-align: center; line-height: 1.7;
+        }
+        #attribution a {
+            color: var(--coral); text-decoration: none; transition: color 0.2s;
+        }
+        #attribution a:hover { color: var(--coral-light); text-decoration: underline; }
+
+        /* ── Tutorial Modal ──────────────────────────────── */
+        .modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(4, 8, 20, 0.82);
+            backdrop-filter: blur(10px);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 100; transition: opacity 0.3s;
+        }
+        .modal-overlay.hidden { opacity: 0; pointer-events: none; }
+
+        .modal-card {
+            width: 460px; max-width: 94vw;
+            background: rgba(8, 15, 38, 0.97);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px; overflow: hidden;
+            box-shadow: 0 40px 100px rgba(0,0,0,0.7);
+            position: relative;
+        }
+
+        .modal-top-bar {
+            padding: 20px 22px 0;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .modal-dots { display: flex; gap: 5px; align-items: center; }
+        .modal-dot {
+            width: 6px; height: 6px; border-radius: 50%;
+            background: rgba(255,255,255,0.2); transition: all 0.25s; cursor: pointer;
+        }
+        .modal-dot.active { background: var(--coral); width: 18px; border-radius: 3px; }
+        .modal-close-btn {
+            background: rgba(255,255,255,0.07); border: 1px solid var(--glass-border);
+            color: var(--text-muted); width: 26px; height: 26px; border-radius: 8px;
+            cursor: pointer; font-size: 14px;
+            display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+        }
+        .modal-close-btn:hover { background: rgba(255,255,255,0.15); color: var(--cream); }
+
+        .modal-pages-wrap { overflow: hidden; }
+        .modal-pages { display: flex; transition: transform 0.35s cubic-bezier(0.4,0,0.2,1); }
+        .modal-page { min-width: 100%; padding: 22px 26px 16px; }
+
+        .page-eyebrow {
+            font-size: 9px; font-weight: 700; letter-spacing: 2.5px;
+            text-transform: uppercase; color: var(--coral); margin-bottom: 5px;
+        }
+        .page-heading {
+            font-family: var(--font-head); font-size: 20px; font-weight: 800;
+            color: var(--cream); margin-bottom: 10px; line-height: 1.2;
+        }
+
+        /* VASE */
+        .vase-intro { font-size: 12.5px; line-height: 1.65; color: var(--text-muted); margin-bottom: 14px; }
+        .vase-list { display: flex; flex-direction: column; gap: 11px; }
+        .vase-item { display: flex; gap: 12px; align-items: flex-start; }
+        .vase-badge {
+            width: 28px; height: 28px; border-radius: 7px; flex-shrink: 0;
+            background: linear-gradient(135deg, var(--coral), var(--magenta));
+            color: white; font-size: 14px; font-weight: 800; font-family: var(--font-head);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .vase-body { font-size: 12.5px; line-height: 1.6; color: var(--text-muted); padding-top: 4px; }
+        .vase-body strong { color: var(--cream); display: inline; margin-right: 4px; }
+
+        /* Step list */
+        .step-list { display: flex; flex-direction: column; gap: 10px; }
+        .step-item { display: flex; gap: 10px; align-items: flex-start; }
+        .step-num {
+            width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0;
+            background: linear-gradient(135deg, var(--coral), var(--magenta));
+            color: white; font-size: 9.5px; font-weight: 700;
+            display: flex; align-items: center; justify-content: center; margin-top: 1px;
+        }
+        .step-text { font-size: 12.5px; line-height: 1.6; color: var(--text-muted); }
+        .step-text strong { color: var(--cream); }
+
+        /* VASE card pages */
+        .vase-visual {
+            width: 100%; height: 110px;
+            background: rgba(255,255,255,0.025);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 10px; margin: 10px 0 12px; overflow: hidden;
+        }
+        .vase-letter-big {
+            font-size: 40px; font-weight: 900; font-family: var(--font-head);
+            background: linear-gradient(135deg, #E8633F, #C4175A);
+            -webkit-background-clip: text; background-clip: text;
+            -webkit-text-fill-color: transparent; color: transparent;
+            line-height: 1; display: inline-block;
+        }
+        .vase-heading-row { display: flex; align-items: baseline; gap: 10px; margin-bottom: 0; }
+        .vase-page-desc { font-size: 12.5px; line-height: 1.65; color: var(--text-muted); margin: 0; }
+        .vase-page-desc strong { color: var(--cream); }
+
+        /* Modal actions */
+        .modal-actions {
+            padding: 14px 22px 22px;
+            display: flex; flex-direction: column; gap: 8px;
+        }
+        .btn-mnext {
+            width: 100%; padding: 12px; border-radius: 10px; border: none;
+            background: linear-gradient(135deg, var(--coral), var(--magenta));
+            color: white; font-family: var(--font-body); font-size: 13px; font-weight: 700;
+            cursor: pointer; transition: opacity 0.2s, transform 0.1s;
+            letter-spacing: 0.3px;
+        }
+        .btn-mnext:hover { opacity: 0.88; }
+        .btn-mnext:active { transform: scale(0.98); }
+        .btn-mprev {
+            background: none; border: none; padding: 4px 0;
+            font-family: var(--font-body); font-size: 11.5px; color: var(--text-muted);
+            cursor: pointer; transition: color 0.2s; text-align: center;
+        }
+        .btn-mprev:hover { color: var(--cream); }
+    </style>
+</head>
+<body>
+
+<!-- Tutorial Modal -->
+<div id="tutorial-modal" class="modal-overlay">
+    <div class="modal-card">
+        <div class="modal-top-bar">
+            <div class="modal-dots">
+                <div class="modal-dot active" data-p="0"></div>
+                <div class="modal-dot" data-p="1"></div>
+                <div class="modal-dot" data-p="2"></div>
+                <div class="modal-dot" data-p="3"></div>
+                <div class="modal-dot" data-p="4"></div>
+            </div>
+            <button class="modal-close-btn" id="modal-close">&#x2715;</button>
+        </div>
+
+        <div class="modal-pages-wrap">
+            <div class="modal-pages" id="modal-pages">
+
+                <!-- Page 1 — V: Variation -->
+                <div class="modal-page">
+                    <div class="page-eyebrow">01 — VASE</div>
+                    <div class="vase-heading-row">
+                        <div class="vase-letter-big">V</div>
+                        <h2 class="page-heading" style="margin-bottom:0">Variation</h2>
+                    </div>
+                    <div class="vase-visual">
+                        <svg viewBox="0 0 360 110" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+                            <!-- White rabbit (left) -->
+                            <ellipse cx="80" cy="52" rx="4.5" ry="10" fill="#b8ccdf"/>
+                            <ellipse cx="92" cy="52" rx="4.5" ry="10" fill="#b8ccdf"/>
+                            <ellipse cx="80" cy="54" rx="2.5" ry="6" fill="#f0a0b0"/>
+                            <ellipse cx="92" cy="54" rx="2.5" ry="6" fill="#f0a0b0"/>
+                            <circle cx="86" cy="66" r="13" fill="#ccdcec"/>
+                            <ellipse cx="86" cy="83" rx="21" ry="14" fill="#ccdcec"/>
+                            <circle cx="82" cy="65" r="2.2" fill="#2a3a5a"/>
+                            <circle cx="90" cy="65" r="2.2" fill="#2a3a5a"/>
+                            <text x="86" y="105" text-anchor="middle" fill="#7A96BE" font-size="9" font-family="system-ui,sans-serif">White fur</text>
+                            <!-- Mutation arrows -->
+                            <line x1="118" y1="72" x2="143" y2="72" stroke="#E8633F" stroke-width="1.5" opacity="0.6"/>
+                            <line x1="217" y1="72" x2="242" y2="72" stroke="#E8633F" stroke-width="1.5" opacity="0.6"/>
+                            <polygon points="118,72 128,67 128,77" fill="#E8633F" opacity="0.6"/>
+                            <polygon points="242,72 232,67 232,77" fill="#E8633F" opacity="0.6"/>
+                            <rect x="141" y="60" width="78" height="24" rx="12" fill="rgba(232,99,63,0.12)" stroke="rgba(232,99,63,0.28)" stroke-width="1"/>
+                            <text x="180" y="76" text-anchor="middle" fill="#E8633F" font-size="9" font-family="system-ui,sans-serif" font-weight="600" letter-spacing="1">MUTATION</text>
+                            <!-- Brown rabbit (right) -->
+                            <ellipse cx="268" cy="52" rx="4.5" ry="10" fill="#6a3e1d"/>
+                            <ellipse cx="280" cy="52" rx="4.5" ry="10" fill="#6a3e1d"/>
+                            <ellipse cx="268" cy="54" rx="2.5" ry="6" fill="#cc4477" opacity="0.45"/>
+                            <ellipse cx="280" cy="54" rx="2.5" ry="6" fill="#cc4477" opacity="0.45"/>
+                            <circle cx="274" cy="66" r="13" fill="#8B5E3C"/>
+                            <ellipse cx="274" cy="83" rx="21" ry="14" fill="#8B5E3C"/>
+                            <circle cx="270" cy="65" r="2.2" fill="#1a0a00"/>
+                            <circle cx="278" cy="65" r="2.2" fill="#1a0a00"/>
+                            <text x="274" y="105" text-anchor="middle" fill="#7A96BE" font-size="9" font-family="system-ui,sans-serif">Brown fur</text>
+                        </svg>
+                    </div>
+                    <p class="vase-page-desc"><strong>Variation</strong> — Mutation produces individuals with different traits — in this case, white or brown fur.</p>
+                </div>
+
+                <!-- Page 2 — A: Advantage -->
+                <div class="modal-page">
+                    <div class="page-eyebrow">02 — VASE</div>
+                    <div class="vase-heading-row">
+                        <div class="vase-letter-big">A</div>
+                        <h2 class="page-heading" style="margin-bottom:0">Adaptation</h2>
+                    </div>
+                    <div class="vase-visual">
+                        <svg viewBox="0 0 360 110" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Left: grassland -->
+                            <rect x="0" y="0" width="174" height="110" fill="#0e2010"/>
+                            <rect x="0" y="88" width="174" height="22" fill="#193819"/>
+                            <!-- Brown rabbit (blended in) -->
+                            <ellipse cx="62" cy="50" rx="4" ry="8.5" fill="#6a3e1d"/>
+                            <ellipse cx="72" cy="50" rx="4" ry="8.5" fill="#6a3e1d"/>
+                            <circle cx="67" cy="61" r="11" fill="#7A4E2D"/>
+                            <ellipse cx="67" cy="76" rx="18" ry="12" fill="#7A4E2D"/>
+                            <circle cx="64" cy="60" r="2" fill="#1a0a00"/>
+                            <circle cx="70" cy="60" r="2" fill="#1a0a00"/>
+                            <circle cx="120" cy="26" r="12" fill="rgba(76,175,80,0.18)" stroke="#4CAF50" stroke-width="1.5"/>
+                            <text x="120" y="31.5" text-anchor="middle" fill="#4CAF50" font-size="14">✓</text>
+                            <text x="87" y="103" text-anchor="middle" fill="rgba(76,175,80,0.65)" font-size="8.5" font-family="system-ui,sans-serif">Grassland — brown blends in</text>
+                            <!-- Divider -->
+                            <line x1="180" y1="6" x2="180" y2="104" stroke="rgba(255,255,255,0.1)" stroke-width="1" stroke-dasharray="4,3"/>
+                            <!-- Right: snow -->
+                            <rect x="186" y="0" width="174" height="110" fill="#0c1e2e"/>
+                            <rect x="186" y="88" width="174" height="22" fill="rgba(200,228,248,0.14)"/>
+                            <!-- White rabbit (blended in) -->
+                            <ellipse cx="248" cy="50" rx="4" ry="8.5" fill="#a8bed2"/>
+                            <ellipse cx="258" cy="50" rx="4" ry="8.5" fill="#a8bed2"/>
+                            <ellipse cx="248" cy="52" rx="2.2" ry="5.5" fill="#f0a0b0" opacity="0.55"/>
+                            <ellipse cx="258" cy="52" rx="2.2" ry="5.5" fill="#f0a0b0" opacity="0.55"/>
+                            <circle cx="253" cy="61" r="11" fill="#becedd"/>
+                            <ellipse cx="253" cy="76" rx="18" ry="12" fill="#becedd"/>
+                            <circle cx="250" cy="60" r="2" fill="#2a3a5a"/>
+                            <circle cx="256" cy="60" r="2" fill="#2a3a5a"/>
+                            <circle cx="306" cy="26" r="12" fill="rgba(76,175,80,0.18)" stroke="#4CAF50" stroke-width="1.5"/>
+                            <text x="306" y="31.5" text-anchor="middle" fill="#4CAF50" font-size="14">✓</text>
+                            <text x="273" y="103" text-anchor="middle" fill="rgba(76,175,80,0.65)" font-size="8.5" font-family="system-ui,sans-serif">Snow — white blends in</text>
+                        </svg>
+                    </div>
+                    <p class="vase-page-desc"><strong>Adaptation</strong> — Some traits are better adapted to the environment. Brown fur blends into grassland; white fur blends into snow.</p>
+                </div>
+
+                <!-- Page 3 — S: Selection -->
+                <div class="modal-page">
+                    <div class="page-eyebrow">03 — VASE</div>
+                    <div class="vase-heading-row">
+                        <div class="vase-letter-big">S</div>
+                        <h2 class="page-heading" style="margin-bottom:0">Selection</h2>
+                    </div>
+                    <div class="vase-visual">
+                        <svg viewBox="0 0 360 110" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="0" y="0" width="360" height="110" fill="#0a1428"/>
+                            <rect x="0" y="88" width="360" height="22" fill="#193819"/>
+                            <!-- Brown rabbit left (safe) -->
+                            <ellipse cx="72" cy="50" rx="4" ry="8.5" fill="#6a3e1d"/>
+                            <ellipse cx="82" cy="50" rx="4" ry="8.5" fill="#6a3e1d"/>
+                            <circle cx="77" cy="61" r="11" fill="#7A4E2D"/>
+                            <ellipse cx="77" cy="76" rx="18" ry="12" fill="#7A4E2D"/>
+                            <circle cx="74" cy="60" r="2" fill="#1a0a00"/>
+                            <circle cx="80" cy="60" r="2" fill="#1a0a00"/>
+                            <circle cx="77" cy="33" r="11" fill="rgba(76,175,80,0.18)" stroke="#4CAF50" stroke-width="1.5"/>
+                            <text x="77" y="38.5" text-anchor="middle" fill="#4CAF50" font-size="14">✓</text>
+                            <text x="77" y="104" text-anchor="middle" fill="rgba(76,175,80,0.65)" font-size="8.5" font-family="system-ui,sans-serif">Survives</text>
+                            <!-- White rabbit right (targeted) -->
+                            <ellipse cx="248" cy="50" rx="4" ry="8.5" fill="#a8bed2"/>
+                            <ellipse cx="258" cy="50" rx="4" ry="8.5" fill="#a8bed2"/>
+                            <ellipse cx="248" cy="52" rx="2.2" ry="5.5" fill="#f0a0b0" opacity="0.55"/>
+                            <ellipse cx="258" cy="52" rx="2.2" ry="5.5" fill="#f0a0b0" opacity="0.55"/>
+                            <circle cx="253" cy="61" r="11" fill="#becedd"/>
+                            <ellipse cx="253" cy="76" rx="18" ry="12" fill="#becedd"/>
+                            <circle cx="250" cy="60" r="2" fill="#2a3a5a"/>
+                            <circle cx="256" cy="60" r="2" fill="#2a3a5a"/>
+                            <circle cx="253" cy="33" r="11" fill="rgba(232,99,63,0.18)" stroke="#E8633F" stroke-width="1.5"/>
+                            <text x="253" y="38.5" text-anchor="middle" fill="#E8633F" font-size="12" font-weight="bold">✕</text>
+                            <text x="253" y="104" text-anchor="middle" fill="rgba(232,99,63,0.7)" font-size="8.5" font-family="system-ui,sans-serif">Caught</text>
+                            <!-- Hawk (overhead view) at top-right -->
+                            <g transform="translate(318,18)">
+                                <ellipse cx="0" cy="0" rx="13" ry="5" fill="#8B6a14"/>
+                                <path d="M-13,-1 Q-24,-13 -36,-5 Q-22,2 -13,6Z" fill="#8B6a14"/>
+                                <path d="M13,-1 Q24,-13 36,-5 Q22,2 13,6Z" fill="#7a5a10"/>
+                                <ellipse cx="-15" cy="-1" rx="5" ry="3.5" fill="#7a5a10"/>
+                            </g>
+                            <!-- Dive arrow from hawk toward white rabbit -->
+                            <line x1="304" y1="24" x2="265" y2="52" stroke="#E8633F" stroke-width="1.5" stroke-dasharray="5,3" opacity="0.65"/>
+                            <polygon points="265,52 272,44 270,55" fill="#E8633F" opacity="0.65"/>
+                        </svg>
+                    </div>
+                    <p class="vase-page-desc"><strong>Selection</strong> — The hawk picks off visible rabbits. Camouflaged individuals survive longer and reproduce more.</p>
+                </div>
+
+                <!-- Page 4 — E: Evolution -->
+                <div class="modal-page">
+                    <div class="page-eyebrow">04 — VASE</div>
+                    <div class="vase-heading-row">
+                        <div class="vase-letter-big">E</div>
+                        <h2 class="page-heading" style="margin-bottom:0">Evolution</h2>
+                    </div>
+                    <div class="vase-visual">
+                        <svg viewBox="0 0 360 110" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+                            <text x="180" y="13" text-anchor="middle" fill="#7A96BE" font-size="8.5" font-family="system-ui,sans-serif" letter-spacing="0.3">Population over time — Grassland (brown advantaged)</text>
+                            <!-- Gen 1: 50% white / 50% brown — bars from y=20 to y=90 (70px) -->
+                            <text x="72" y="28" text-anchor="middle" fill="#7A96BE" font-size="8.5" font-family="system-ui,sans-serif">Gen 1</text>
+                            <rect x="48" y="31" width="48" height="35" rx="3" fill="#becedd"/>
+                            <rect x="48" y="66" width="48" height="24" rx="3" fill="#8B5E3C"/>
+                            <text x="72" y="100" text-anchor="middle" fill="rgba(255,255,255,0.22)" font-size="7.5" font-family="system-ui,sans-serif">50 / 50</text>
+                            <!-- Arrow -->
+                            <text x="148" y="58" text-anchor="middle" fill="#E8633F" font-size="18">→</text>
+                            <!-- Gen 5: 20% white / 80% brown -->
+                            <text x="204" y="28" text-anchor="middle" fill="#7A96BE" font-size="8.5" font-family="system-ui,sans-serif">Gen 5</text>
+                            <rect x="180" y="31" width="48" height="12" rx="3" fill="#becedd"/>
+                            <rect x="180" y="43" width="48" height="47" rx="3" fill="#8B5E3C"/>
+                            <text x="204" y="100" text-anchor="middle" fill="rgba(255,255,255,0.22)" font-size="7.5" font-family="system-ui,sans-serif">20 / 80</text>
+                            <!-- Arrow -->
+                            <text x="280" y="58" text-anchor="middle" fill="#E8633F" font-size="18">→</text>
+                            <!-- Gen 10: 5% white / 95% brown -->
+                            <text x="326" y="28" text-anchor="middle" fill="#7A96BE" font-size="8.5" font-family="system-ui,sans-serif">Gen 10</text>
+                            <rect x="302" y="31" width="48" height="4" rx="2" fill="#becedd"/>
+                            <rect x="302" y="35" width="48" height="55" rx="3" fill="#8B5E3C"/>
+                            <text x="326" y="100" text-anchor="middle" fill="rgba(255,255,255,0.22)" font-size="7.5" font-family="system-ui,sans-serif">5 / 95</text>
+                            <!-- Legend -->
+                            <rect x="108" y="104" width="8" height="7" rx="1.5" fill="#becedd"/>
+                            <text x="120" y="111" fill="#7A96BE" font-size="8" font-family="system-ui,sans-serif">White</text>
+                            <rect x="158" y="104" width="8" height="7" rx="1.5" fill="#8B5E3C"/>
+                            <text x="170" y="111" fill="#7A96BE" font-size="8" font-family="system-ui,sans-serif">Brown</text>
+                        </svg>
+                    </div>
+                    <p class="vase-page-desc"><strong>Evolution</strong> — Over generations, the advantageous trait spreads. The population evolves to match its environment.</p>
+                </div>
+
+                <!-- Page 5 — Controls -->
+                <div class="modal-page">
+                    <div class="page-eyebrow">05 — Controls</div>
+                    <h2 class="page-heading">How to run it</h2>
+                    <div class="step-list">
+                        <div class="step-item">
+                            <div class="step-num">1</div>
+                            <div class="step-text"><strong>Open Controls</strong> — click the Controls button at the bottom-left to expand the settings panel.</div>
+                        </div>
+                        <div class="step-item">
+                            <div class="step-num">2</div>
+                            <div class="step-text"><strong>Pick an environment &amp; color mix</strong> — Grassland or Snow sets which color is favoured. Adjust the starting ratio of white to brown.</div>
+                        </div>
+                        <div class="step-item">
+                            <div class="step-num">3</div>
+                            <div class="step-text"><strong>Hit Start</strong> — the simulation runs. Open the <strong>Population Chart</strong> (bottom-right) to track how color ratios shift each generation.</div>
+                        </div>
+                        <div class="step-item">
+                            <div class="step-num">4</div>
+                            <div class="step-text"><strong>Experiment live</strong> — adjust mutation rate or flip environments mid-run. Watch the chart reverse — that's natural selection.</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="modal-actions">
+            <button class="btn-mnext" id="modal-next">Next →</button>
+            <button class="btn-mprev" id="modal-prev" style="display:none">← Back</button>
+        </div>
+    </div>
+</div>
+
+<!-- Full-screen 3D canvas -->
+<div id="canvas-wrap">
+    <canvas id="three-canvas"></canvas>
+</div>
+
+<!-- Title pill -->
+<div id="title-pill" class="glass">
+    <div class="logo-mark">CM</div>
+    <span class="title-name">Natural Selection</span>
+    <div class="title-divider"></div>
+    <div class="env-hud-dot grassland" id="env-hud-dot"></div>
+    <span id="env-hud-name">Grassland</span>
+    <div class="title-divider"></div>
+    <button class="btn-guide" id="guide-btn">
+        <div class="guide-icon">?</div>
+        Guide
+    </button>
+</div>
+
+<!-- Tutorial pointer arrow -->
+<div id="controls-arrow">
+    <svg width="56" height="70" viewBox="0 0 38 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M19 4 L19 38" stroke="#E8633F" stroke-width="4.5" stroke-linecap="round"/>
+        <path d="M6 26 L19 42 L32 26" stroke="#E8633F" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="19" cy="44" r="3" fill="#E8633F" opacity="0.4"/>
+    </svg>
+</div>
+
+<!-- Controls toggle button -->
+<button id="controls-toggle" class="glass">
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+        <circle cx="4" cy="3.5" r="1.3" fill="currentColor"/>
+        <line x1="0" y1="3.5" x2="2.7" y2="3.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+        <line x1="5.3" y1="3.5" x2="13" y2="3.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+        <circle cx="9" cy="9.5" r="1.3" fill="currentColor"/>
+        <line x1="0" y1="9.5" x2="7.7" y2="9.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+        <line x1="10.3" y1="9.5" x2="13" y2="9.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+    </svg>
+    Controls
+    <span class="toggle-arrow">↑</span>
+</button>
+
+<!-- Controls panel -->
+<div id="controls-panel" class="glass">
+    <div class="ctrl-inner">
+
+        <div class="ctrl-section">
+            <div class="ctrl-label">Environment</div>
+            <div class="env-cards">
+                <button class="env-card active" data-env="grassland">
+                    <div class="env-active-tag">Active</div>
+                    <div class="env-art grassland"></div>
+                    <span class="env-label">Grassland</span>
+                </button>
+                <button class="env-card" data-env="snow">
+                    <div class="env-active-tag">Active</div>
+                    <div class="env-art snow"></div>
+                    <span class="env-label">Snow</span>
+                </button>
+            </div>
+            <div class="risk-rows">
+                <div class="risk-row">
+                    <span>White</span>
+                    <div class="risk-track">
+                        <div class="risk-fill danger" id="white-risk-fill" style="width:80%"></div>
+                    </div>
+                    <span class="risk-pct danger" id="white-risk-pct">80%</span>
+                </div>
+                <div class="risk-row">
+                    <span>Brown</span>
+                    <div class="risk-track">
+                        <div class="risk-fill safe" id="brown-risk-fill" style="width:20%"></div>
+                    </div>
+                    <span class="risk-pct safe" id="brown-risk-pct">20%</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="ctrl-section">
+            <div class="ctrl-label">Simulation</div>
+            <div class="status-pill" id="status-pill">
+                <div class="status-dot"></div>
+                <span id="status-text">Ready</span>
+            </div>
+            <div class="sim-controls">
+                <button class="btn-primary" id="start-btn">
+                    <svg width="10" height="10" viewBox="0 0 11 11" fill="currentColor"><path d="M2 1.5L9.5 5.5L2 9.5V1.5Z"/></svg>
+                    Start
+                </button>
+                <button class="btn-icon-only" id="reset-btn" title="Reset">
+                    <svg width="14" height="14" viewBox="0 0 15 15" fill="none">
+                        <path d="M7.5 2C4.46 2 2 4.46 2 7.5s2.46 5.5 5.5 5.5 5.5-2.46 5.5-5.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                        <path d="M12 2L13.5 5.5H9.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="ctrl-section">
+            <div class="ctrl-label">Parameters</div>
+
+            <div class="slider-group">
+                <div class="slider-label">
+                    <div class="slider-label-left">Speed</div>
+                    <span class="slider-badge" id="speed-val">Normal</span>
+                </div>
+                <input type="range" id="speed-slider" min="1" max="5" value="3">
+            </div>
+
+            <div class="slider-group">
+                <div class="slider-label">
+                    <div class="slider-label-left">Color Mix</div>
+                </div>
+                <div class="mix-preview">
+                    <div class="mix-tag">
+                        <div class="mix-dot white-dot"></div>
+                        White:&nbsp;<span class="mix-count" id="white-start">100%</span>
+                    </div>
+                    <div class="mix-tag">
+                        <div class="mix-dot brown-dot"></div>
+                        Brown:&nbsp;<span class="mix-count" id="brown-start">0%</span>
+                    </div>
+                </div>
+                <input type="range" id="mix-slider" min="0" max="100" value="0" class="lockable">
+            </div>
+
+            <div class="slider-group">
+                <div class="slider-label">
+                    <div class="slider-label-left">Mutation Rate</div>
+                    <span class="slider-badge" id="mutation-val">10%</span>
+                </div>
+                <input type="range" id="mutation-slider" min="1" max="20" value="10">
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Stats column (bottom-right) -->
+<!-- column-reverse: first child = bottom → stats first, chart second (appears above) -->
+<div id="right-col">
+
+    <!-- Stats (always visible, anchored at bottom) -->
+    <div id="stats-panel" class="glass">
+
+        <div class="gen-row">
+            <div>
+                <div class="gen-eye">Generation</div>
+                <div class="gen-digits">
+                    <span class="gen-digit" id="gd2">0</span>
+                    <span class="gen-digit" id="gd1">0</span>
+                    <span class="gen-digit" id="gd0">0</span>
+                </div>
+            </div>
+            <div class="gen-status">
+                <div class="status-pill" style="font-size:8.5px; padding:3px 9px;">
+                    <div class="status-dot" style="width:4px;height:4px;background:#4ADE80"></div>
+                    <span style="color:#4ADE80">Live</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="pop-row">
+            <div class="pop-item">
+                <svg class="rabbit-svg" viewBox="0 0 40 52" fill="none">
+                    <ellipse cx="20" cy="40" rx="12" ry="9" fill="#C8C0B0"/>
+                    <circle cx="20" cy="27" r="8.5" fill="#D8D0C0"/>
+                    <ellipse cx="15" cy="13.5" rx="3" ry="8" fill="#C0B8A8"/>
+                    <ellipse cx="25" cy="13.5" rx="3" ry="8" fill="#C0B8A8"/>
+                    <circle cx="17" cy="25.5" r="1.4" fill="#333" opacity="0.55"/>
+                    <circle cx="23" cy="25.5" r="1.4" fill="#333" opacity="0.55"/>
+                </svg>
+                <div>
+                    <span class="pop-number white-n" id="white-count">100%</span>
+                    <div class="pop-sub">White</div>
+                </div>
+            </div>
+            <div class="pop-divider"></div>
+            <div class="pop-item">
+                <svg class="rabbit-svg" viewBox="0 0 40 52" fill="none">
+                    <ellipse cx="20" cy="40" rx="12" ry="9" fill="#7A4E2D"/>
+                    <circle cx="20" cy="27" r="8.5" fill="#8B5E3C"/>
+                    <ellipse cx="15" cy="13.5" rx="3" ry="8" fill="#7A4E2D"/>
+                    <ellipse cx="25" cy="13.5" rx="3" ry="8" fill="#7A4E2D"/>
+                    <circle cx="17" cy="25.5" r="1.4" fill="#1a0a00" opacity="0.6"/>
+                    <circle cx="23" cy="25.5" r="1.4" fill="#1a0a00" opacity="0.6"/>
+                </svg>
+                <div>
+                    <span class="pop-number brown-n" id="brown-count">0%</span>
+                    <div class="pop-sub">Brown</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="hawk-row">
+            <svg class="hawk-svg" viewBox="0 0 50 32" fill="none">
+                <ellipse cx="25" cy="18" rx="9" ry="4.5" fill="#5C4A2A"/>
+                <path d="M4,18 Q14,7 25,18 Q36,7 46,18" fill="#7A6038"/>
+                <ellipse cx="32" cy="15" rx="4" ry="3.5" fill="#5C4A2A"/>
+                <path d="M35,13.5 L41,16 L35,17.5" fill="#DAA520"/>
+                <circle cx="33.5" cy="13" r="1.2" fill="#1a1a1a"/>
+            </svg>
+            <div>
+                <div class="hawk-stat-label">Attacks</div>
+                <div class="hawk-stat-val" id="hawk-attacks">—</div>
+            </div>
+            <div class="kills-badge" id="hawk-kills">0 kills</div>
+        </div>
+
+        <button class="chart-toggle-btn" id="chart-toggle">
+            <svg width="13" height="13" viewBox="0 0 12 12" fill="none">
+                <rect x="1" y="7" width="2.5" height="4" rx="0.5" fill="currentColor" opacity="0.6"/>
+                <rect x="4.75" y="4" width="2.5" height="7" rx="0.5" fill="currentColor"/>
+                <rect x="8.5" y="1.5" width="2.5" height="9.5" rx="0.5" fill="currentColor" opacity="0.8"/>
+            </svg>
+            Population Chart
+            <div class="chart-onoff" id="chart-onoff"><div class="chart-onoff-thumb"></div></div>
+        </button>
+
+    </div>
+
+    <!-- Chart (above stats, toggled) -->
+    <div id="chart-panel" class="glass">
+        <div class="chart-inner">
+            <div class="chart-label">Population % over generations</div>
+            <div class="chart-wrap">
+                <canvas id="pop-chart"></canvas>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Hawk HUD -->
+<div id="hawk-hud-wrap">
+    <div class="hawk-hud" id="hawk-hud">Hawk patrolling</div>
+</div>
+
+<!-- Attribution -->
+<div id="attribution" class="glass">
+    <div>Curiominds.inc · Natural Selection Simulator</div>
+    <div>Creator: Mr Lau Chin Hang Henry &nbsp;·&nbsp;
+        <a href="https://www.instagram.com/curiminds.inc/" target="_blank" rel="noopener">@curiminds.inc</a>
+        &nbsp;·&nbsp;
+        <a href="https://website.curiominds-inc.workers.dev/" target="_blank" rel="noopener">Website</a>
+    </div>
+</div>
+
+<!-- Standalone bootstrap — all code + assets load from the GitHub repo via jsDelivr.
+     No local files required; this HTML can be hosted anywhere on its own. -->
+<script type="module">
+const REPO_BASE = 'https://cdn.jsdelivr.net/gh/curiomindsinc/natural_selection@main/';
+
+// Modules resolve their own relative imports against REPO_BASE automatically,
+// but runtime asset paths ('models/…', 'sounds/…') resolve against THIS page,
+// so rewrite them at both loader entry points (three's LoadingManager + fetch).
+const isRepoAsset = u => typeof u === 'string' && /^(models|sounds)\//.test(u);
+const toRepoURL   = u => REPO_BASE + u.split('/').map(encodeURIComponent).join('/');
+
+const nativeFetch = window.fetch.bind(window);
+window.fetch = (input, init) => nativeFetch(isRepoAsset(input) ? toRepoURL(input) : input, init);
+
+const THREE = await import('three');
+THREE.DefaultLoadingManager.setURLModifier(u => isRepoAsset(u) ? toRepoURL(u) : u);
+
+await import(REPO_BASE + 'main.js');
+</script>
+</body>
+</html>
