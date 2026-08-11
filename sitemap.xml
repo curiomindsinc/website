@@ -22,10 +22,14 @@
   <url><loc>https://curiomindsinc.pages.dev/Biology/maltase-simulation</loc><priority>0.8</priority></url>
   <url><loc>https://curiomindsinc.pages.dev/Biology/bioflow_final</loc><priority>0.8</priority></url>
   <url><loc>https://curiomindsinc.pages.dev/Biology/osmosis-simulation</loc><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Biology/savanna</loc><priority>0.8</priority></url>
   <url><loc>https://curiomindsinc.pages.dev/Biology/heart_detective_v5</loc><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Biology/natural_selection</loc><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Biology/centraldogma</loc><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Biology/mitosis_cell_division_final</loc><priority>0.8</priority></url>
 
   <!-- Earth Science -->
-  <url><loc>https://curiomindsinc.pages.dev/Earth%20Science/tectonics/onogoro_final</loc><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Earth%20Science/onogoro_final</loc><priority>0.8</priority></url>
 
   <!-- Astronomy -->
   <url><loc>https://curiomindsinc.pages.dev/Astronomy/solar-system-simulator</loc><priority>0.8</priority></url>
