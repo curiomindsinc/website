@@ -364,6 +364,22 @@ body.light{
   .score-chip{font-size:0.7rem;padding:0.2rem 0.5rem;}
   .streak-chip{font-size:0.72rem;}
 }
+
+/* ── Viewport-fit: the entry card overflowed short laptop screens ── */
+.screen{min-height:100dvh;}
+#name-screen{min-height:100dvh;overflow-y:auto;padding:1rem 0;}
+
+@media (max-height: 700px){
+  .name-card{padding:1.4rem 2.2rem;}
+  .atom-row{gap:8px;margin-bottom:1rem;}
+  .atom-pip{width:34px;height:34px;font-size:0.58rem;}
+  .name-logo{font-size:1.25rem;}
+  .name-tagline{margin-bottom:1.2rem;}
+}
+@media (max-height: 560px){
+  .atom-row{display:none;}
+  .name-card{padding:1.1rem 2rem;}
+}
 </style>
 </head>
 <body>
