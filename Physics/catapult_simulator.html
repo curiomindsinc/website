@@ -76,6 +76,58 @@
   .credit { text-align:center; font-size:12px; color:#a07040; margin-top:8px; font-style:italic; }
   .credit a { color:var(--gold-dim); text-decoration:none; }
   .credit a:hover { text-decoration:underline; color:var(--gold); }
+
+  /* ── Viewport-fit shell: controls always on screen ── */
+  html, body { height: 100%; min-height: 0; overflow: hidden; }
+  #app {
+    max-width: none;
+    height: 100dvh;
+    padding: 6px 14px 8px;
+    display: grid;
+    grid-template-rows: auto minmax(90px, 1fr) auto auto auto;
+    gap: 7px;
+    overflow: hidden;
+  }
+  .site-header { padding: 4px 0 7px; margin-bottom: 0; }
+  .site-header .subtitle { font-size: 11px; margin-top: 2px; }
+
+  #canvas-wrap {
+    min-height: 0;
+    display: flex; align-items: center; justify-content: center;
+    line-height: 0;
+  }
+  #gameCanvas { width: auto; max-width: 100%; max-height: 100%; }
+
+  .wood-panel { margin-top: 0; padding: 8px 12px; }
+  .zoom-row { padding-top: 6px; margin-top: 6px; }
+  .msg-bar { margin-top: 6px; min-height: 0; padding: 5px 12px; font-size: 12px; }
+
+  .parchment-panel { margin-top: 0; padding: 0; min-height: 0; overflow: auto; }
+  .parchment-panel > summary {
+    cursor: pointer; padding: 8px 14px; font-family: 'Cinzel', serif;
+    font-size: 12px; font-weight: 700; color: #5a3000; letter-spacing: 1px;
+    user-select: none;
+  }
+  .parchment-panel > .eq-body { padding: 0 14px 10px; }
+  .eq-formula { font-size: 13px; }
+  .eq-vals { margin-top: 8px; gap: 8px; }
+  .eq-val-box { padding: 4px 10px; }
+  .eq-val-num { font-size: 15px; }
+
+  .credit { margin-top: 0; font-size: 11px; }
+
+  @media (max-width: 760px) {
+    #app { padding: 5px 9px 7px; gap: 6px; }
+    .site-header { padding: 2px 0 5px; }
+    .site-header .subtitle { display: none; }
+    .wood-panel { padding: 7px 9px; }
+    .zoom-hint { display: none; }
+    .credit { font-size: 10px; }
+  }
+  @media (max-height: 660px) {
+    .site-header .subtitle { display: none; }
+    .msg-bar { font-size: 11px; padding: 4px 10px; }
+  }
 </style>
 </head>
 <body>
@@ -123,8 +175,9 @@
     <div class="msg-bar msg-idle" id="msgBar">Adjust angle &amp; speed, then fire!</div>
   </div>
 
-  <div class="parchment-panel">
-    <div class="eq-title">📜 Projectile Motion Equations</div>
+  <details class="parchment-panel" open>
+    <summary>📜 Projectile Motion Equations</summary>
+    <div class="eq-body">
     <div class="eq-formula">Range: R = v₀² · sin(2θ) / g</div>
     <div class="eq-formula">Max Height: H = v₀² · sin²(θ) / (2g)</div>
     <div class="eq-formula">Time of Flight: T = 2v₀ · sin(θ) / g</div>
@@ -134,7 +187,8 @@
       <div class="eq-val-box"><span class="eq-val-label">Time of Flight (T)</span><span class="eq-val-num" id="eqT">—</span></div>
       <div class="eq-val-box"><span class="eq-val-label">Castle Distance</span><span class="eq-val-num" id="eqD">—</span></div>
     </div>
-  </div>
+    </div>
+  </details>
 
   <div class="credit">
     Created by Mr Lau Chin Hang &nbsp;|&nbsp;
@@ -205,11 +259,15 @@ function w2s(wx, wy) {
 
 /* ─── canvas sizing ─── */
 function resizeCanvas() {
-  const cw = wrap.clientWidth || CANVAS_W;
+  const cw = wrap.clientWidth  || CANVAS_W;
+  const ch = wrap.clientHeight || 0;
   canvas.width  = CANVAS_W;
   canvas.height = CANVAS_H;
-  canvas.style.width  = cw + 'px';
-  canvas.style.height = Math.round(CANVAS_H * cw / CANVAS_W) + 'px';
+  let w = cw, h = Math.round(CANVAS_H * cw / CANVAS_W);
+  // cap by the slot's height so the controls below stay on screen
+  if (ch > 40 && h > ch) { h = ch; w = Math.round(CANVAS_W * ch / CANVAS_H); }
+  canvas.style.width  = w + 'px';
+  canvas.style.height = h + 'px';
 }
 
 /* ─── controls ─── */

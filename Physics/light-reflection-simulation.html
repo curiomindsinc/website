@@ -52,6 +52,36 @@
   }
   .info-box em { font-style:italic; }
   .hl1{color:#88aaff;} .hl2{color:#ffaa44;} .hl3{color:#44ddaa;}
+
+  /* ── Viewport-fit + responsive: the canvas was a hard-coded 660x430 ── */
+  html, body { height: 100%; }
+  body { min-height: 0; overflow: hidden; padding: 10px 12px; }
+
+  canvas {
+    width: auto; height: auto;
+    max-width: 100%; max-height: 100%;
+    aspect-ratio: 660 / 430;
+    flex: 0 1 auto; min-height: 0;
+  }
+  .mode-tabs { flex-wrap: wrap; justify-content: center; max-width: 100%; }
+  .bottom-row { flex-shrink: 0; max-width: 100%; }
+  .angle-display { min-width: 0; width: 100%; max-width: 340px; }
+  .info-box { max-width: min(660px, 100%); flex-shrink: 0; }
+
+  @media (max-width: 700px), (max-height: 640px) {
+    body { padding: 8px 10px; }
+    h1 { font-size: 1.05rem; }
+    .credits { display: none; }
+    .law-tag { margin-bottom: 7px; font-size: 0.54rem; }
+    .mode-tabs { gap: 4px; margin-bottom: 7px; }
+    .mode-tab { padding: 5px 8px; font-size: 0.52rem; }
+    .bottom-row { margin-top: 7px; }
+    .info-box { font-size: 0.54rem; padding: 5px 12px; margin-top: 6px;
+                min-height: 0; line-height: 1.55; }
+  }
+  @media (max-width: 430px) {
+    .mode-tab { flex: 1 1 30%; padding: 5px 4px; }
+  }
 </style>
 </head>
 <body>
