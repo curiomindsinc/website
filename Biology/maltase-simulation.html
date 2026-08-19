@@ -15,7 +15,8 @@
   @media(max-width:900px){ .layout { grid-template-columns:1fr; } }
   .card { background: hsl(220,18%,16%); border: 1px solid hsl(220,15%,25%); border-radius: 12px; }
   .canvas-wrap { height: min(60vh, 520px); min-height: 350px; overflow: hidden; border-radius: 12px; }
-  canvas { display:block; width:100%; height:100%; cursor:crosshair; }
+  canvas { display:block; width:100%; height:100%; cursor:grab; touch-action:none; }
+  canvas.grabbing { cursor:grabbing; }
   .sidebar { display:flex; flex-direction:column; gap:12px; }
   .panel { padding: 14px; }
   .panel-title { font-size: 0.65rem; font-weight: 600; color: #64748b; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 10px; }
@@ -52,6 +53,58 @@
   .legend-item { display:flex; align-items:center; gap:6px; font-size:0.65rem; color:rgba(255,255,255,0.75); }
   .dot { width:10px; height:10px; border-radius:2px; flex-shrink:0; }
   .hint { font-size:0.6rem; color:#475569; text-align:center; margin-top:4px; }
+
+  /* ── Viewport-fit shell: controls always on screen ── */
+  html, body { height: 100%; }
+  body { min-height: 0; overflow: hidden; padding: 10px 12px 12px;
+         display: grid; grid-template-rows: auto 1fr; gap: 10px; }
+  header { margin-bottom: 0; }
+  h1 { font-size: 0.98rem; }
+  .subtitle { font-size: 0.66rem; }
+
+  .layout {
+    max-width: none; width: 100%; margin: 0;
+    min-height: 0; gap: 12px;
+    grid-template-rows: minmax(0, 1fr) auto;
+  }
+  .sim-col { grid-column: 1; grid-row: 1; min-height: 0; display: grid; grid-template-rows: 1fr auto; gap: 8px; }
+  .sidebar { grid-column: 2; grid-row: 1 / -1; }
+  .graphs  { grid-column: 1; grid-row: 2; }
+  .canvas-wrap { height: auto; min-height: 0; }
+  .hint { margin-top: 0; }
+
+  /* Notes collapse so they can never push controls off-screen */
+  .banner { margin-top: 0; padding: 0; }
+  .banner > summary { cursor: pointer; padding: 8px 12px; font-size: 0.68rem;
+                      font-weight: 600; color: #94a3b8; user-select: none; }
+  .banner .banner-grid { padding: 0 12px 10px; }
+
+  .graphs { margin-top: 0; flex-direction: row; gap: 8px; }
+  .graphs > .graph-card { flex: 1; min-width: 0; padding: 9px 11px; }
+  .graph-canvas { height: clamp(62px, 12vh, 130px); }
+  .graph-title { margin-bottom: 5px; font-size: 0.7rem; }
+
+  /* Sidebar scrolls inside itself — the page never does */
+  .sidebar { min-height: 0; overflow-y: auto; overflow-x: hidden;
+             padding-right: 3px; scrollbar-width: thin; }
+  .panel { padding: 11px 12px; }
+  .controls { gap: 10px; }
+  .legend { margin-top: 0; }
+
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; grid-template-rows: minmax(0,1fr) minmax(0,46vh); }
+    /* single column: drop the explicit column placements or they force a 2nd track */
+    .sim-col { grid-column: 1; grid-row: 1; grid-template-rows: 1fr; }
+    .sidebar { grid-column: 1; grid-row: 2; }
+    .sim-col .hint, .sim-col .banner, .graphs { display: none; }
+  }
+  @media (max-width: 700px) {
+    body { padding: 8px 9px 9px; gap: 7px; }
+    header { gap: 7px; }
+    .subtitle { display: none; }
+    h1 { font-size: 0.88rem; }
+    .layout { grid-template-rows: minmax(0,1fr) minmax(0,50vh); gap: 8px; }
+  }
 </style>
 </head>
 <body>
@@ -65,21 +118,22 @@
   </div>
 </header>
 <div class="layout">
-  <div>
+  <div class="sim-col">
     <div class="card canvas-wrap"><canvas id="sim"></canvas></div>
-    <p class="hint">Scroll to zoom · Alt+drag or middle-click to pan</p>
-    <div class="banner">
+    <p class="hint">Drag to pan · Scroll or pinch to zoom · Double-click / double-tap to reset view</p>
+    <details class="banner">
+      <summary>How it works — lock &amp; key, catalysis, denaturation</summary>
       <div class="banner-grid">
         <div><span class="tag-green">Lock &amp; Key:</span> Maltase's active site has a specific shape complementary only to maltose. Sucrose and lactose cannot fit and bounce off.</div>
         <div><span class="tag-amber">Catalysis:</span> Maltose binds → enzyme-substrate complex forms → maltose is hydrolysed into 2 glucose molecules → enzyme is released unchanged.</div>
         <div><span class="tag-red">Denaturation:</span> Above 35°C or outside pH 6.5–7.5, the enzyme's shape changes. The active site distorts so maltose can no longer fit.</div>
       </div>
-    </div>
-    <div class="graphs">
-      <div class="graph-card"><div class="graph-title">Rate vs Temperature</div><canvas class="graph-canvas" id="g-temp"></canvas></div>
-      <div class="graph-card"><div class="graph-title">Rate vs pH</div><canvas class="graph-canvas" id="g-ph"></canvas></div>
-      <div class="graph-card"><div class="graph-title">Rate vs [Substrate]</div><canvas class="graph-canvas" id="g-conc"></canvas></div>
-    </div>
+    </details>
+  </div>
+  <div class="graphs">
+    <div class="graph-card"><div class="graph-title">Rate vs Temperature</div><canvas class="graph-canvas" id="g-temp"></canvas></div>
+    <div class="graph-card"><div class="graph-title">Rate vs pH</div><canvas class="graph-canvas" id="g-ph"></canvas></div>
+    <div class="graph-card"><div class="graph-title">Rate vs [Substrate]</div><canvas class="graph-canvas" id="g-conc"></canvas></div>
   </div>
   <div class="sidebar">
     <div class="card panel">
@@ -129,13 +183,13 @@ function buildControls() {
   sliders.forEach(s => {
     const row = document.createElement('div'); row.className='ctrl-row';
     const valId='val-'+s.key, warnId='warn-'+s.key;
-    row.innerHTML = `<div class="ctrl-header"><label class="ctrl-label">${s.icon} ${s.label}</label><span class="ctrl-val" id="${valId}">${params[s.key]}${s.unit}${s.optimum!==undefined?' <span style=\"color:#64748b\">(opt:${s.optimum}${s.unit})</span>':''}</span></div><input type="range" min="${s.min}" max="${s.max}" step="${s.step}" value="${params[s.key]}" /><div class="ctrl-warn" id="${warnId}" style="display:none">${s.warnText||''}</div>`;
+    row.innerHTML = `<div class="ctrl-header"><label class="ctrl-label">${s.icon} ${s.label}</label><span class="ctrl-val" id="${valId}">${params[s.key]}${s.unit}${s.optimum!==undefined?` <span style="color:#64748b">(opt:${s.optimum}${s.unit})</span>`:''}</span></div><input type="range" min="${s.min}" max="${s.max}" step="${s.step}" value="${params[s.key]}" /><div class="ctrl-warn" id="${warnId}" style="display:none">${s.warnText||''}</div>`;
     const input = row.querySelector('input');
     input.addEventListener('input', () => {
       params[s.key]=parseFloat(input.value);
       const isWarn=(s.warnAbove&&params[s.key]>s.warnAbove)||(s.warnBelow&&params[s.key]<s.warnBelow);
       const valEl=document.getElementById(valId); valEl.className='ctrl-val'+(isWarn?' warn':'');
-      valEl.innerHTML=`${params[s.key]}${s.unit}${s.optimum!==undefined?' <span style="color:#64748b">(opt:${s.optimum}${s.unit})</span>':''}`;
+      valEl.innerHTML=`${params[s.key]}${s.unit}${s.optimum!==undefined?` <span style="color:#64748b">(opt:${s.optimum}${s.unit})</span>`:''}`;
       const warnEl=document.getElementById(warnId); if(warnEl) warnEl.style.display=isWarn?'block':'none';
       syncMolecules(); drawGraphs();
     });
@@ -170,12 +224,31 @@ class Product extends Molecule {
   constructor(x,y){super('glucose',x,y,14,14);this.age=0;}
   update(sf,W,H){super.update(sf,W,H);this.age++;if(this.age>300)this.opacity=Math.max(0,this.opacity-0.01);}
 }
+// The simulation lives in a logical world that is scaled up to fill the canvas.
+// Previously the world *was* the canvas in pixels, so a wider window just made a
+// bigger empty arena holding the same handful of fixed-size molecules.
+//
+// The world now targets a constant AREA (constant molecule density) and takes the
+// canvas's aspect ratio, so it always fills the panel edge to edge with no letterbox.
+// The magnification is capped so molecules never become cartoonishly large on a big
+// monitor; past the cap the world grows instead, which is the gentler trade-off.
+const WORLD_AREA = 820 * 430;
+const MIN_FIT = 0.85, MAX_FIT = 1.6;
+let WORLD_W = 820, WORLD_H = 430, WORLD_SCALE = 1;
+function updateWorld(){
+  const c=document.getElementById('sim');
+  const cw=Math.max(1,c.width), ch=Math.max(1,c.height);
+  WORLD_SCALE=Math.min(MAX_FIT,Math.max(MIN_FIT,Math.sqrt(cw*ch/WORLD_AREA)));
+  WORLD_W=cw/WORLD_SCALE; WORLD_H=ch/WORLD_SCALE;
+}
+function fitScale(){return WORLD_SCALE;}
+function centerView(){const c=document.getElementById('sim'),s=fitScale()*view.zoom;view.panX=(c.width-WORLD_W*s)/2;view.panY=(c.height-WORLD_H*s)/2;}
 const state={enzymes:[],substrates:[],products:[],glucoseProduced:0,reactionEvents:[],frame:0};
 const view={zoom:1,panX:0,panY:0,dragging:false,lastX:0,lastY:0};
 const REACTION_DURATION=120;
-function resetSim(){state.enzymes.forEach(e=>{e.bound=null;e.reactionTimer=0;});state.substrates=[];state.products=[];state.glucoseProduced=0;state.reactionEvents=[];state.frame=0;view.zoom=1;view.panX=0;view.panY=0;syncMolecules();}
-function syncMolecules(){const canvas=document.getElementById('sim'),W=canvas.width,H=canvas.height;while(state.enzymes.length<params.enzymeCount)state.enzymes.push(new Enzyme(Math.random()*(W-60)+30,Math.random()*(H-60)+30));while(state.enzymes.length>params.enzymeCount){const r=state.enzymes.pop();if(r.bound){r.bound.boundTo=null;r.bound=null;}}const syncType=(type,target)=>{const cur=state.substrates.filter(s=>s.type===type).length;if(cur<target){for(let i=0;i<target-cur;i++)state.substrates.push(new Substrate(type,Math.random()*(W-40)+20,Math.random()*(H-40)+20));}else if(cur>target){let rem=cur-target;for(let i=state.substrates.length-1;i>=0&&rem>0;i--)if(state.substrates[i].type===type&&!state.substrates[i].boundTo){state.substrates.splice(i,1);rem--;}}};syncType('maltose',params.maltoseCount);syncType('sucrose',params.sucrose);syncType('lactose',params.lactose);}
-function simulate(){const canvas=document.getElementById('sim'),W=canvas.width,H=canvas.height,sf=getSpeedFactor(params.temperature)*params.speed,activity=getActivityFactor(params.temperature,params.pH),denat=getDenaturationLevel(params.temperature,params.pH);state.frame++;for(const e of state.enzymes){e.denatured=denat>0.4;e.denaturedAmount=denat;e.update(sf,W,H);if(e.bound&&e.reactionTimer<=0){const idx=state.substrates.indexOf(e.bound);if(idx>-1)state.substrates.splice(idx,1);for(let i=0;i<2;i++){const g=new Product(e.x+20,e.y+(i===0?-10:10));g.vx=2+Math.random()*2;g.vy=(i===0?-1:1)+Math.random()*2;state.products.push(g);}state.glucoseProduced+=2;state.reactionEvents.push(Date.now());e.bound=null;e.cooldown=30;e.flash=1;}}for(const s of state.substrates)if(!s.boundTo)s.update(sf,W,H);state.products=state.products.filter(p=>p.opacity>0);for(const p of state.products)p.update(sf,W,H);for(const e of state.enzymes){if(e.bound||e.cooldown>0)continue;for(const s of state.substrates){if(s.boundTo)continue;const dx=s.x-e.x,dy=s.y-e.y,d=Math.hypot(dx,dy);if(d<35){if(s.type==='maltose'&&!e.denatured&&activity>0.1){e.bound=s;s.boundTo=e;e.reactionTimer=REACTION_DURATION/Math.max(0.2,activity);}else{s.bounceTimer=20;const a=Math.atan2(dy,dx);s.vx=Math.cos(a)*3;s.vy=Math.sin(a)*3;e.vx-=Math.cos(a)*0.5;e.vy-=Math.sin(a)*0.5;}}}}for(let i=0;i<state.substrates.length;i++){if(state.substrates[i].boundTo)continue;for(let j=i+1;j<state.substrates.length;j++){if(state.substrates[j].boundTo)continue;const a=state.substrates[i],b=state.substrates[j],dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy);if(d<20&&d>0){const nx=dx/d,ny=dy/d;a.vx-=nx*0.5;a.vy-=ny*0.5;b.vx+=nx*0.5;b.vy+=ny*0.5;}}}const now=Date.now(),recent=state.reactionEvents.filter(t=>now-t<5000);if(state.frame%10===0){document.getElementById('s-glucose').textContent=state.glucoseProduced;document.getElementById('s-rate').textContent=(recent.length/5).toFixed(1);document.getElementById('s-occ').textContent=state.enzymes.filter(e=>e.bound).length+'/'+state.enzymes.length;document.getElementById('s-den').textContent=state.enzymes.filter(e=>e.denatured).length;}}
+function resetSim(){state.enzymes.forEach(e=>{e.bound=null;e.reactionTimer=0;});state.substrates=[];state.products=[];state.glucoseProduced=0;state.reactionEvents=[];state.frame=0;view.zoom=1;centerView();syncMolecules();}
+function syncMolecules(){const W=WORLD_W,H=WORLD_H;while(state.enzymes.length<params.enzymeCount)state.enzymes.push(new Enzyme(Math.random()*(W-60)+30,Math.random()*(H-60)+30));while(state.enzymes.length>params.enzymeCount){const r=state.enzymes.pop();if(r.bound){r.bound.boundTo=null;r.bound=null;}}const syncType=(type,target)=>{const cur=state.substrates.filter(s=>s.type===type).length;if(cur<target){for(let i=0;i<target-cur;i++)state.substrates.push(new Substrate(type,Math.random()*(W-40)+20,Math.random()*(H-40)+20));}else if(cur>target){let rem=cur-target;for(let i=state.substrates.length-1;i>=0&&rem>0;i--)if(state.substrates[i].type===type&&!state.substrates[i].boundTo){state.substrates.splice(i,1);rem--;}}};syncType('maltose',params.maltoseCount);syncType('sucrose',params.sucrose);syncType('lactose',params.lactose);}
+function simulate(){const W=WORLD_W,H=WORLD_H,sf=getSpeedFactor(params.temperature)*params.speed,activity=getActivityFactor(params.temperature,params.pH),denat=getDenaturationLevel(params.temperature,params.pH);state.frame++;for(const e of state.enzymes){e.denatured=denat>0.4;e.denaturedAmount=denat;e.update(sf,W,H);if(e.bound&&e.reactionTimer<=0){const idx=state.substrates.indexOf(e.bound);if(idx>-1)state.substrates.splice(idx,1);for(let i=0;i<2;i++){const g=new Product(e.x+20,e.y+(i===0?-10:10));g.vx=2+Math.random()*2;g.vy=(i===0?-1:1)+Math.random()*2;state.products.push(g);}state.glucoseProduced+=2;state.reactionEvents.push(Date.now());e.bound=null;e.cooldown=30;e.flash=1;}}for(const s of state.substrates)if(!s.boundTo)s.update(sf,W,H);state.products=state.products.filter(p=>p.opacity>0);for(const p of state.products)p.update(sf,W,H);for(const e of state.enzymes){if(e.bound||e.cooldown>0)continue;for(const s of state.substrates){if(s.boundTo)continue;const dx=s.x-e.x,dy=s.y-e.y,d=Math.hypot(dx,dy);if(d<35){if(s.type==='maltose'&&!e.denatured&&activity>0.1){e.bound=s;s.boundTo=e;e.reactionTimer=REACTION_DURATION/Math.max(0.2,activity);}else{s.bounceTimer=20;const a=Math.atan2(dy,dx);s.vx=Math.cos(a)*3;s.vy=Math.sin(a)*3;e.vx-=Math.cos(a)*0.5;e.vy-=Math.sin(a)*0.5;}}}}for(let i=0;i<state.substrates.length;i++){if(state.substrates[i].boundTo)continue;for(let j=i+1;j<state.substrates.length;j++){if(state.substrates[j].boundTo)continue;const a=state.substrates[i],b=state.substrates[j],dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy);if(d<20&&d>0){const nx=dx/d,ny=dy/d;a.vx-=nx*0.5;a.vy-=ny*0.5;b.vx+=nx*0.5;b.vy+=ny*0.5;}}}const now=Date.now(),recent=state.reactionEvents.filter(t=>now-t<5000);if(state.frame%10===0){document.getElementById('s-glucose').textContent=state.glucoseProduced;document.getElementById('s-rate').textContent=(recent.length/5).toFixed(1);document.getElementById('s-occ').textContent=state.enzymes.filter(e=>e.bound).length+'/'+state.enzymes.length;document.getElementById('s-den').textContent=state.enzymes.filter(e=>e.denatured).length;}}
 const AS_OX=20,AS_R=9,AS_GAP=7;
 function hexPath(ctx,cx,cy,r){ctx.moveTo(cx+r,cy);for(let i=1;i<=6;i++){const a=Math.PI/3*i;ctx.lineTo(cx+r*Math.cos(a),cy+r*Math.sin(a));}ctx.closePath();}
 function pentPath(ctx,cx,cy,r){ctx.moveTo(cx+r,cy);for(let i=1;i<=5;i++){const a=Math.PI*2/5*i-Math.PI/10;ctx.lineTo(cx+r*Math.cos(a),cy+r*Math.sin(a));}ctx.closePath();}
@@ -189,16 +262,68 @@ function drawSucrose(ctx,m){ctx.save();ctx.translate(m.x,m.y);ctx.rotate(m.angle
 function drawLactose(ctx,m){ctx.save();ctx.translate(m.x,m.y);ctx.rotate(m.angle);const c=COLORS.lactose;ctx.beginPath();diamond(ctx,-8,0,9,7);const g1=ctx.createRadialGradient(-8,-2,1,-8,0,10);g1.addColorStop(0,lighten(c,30));g1.addColorStop(1,c);ctx.fillStyle=g1;ctx.fill();ctx.strokeStyle=darken(c,30);ctx.lineWidth=1.2;ctx.stroke();ctx.beginPath();hexPath(ctx,8,0,8);const g2=ctx.createRadialGradient(8,-2,1,8,0,9);g2.addColorStop(0,lighten(c,30));g2.addColorStop(1,c);ctx.fillStyle=g2;ctx.fill();ctx.strokeStyle=darken(c,30);ctx.lineWidth=1.2;ctx.stroke();ctx.fillStyle='#000c';ctx.font='bold 6px sans-serif';ctx.textAlign='center';ctx.fillText('Lactose',0,3);if(m.bounceTimer>0){ctx.globalAlpha=m.bounceTimer/20;ctx.beginPath();ctx.arc(0,0,20,0,Math.PI*2);ctx.strokeStyle='#f44';ctx.lineWidth=2;ctx.stroke();ctx.globalAlpha=1;ctx.fillStyle='#f66';ctx.font='bold 7px sans-serif';ctx.fillText('✗ No fit!',0,-16);}ctx.restore();}
 function drawGlucose(ctx,m){ctx.save();ctx.globalAlpha=m.opacity;ctx.translate(m.x,m.y);ctx.rotate(m.angle);const c=COLORS.glucose;ctx.beginPath();hexPath(ctx,0,0,9);const g=ctx.createRadialGradient(-1,-1,1,0,0,10);g.addColorStop(0,lighten(c,40));g.addColorStop(1,c);ctx.fillStyle=g;ctx.fill();ctx.strokeStyle=darken(c,30);ctx.lineWidth=1.2;ctx.stroke();ctx.fillStyle='#000c';ctx.font='bold 6px sans-serif';ctx.textAlign='center';ctx.fillText('Glucose',0,3);ctx.restore();}
 function drawComplex(ctx,e){ctx.save();ctx.translate(e.x,e.y);ctx.rotate(e.angle);const r=26;ctx.beginPath();ctx.arc(0,0,r+2,0,Math.PI*2);const g=ctx.createRadialGradient(-4,-4,2,0,0,r+4);g.addColorStop(0,lighten(COLORS.complex,30));g.addColorStop(1,COLORS.complex);ctx.fillStyle=g;ctx.fill();ctx.strokeStyle=darken(COLORS.complex,30);ctx.lineWidth=2;ctx.stroke();const mc=COLORS.maltose;ctx.beginPath();hexPath(ctx,AS_OX,-AS_GAP,AS_R-1);ctx.fillStyle=mc;ctx.fill();ctx.beginPath();hexPath(ctx,AS_OX,AS_GAP,AS_R-1);ctx.fillStyle=mc;ctx.fill();ctx.fillStyle='#fff';ctx.font='bold 7px sans-serif';ctx.textAlign='center';ctx.fillText('E-S Complex',-4,3);const progress=1-(e.reactionTimer/REACTION_DURATION);ctx.fillStyle='#ffffff44';ctx.fillRect(-r+4,r-8,(2*r-8)*Math.max(0,Math.min(1,progress)),3);ctx.strokeStyle='#ffffff66';ctx.strokeRect(-r+4,r-8,2*r-8,3);ctx.beginPath();ctx.arc(0,0,r+8,0,Math.PI*2);ctx.strokeStyle=`rgba(34,211,238,${0.2+Math.sin(Date.now()/200)*0.15})`;ctx.lineWidth=2;ctx.stroke();ctx.restore();}
-function render(){const canvas=document.getElementById('sim'),ctx=canvas.getContext('2d'),W=canvas.width,H=canvas.height,denat=getDenaturationLevel(params.temperature,params.pH),{zoom,panX,panY}=view;ctx.clearRect(0,0,W,H);ctx.fillStyle='#0f172a';ctx.fillRect(0,0,W,H);ctx.save();ctx.translate(panX,panY);ctx.scale(zoom,zoom);ctx.strokeStyle='#1e293b';ctx.lineWidth=0.5/zoom;for(let x=0;x<W;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}for(let y=0;y<H;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}for(const p of state.products)drawGlucose(ctx,p);for(const s of state.substrates){if(s.boundTo)continue;if(s.type==='maltose')drawMaltose(ctx,s);else if(s.type==='sucrose')drawSucrose(ctx,s);else if(s.type==='lactose')drawLactose(ctx,s);}for(const e of state.enzymes){if(e.bound)drawComplex(ctx,e);else drawMaltase(ctx,e,denat);}ctx.restore();if(zoom!==1){ctx.fillStyle='rgba(255,255,255,0.3)';ctx.font='11px sans-serif';ctx.fillText(Math.round(zoom*100)+'%',10,H-10);}}
+function render(){const canvas=document.getElementById('sim'),ctx=canvas.getContext('2d'),W=canvas.width,H=canvas.height,denat=getDenaturationLevel(params.temperature,params.pH),{zoom,panX,panY}=view;ctx.clearRect(0,0,W,H);ctx.fillStyle='#070d1a';ctx.fillRect(0,0,W,H);const sc=fitScale()*zoom;ctx.save();ctx.translate(panX,panY);ctx.scale(sc,sc);ctx.fillStyle='#0f172a';ctx.fillRect(0,0,WORLD_W,WORLD_H);ctx.strokeStyle='#1e293b';ctx.lineWidth=0.5/sc;for(let x=0;x<=WORLD_W;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,WORLD_H);ctx.stroke();}for(let y=0;y<=WORLD_H;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(WORLD_W,y);ctx.stroke();}ctx.strokeStyle='#334155';ctx.lineWidth=1.5/sc;ctx.strokeRect(0,0,WORLD_W,WORLD_H);for(const p of state.products)drawGlucose(ctx,p);for(const s of state.substrates){if(s.boundTo)continue;if(s.type==='maltose')drawMaltose(ctx,s);else if(s.type==='sucrose')drawSucrose(ctx,s);else if(s.type==='lactose')drawLactose(ctx,s);}for(const e of state.enzymes){if(e.bound)drawComplex(ctx,e);else drawMaltase(ctx,e,denat);}ctx.restore();if(zoom!==1){ctx.fillStyle='rgba(255,255,255,0.3)';ctx.font='11px sans-serif';ctx.fillText(Math.round(zoom*100)+'%',10,H-10);}}
 function loop(){if(!params.paused){syncMolecules();simulate();}render();requestAnimationFrame(loop);}
-function resizeCanvas(){const canvas=document.getElementById('sim'),wrap=canvas.parentElement;canvas.width=wrap.clientWidth;canvas.height=wrap.clientHeight;}
+function resizeCanvas(){const canvas=document.getElementById('sim'),wrap=canvas.parentElement;canvas.width=wrap.clientWidth;canvas.height=wrap.clientHeight;updateWorld();centerView();}
 window.addEventListener('resize',resizeCanvas);
 resizeCanvas();syncMolecules();loop();
 const simCanvas=document.getElementById('sim');
 simCanvas.addEventListener('wheel',e=>{e.preventDefault();const rect=simCanvas.getBoundingClientRect(),mx=e.clientX-rect.left,my=e.clientY-rect.top,zf=e.deltaY<0?1.12:1/1.12,nz=Math.min(8,Math.max(0.25,view.zoom*zf));view.panX=mx-(mx-view.panX)*(nz/view.zoom);view.panY=my-(my-view.panY)*(nz/view.zoom);view.zoom=nz;},{passive:false});
-simCanvas.addEventListener('mousedown',e=>{if(e.button!==1&&!(e.button===0&&e.altKey))return;e.preventDefault();view.dragging=true;view.lastX=e.clientX;view.lastY=e.clientY;});
-window.addEventListener('mousemove',e=>{if(!view.dragging)return;view.panX+=e.clientX-view.lastX;view.panY+=e.clientY-view.lastY;view.lastX=e.clientX;view.lastY=e.clientY;});
-window.addEventListener('mouseup',()=>{view.dragging=false;});
+function startDrag(x,y){view.dragging=true;view.lastX=x;view.lastY=y;simCanvas.classList.add('grabbing');}
+function moveDrag(x,y){if(!view.dragging)return;view.panX+=x-view.lastX;view.panY+=y-view.lastY;view.lastX=x;view.lastY=y;}
+function endDrag(){view.dragging=false;simCanvas.classList.remove('grabbing');}
+function resetView(){view.zoom=1;centerView();}
+
+// Pan with a plain left-drag (middle-click and Alt+drag still work).
+// preventDefault() here suppresses Chrome's dblclick event, so the
+// double-press that resets the view is detected by time + distance instead.
+let lastTap=0,lastTapX=0,lastTapY=0;
+function isDoublePress(x,y){
+  const now=Date.now(),near=Math.hypot(x-lastTapX,y-lastTapY)<12,quick=now-lastTap<350;
+  lastTap=now;lastTapX=x;lastTapY=y;
+  if(near&&quick){lastTap=0;return true;}
+  return false;
+}
+simCanvas.addEventListener('mousedown',e=>{
+  if(e.button!==0&&e.button!==1)return;
+  e.preventDefault();
+  if(e.button===0&&isDoublePress(e.clientX,e.clientY)){resetView();return;}
+  startDrag(e.clientX,e.clientY);
+});
+window.addEventListener('mousemove',e=>moveDrag(e.clientX,e.clientY));
+window.addEventListener('mouseup',endDrag);
+simCanvas.addEventListener('mouseleave',()=>{if(!view.dragging)simCanvas.classList.remove('grabbing');});
+
+// Touch: one finger pans, two fingers pinch-zoom about the midpoint.
+let pinchDist=0,pinchMid=null;
+function touchMid(t0,t1){const r=simCanvas.getBoundingClientRect();return {x:(t0.clientX+t1.clientX)/2-r.left,y:(t0.clientY+t1.clientY)/2-r.top};}
+function touchDist(t0,t1){return Math.hypot(t1.clientX-t0.clientX,t1.clientY-t0.clientY);}
+simCanvas.addEventListener('touchstart',e=>{
+  e.preventDefault();
+  if(e.touches.length===1){
+    const t=e.touches[0];
+    if(isDoublePress(t.clientX,t.clientY)){resetView();return;}
+    startDrag(t.clientX,t.clientY);
+  }
+  else if(e.touches.length===2){endDrag();pinchDist=touchDist(e.touches[0],e.touches[1]);pinchMid=touchMid(e.touches[0],e.touches[1]);}
+},{passive:false});
+simCanvas.addEventListener('touchmove',e=>{
+  e.preventDefault();
+  if(e.touches.length===1&&view.dragging){moveDrag(e.touches[0].clientX,e.touches[0].clientY);}
+  else if(e.touches.length===2&&pinchDist>0){
+    const d=touchDist(e.touches[0],e.touches[1]),m=touchMid(e.touches[0],e.touches[1]);
+    const nz=Math.min(8,Math.max(0.25,view.zoom*(d/pinchDist)));
+    // keep the pinch midpoint anchored, then follow it if the fingers also slide
+    view.panX=m.x-(pinchMid.x-view.panX)*(nz/view.zoom);
+    view.panY=m.y-(pinchMid.y-view.panY)*(nz/view.zoom);
+    view.zoom=nz;pinchDist=d;pinchMid=m;
+  }
+},{passive:false});
+simCanvas.addEventListener('touchend',e=>{
+  if(e.touches.length===0){endDrag();pinchDist=0;pinchMid=null;}
+  else if(e.touches.length===1){pinchDist=0;pinchMid=null;startDrag(e.touches[0].clientX,e.touches[0].clientY);}
+},{passive:false});
+simCanvas.addEventListener('touchcancel',()=>{endDrag();pinchDist=0;pinchMid=null;});
 function drawGraph(id,data,refX,color,xMin,xMax){const canvas=document.getElementById(id);if(!canvas)return;const ctx=canvas.getContext('2d'),W=canvas.clientWidth,H=canvas.clientHeight;canvas.width=W;canvas.height=H;const pad={l:28,r:8,t:6,b:18},iW=W-pad.l-pad.r,iH=H-pad.t-pad.b;ctx.fillStyle='#0f172a';ctx.fillRect(0,0,W,H);ctx.strokeStyle='#334155';ctx.lineWidth=0.5;for(let i=0;i<=4;i++){const y=pad.t+iH*i/4;ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke();}const pts=data.map((d,i)=>({px:pad.l+(i/(data.length-1))*iW,py:pad.t+iH*(1-d/100)}));ctx.beginPath();ctx.moveTo(pts[0].px,pts[0].py);for(let i=1;i<pts.length;i++)ctx.lineTo(pts[i].px,pts[i].py);ctx.strokeStyle=color;ctx.lineWidth=2;ctx.stroke();const rx=pad.l+((refX-xMin)/(xMax-xMin))*iW;ctx.strokeStyle='rgba(255,255,255,0.35)';ctx.lineWidth=1;ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(rx,pad.t);ctx.lineTo(rx,pad.t+iH);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#94a3b8';ctx.font='8px sans-serif';ctx.textAlign='center';ctx.fillText(xMin,pad.l,H-3);ctx.fillText(xMax,W-pad.r,H-3);ctx.fillText(Math.round(refX),rx,pad.t-1);}
 function drawGraphs(){const td=[];for(let t=0;t<=80;t+=2)td.push(getActivityFactor(t,8)*Math.min(params.maltoseCount/params.enzymeCount,1)*100);drawGraph('g-temp',td,params.temperature,'#ef4444',0,80);const phd=[];for(let p=1;p<=14;p+=0.5)phd.push(getActivityFactor(35,p)*Math.min(params.maltoseCount/params.enzymeCount,1)*100);drawGraph('g-ph',phd,params.pH,'#3b82f6',1,14);const cd=[];for(let c=0;c<=30;c++)cd.push(Math.min(c/params.enzymeCount,1)*getActivityFactor(params.temperature,params.pH)*100);drawGraph('g-conc',cd,params.maltoseCount,'#f59e0b',0,30);}
 drawGraphs();setInterval(drawGraphs,500);

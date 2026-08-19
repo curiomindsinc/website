@@ -570,6 +570,18 @@
       flex: 0 0 48%;
     }
   }
+
+  /* ── Viewport-fit shell: body was min-height:100vh, so .main grew past the screen ── */
+  html, body { height: 100%; }
+  body { height: 100dvh; min-height: 0; overflow: hidden; }
+  .main { min-height: 0; }
+  .controls { min-height: 0; }
+  footer { flex-shrink: 0; }
+
+  @media (max-width: 480px) {
+    /* replace the hard-coded calc(100vh - 80px); the header is taller than 80px here */
+    .main { height: auto; flex: 1; min-height: 0; }
+  }
 </style>
 </head>
 <body>

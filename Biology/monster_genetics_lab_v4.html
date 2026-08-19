@@ -125,6 +125,62 @@ body { font-family: Georgia, 'Times New Roman', serif; background: #f8f7f4; colo
 .sandbox-toggle { display:flex; align-items:center; gap:8px; margin-bottom:10px; cursor:pointer; user-select:none; font-size:13px; color:#7c3aed; font-weight:600; }
 .sandbox-toggle svg { width:16px; height:16px; flex-shrink:0; }
 .sandbox-section { border:1px dashed #c4b5fd; border-radius:10px; padding:14px; background:#faf9ff; }
+
+/* ── Viewport-fit shell: pickers and Submit always on screen ── */
+html, body { height: 100%; }
+body { min-height: 0; overflow: hidden; }
+
+#app {
+  max-width: none;
+  height: 100dvh;
+  padding: 0.7rem 1.1rem 0.9rem;
+  display: grid;
+  grid-template-rows: auto auto auto 1fr;
+  gap: 0.55rem;
+  overflow: hidden;
+}
+.lab-header { margin-bottom: 0; padding-bottom: 0.55rem; }
+.lab-header h1 { font-size: 19px; }
+.lab-header p { font-size: 12px; margin-top: 2px; }
+.lab-header p[style] { font-size: 11px !important; margin-top: 3px !important; }
+.progress-bar-wrap { margin-bottom: 0; }
+.level-bar { margin-bottom: 0; gap: 4px; }
+.level-btn { padding: 4px 10px; font-size: 11px; }
+
+#main { min-height: 0; overflow: hidden; display: grid; }
+
+/* each panel scrolls inside itself — the page never does */
+.game-area {
+  min-height: 0;
+  gap: 0.7rem;
+  grid-template-rows: auto minmax(0, 1fr);
+  align-content: stretch;
+}
+.game-area > .panel { min-height: 0; overflow: auto; padding: 0.85rem 1rem; }
+.game-area > .panel.full { max-height: 30vh; }
+.panel h3 { margin-bottom: 9px; }
+.concept-box { margin-bottom: 9px; padding: 9px 13px; line-height: 1.55; }
+.hint-text { margin-bottom: 0; }
+.word-problem-box { margin-bottom: 10px; padding: 11px 13px; line-height: 1.6; }
+.legend { margin-bottom: 9px; gap: 10px; }
+.picker-section { margin-bottom: 10px; }
+.punnett-wrap { margin-top: 10px; }
+.question-wrap { margin-top: 10px; padding-top: 10px; }
+.feedback { margin-top: 9px; padding: 10px 12px; }
+
+/* single-panel levels (word problem / intro) just fill the row */
+.game-area[style*="1fr"] { grid-template-rows: minmax(0, 1fr); }
+.game-area[style*="1fr"] > .panel.full { max-height: none; }
+
+@media (max-width: 660px) {
+  #app { padding: 0.5rem 0.7rem 0.7rem; gap: 0.45rem; }
+  .lab-header { padding-bottom: 0.4rem; }
+  .lab-header h1 { font-size: 15px; }
+  .lab-header p { display: none; }
+  .game-area { grid-template-columns: 1fr; grid-template-rows: auto minmax(0,1fr) minmax(0,1fr); }
+  .game-area > .panel.full { max-height: 20vh; }
+  .game-area > .panel { padding: 0.7rem 0.8rem; }
+}
 </style>
 </head>
 <body>

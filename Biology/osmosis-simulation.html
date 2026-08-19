@@ -227,6 +227,59 @@
     .btn-row { flex-direction: column; }
     .stats-row { grid-template-columns: 1fr 1fr; }
   }
+
+  /* ── Viewport-fit shell: controls always on screen ── */
+  html, body { height: 100%; }
+  body { min-height: 0; overflow: hidden; padding: 12px 14px 14px; justify-content: center; }
+
+  h1 { font-size: clamp(1.05rem, 2.4vw, 1.5rem); margin-bottom: 1px; }
+  .subtitle { margin-bottom: 10px; font-size: 0.66rem; }
+
+  .sim-wrapper {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: 100%;
+    display: grid;
+    grid-template-rows: minmax(80px, 1fr) auto;
+  }
+  .canvas-slot {
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  canvas { width: auto; height: auto; max-width: 100%; max-height: 100%; }
+
+  .controls { padding: 12px 16px; gap: 10px; }
+  .control-group { gap: 5px; }
+  .control-label { font-size: 0.62rem; }
+  .btn-row { gap: 8px; }
+  button { padding: 7px 12px; font-size: 0.72rem; }
+  .stats-row { gap: 8px; }
+  .stat-box { padding: 6px 9px; }
+  .legend { gap: 14px; }
+  .legend-item { font-size: 0.64rem; }
+
+  /* Explanation collapses so it can never push the buttons off-screen */
+  .info-bar { padding: 0; font-size: 0.68rem; }
+  .info-bar > summary { cursor: pointer; padding: 7px 12px; color: var(--accent);
+                        font-size: 0.64rem; letter-spacing: 0.08em;
+                        text-transform: uppercase; user-select: none; }
+  .info-bar > div { padding: 0 12px 9px; line-height: 1.5; }
+  .credits { padding-top: 5px; font-size: 0.6rem; }
+
+  @media (max-width: 700px) {
+    body { padding: 9px 10px 10px; }
+    .subtitle { display: none; }
+    h1 { margin-bottom: 8px; }
+    .controls { padding: 10px 12px; gap: 8px; }
+    .legend { display: none; }
+  }
+  @media (max-width: 500px) {
+    .btn-row { flex-direction: row; flex-wrap: wrap; }
+    .btn-row button { flex: 1 1 45%; }
+  }
 </style>
 </head>
 <body>
@@ -235,7 +288,7 @@
 <p class="subtitle">Partially Permeable Membrane · Particle Movement</p>
 
 <div class="sim-wrapper">
-  <canvas id="canvas"></canvas>
+  <div class="canvas-slot"><canvas id="canvas"></canvas></div>
   <div class="controls">
     <div class="control-group">
       <div class="control-label">Left Solute Concentration <span id="lc-val">30%</span></div>
@@ -265,9 +318,11 @@
       <div class="legend-item"><div class="dot" style="background:#a78bfa; border-radius:2px; width:6px; height:12px;"></div> Membrane pore</div>
     </div>
 
-    <div class="info-bar">
-      <strong>How it works:</strong> Water molecules pass freely through membrane pores. Solute particles are too large to pass. High solute = low water concentration → water moves from <em>low</em> to <em>high</em> solute side (osmosis) until equilibrium.
-    </div>
+    <details class="info-bar">
+      <summary>How it works</summary>
+      <div> Water molecules pass freely through membrane pores. Solute particles are too large to pass. High solute = low water concentration → water moves from <em>low</em> to <em>high</em> solute side (osmosis) until equilibrium.
+      </div>
+    </details>
 
     <div class="credits">
       Created by <strong>Mr Lau Chin Hang</strong> &nbsp;·&nbsp;
@@ -304,6 +359,9 @@ function resize() {
   const rect = canvas.parentElement.getBoundingClientRect();
   W = Math.min(rect.width, 860);
   H = Math.round(W * 0.52);
+  // never let the canvas grow taller than its slot, or the controls scroll off-screen
+  const avail = Math.round(rect.height);
+  if (avail > 60 && H > avail) { H = avail; W = Math.round(H / 0.52); }
   canvas.width = W;
   canvas.height = H;
   MX = W / 2;
