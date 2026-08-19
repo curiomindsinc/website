@@ -230,13 +230,102 @@
             display: none;
             z-index: 10;
         }
+
+        /* ── Viewport-fit shell: controls always on screen ── */
+        html, body { height: 100%; }
+        body { padding: 0; min-height: 0; overflow: hidden; }
+
+        .container {
+            max-width: none;
+            height: 100dvh;
+            border-radius: 0;
+            box-shadow: none;
+            padding: 10px 16px 12px;
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            gap: 10px;
+            overflow: hidden;
+        }
+        h1 { font-size: 1.35em; margin-bottom: 2px; }
+        .subtitle { margin-bottom: 0; font-size: 0.85em; }
+        .credit-line { margin: 2px 0 0 !important; font-size: 0.75em !important; }
+
+        .main-display { margin-bottom: 0; gap: 12px; min-height: 0; }
+
+        .canvas-container {
+            padding: 10px;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 8px;
+        }
+        #mainCanvas {
+            width: auto; height: auto;
+            max-width: 100%; max-height: 100%;
+            aspect-ratio: 2 / 1;
+            margin: 0 auto;
+        }
+        .legend { margin-top: 0; padding: 6px 8px; flex: 0 0 auto; }
+        .legend-item { font-size: 0.78em; }
+
+        .graph-container {
+            padding: 10px;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .graph-title { margin-bottom: 0; font-size: 0.88em; }
+        #graphCanvas { min-height: 0; max-height: 100%; }
+
+        .controls-panel {
+            margin-top: 0;
+            gap: 10px;
+            grid-template-columns: repeat(auto-fit, minmax(195px, 1fr));
+        }
+        .control-group { padding: 9px 11px; }
+        .control-group h3 { margin-bottom: 7px; font-size: 0.88em; padding-bottom: 3px; }
+        .control-item { margin-bottom: 7px; }
+        .control-item label { margin-bottom: 3px; font-size: 0.8em; }
+        .checkbox-control { margin: 5px 0; font-size: 0.82em; }
+        button { padding: 7px; margin: 3px 0; font-size: 0.85em; }
+        .control-group .info-box { margin-top: 7px; padding: 7px 9px; font-size: 0.76em; }
+
+        /* Learning points collapse so they never push the controls off-screen */
+        .learning-points { margin-top: 0 !important; padding: 0; grid-column: 1 / -1; }
+        .learning-points > summary {
+            cursor: pointer; padding: 8px 12px; font-weight: 600;
+            font-size: 0.85em; color: #2a5298; user-select: none;
+        }
+        .learning-points > div { padding: 0 12px 10px; font-size: 0.82em; line-height: 1.5; }
+
+        @media (max-width: 1100px) {
+            .main-display { grid-template-columns: 1fr 250px; }
+        }
+        @media (max-width: 768px) {
+            .container { padding: 8px 10px 10px; gap: 8px; }
+            h1 { font-size: 1.05em; }
+            .subtitle { display: none; }
+            .credit-line { display: none !important; }
+            .main-display { grid-template-columns: 1fr; grid-template-rows: 1fr auto; gap: 8px; }
+            /* graph collapses to its buttons so the rod keeps the vertical space */
+            .graph-container { padding: 6px 8px; }
+            .graph-container #graphCanvas { display: none; }
+            .graph-container .graph-title { display: none; }
+            .legend { display: none; }
+            .controls-panel { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 7px; }
+            .control-group { padding: 7px 8px; }
+            .control-group .info-box { display: none; }
+            .learning-points { display: none; }
+        }
     </style>
 </head>
 <body>
 <div class="container">
     <h1>Heat Conduction Simulator</h1>
     <p class="subtitle">Explore thermal energy transfer through the particle model of matter</p>
-    <p style="text-align:center;color:#666;font-size:0.9em;margin-top:-15px;margin-bottom:20px;">
+    <p class="credit-line" style="text-align:center;color:#666;font-size:0.9em;margin-top:-15px;margin-bottom:20px;">
         Created by: <strong>Mr Lau Chin Hang</strong> |
         Instagram: <a href="https://www.instagram.com/curiominds.inc" target="_blank"
             style="color:#2a5298;text-decoration:none;font-weight:500;">@curiominds.inc</a>
@@ -302,7 +391,7 @@
             <h3>Time Control</h3>
             <div class="control-item">
                 <label>Speed: <span class="value-display" id="speedValue">1.0x</span></label>
-                <input type="range" id="speedSlider" min="0" max="7" value="5" step="1">
+                <input type="range" id="speedSlider" min="0" max="9" value="5" step="1">
             </div>
             <button id="pauseBtn">Pause</button>
             <button id="stepBtn">Step Forward</button>
@@ -327,16 +416,18 @@
                 <label for="showProbe">Temperature Probe (Touch/Hover)</label>
             </div>
         </div>
-    </div>
 
-    <div class="info-box" style="margin-top:20px;">
-        <strong>Learning Points:</strong><br>
+        <details class="info-box learning-points">
+        <summary>Learning Points</summary>
+        <div>
         - Heat always flows from high to low temperature (Fourier's Law)<br>
         - Particles vibrate more when hot, transferring energy to neighbours<br>
         - Particles don't move along the rod (solid state)<br>
         - Better conductors reach equilibrium faster<br>
         - At equilibrium, the entire rod reaches the heat source temperature<br>
         - Energy is conserved &mdash; it spreads out but doesn't disappear
+        </div>
+        </details>
     </div>
 </div>
 
@@ -364,8 +455,13 @@ const AMBIENT_TEMP     = 20;
 const DT               = 0.1;
 const RECORDING_DURATION = 3600; // 1 simulated hour in seconds
 
-const SPEED_SETTINGS   = [0.01, 0.05, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0];
-const SPEED_LABELS     = ['0.01x','0.05x','0.1x','0.25x','0.5x','1.0x','2.0x','5.0x'];
+const SPEED_SETTINGS   = [0.01, 0.05, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0];
+const SPEED_LABELS     = ['0.01x','0.05x','0.1x','0.25x','0.5x','1.0x','2.0x','5.0x','10x','20x'];
+
+// Largest diffusion number a single explicit (FTCS) pass stays stable at.
+// The stencil's max eigenvalue is 6, so the hard limit is 2/6 = 0.333; 0.2 keeps a margin.
+// Above 5x on copper the raw step exceeds this, so updateHeatDiffusion sub-steps instead.
+const MAX_ALPHA_PER_STEP = 0.2;
 
 // ── Mutable simulation state ──────────────────────────────────────────
 let THERMAL_DIFFUSIVITY = 0.4;
@@ -505,31 +601,40 @@ function getColorForTemp(temp) {
 function updateHeatDiffusion(dt) {
     const newTemps = new Float32Array(TOTAL_PARTICLES);
 
-    for (let j = 0; j < NUM_PARTICLES_Y; j++) {
-        for (let i = 0; i < NUM_PARTICLES_X; i++) {
-            const p   = getParticle(i, j);
-            const idx = j * NUM_PARTICLES_X + i;
+    // Total diffusion this frame. At high speeds one explicit pass would be
+    // unstable (temperatures oscillate then blow up), so split it into however
+    // many equal sub-steps keep each pass under MAX_ALPHA_PER_STEP.
+    const alphaTotal = THERMAL_DIFFUSIVITY * dt * currentSpeed;
+    const subSteps   = Math.max(1, Math.ceil(alphaTotal / MAX_ALPHA_PER_STEP));
+    const alphaStep  = alphaTotal / subSteps;
 
-            if (i === 0) {
-                p.temperature = heatSourceTemp;
-                newTemps[idx] = heatSourceTemp;
-                continue;
+    for (let step = 0; step < subSteps; step++) {
+        for (let j = 0; j < NUM_PARTICLES_Y; j++) {
+            for (let i = 0; i < NUM_PARTICLES_X; i++) {
+                const p   = getParticle(i, j);
+                const idx = j * NUM_PARTICLES_X + i;
+
+                if (i === 0) {
+                    p.temperature = heatSourceTemp;
+                    newTemps[idx] = heatSourceTemp;
+                    continue;
+                }
+
+                const T  = p.temperature;
+                const Tl = (getParticle(i-1,j) || p).temperature;
+                const Tr = (getParticle(i+1,j) || p).temperature;
+                const Tu = (getParticle(i,j-1) || p).temperature;
+                const Td = (getParticle(i,j+1) || p).temperature;
+
+                const lap = (Tl - 2*T + Tr) + (Tu - 2*T + Td) * 0.5;
+                newTemps[idx] = T + alphaStep * lap;
             }
-
-            const T  = p.temperature;
-            const Tl = (getParticle(i-1,j) || p).temperature;
-            const Tr = (getParticle(i+1,j) || p).temperature;
-            const Tu = (getParticle(i,j-1) || p).temperature;
-            const Td = (getParticle(i,j+1) || p).temperature;
-
-            const lap = (Tl - 2*T + Tr) + (Tu - 2*T + Td) * 0.5;
-            newTemps[idx] = T + THERMAL_DIFFUSIVITY * lap * dt * currentSpeed;
         }
-    }
 
-    for (let j = 0; j < NUM_PARTICLES_Y; j++) {
-        for (let i = 1; i < NUM_PARTICLES_X; i++) {
-            getParticle(i,j).temperature = newTemps[j * NUM_PARTICLES_X + i];
+        for (let j = 0; j < NUM_PARTICLES_Y; j++) {
+            for (let i = 1; i < NUM_PARTICLES_X; i++) {
+                getParticle(i,j).temperature = newTemps[j * NUM_PARTICLES_X + i];
+            }
         }
     }
 
@@ -806,7 +911,10 @@ function animate() {
 
     if (!isPaused) {
         updateHeatDiffusion(DT);
-        particles.forEach(p => p.updateVibration(DT * currentSpeed));
+        // Vibration is cosmetic: past ~2x the phase step aliases and the particles
+        // just flicker, so cap the animation rate while the physics runs full speed.
+        const vibDt = DT * Math.min(currentSpeed, 2.0);
+        particles.forEach(p => p.updateVibration(vibDt));
     }
 
     drawRod();

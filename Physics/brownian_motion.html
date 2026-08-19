@@ -203,6 +203,117 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        /* ── Viewport-fit shell: controls always on screen ── */
+        html, body { height: 100%; }
+        body {
+            padding: 0;
+            min-height: 0;
+            overflow: hidden;
+        }
+        .container {
+            max-width: none;
+            height: 100dvh;
+            border-radius: 0;
+            box-shadow: none;
+            display: grid;
+            grid-template-rows: auto 1fr;
+            overflow: hidden;
+        }
+        header { padding: 10px 18px; }
+        h1 { font-size: 1.35em; margin-bottom: 4px; }
+        .subtitle { font-size: 0.82em; line-height: 1.35; }
+        header p[style] { margin-top: 4px !important; font-size: 0.72em !important; }
+
+        .main-content { padding: 12px; gap: 12px; min-height: 0; overflow: hidden; }
+
+        .panel {
+            padding: 12px;
+            min-height: 0;
+            display: grid;
+            grid-template-rows: auto minmax(120px, 1fr) auto;
+            gap: 8px;
+        }
+        .panel h2 { margin-bottom: 0; font-size: 1.05em; }
+
+        .canvas-wrap {
+            min-height: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        canvas {
+            width: auto;
+            height: auto;
+            max-width: 100%;
+            max-height: 100%;
+            aspect-ratio: 1 / 1;
+            border-width: 2px;
+        }
+
+        .panel-foot { min-height: 0; display: flex; flex-direction: column; gap: 8px; }
+        .controls { margin-top: 0; gap: 8px; }
+        button { padding: 8px 16px; font-size: 0.85em; }
+
+        .slider-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
+            gap: 8px;
+        }
+        .slider-control {
+            margin-top: 0;
+            padding: 7px 10px;
+            border-left-width: 3px;
+        }
+        .slider-control label { margin-bottom: 5px; font-size: 0.76em; }
+        input[type="range"] { height: 6px; }
+        input[type="range"]::-webkit-slider-thumb { width: 16px; height: 16px; }
+        input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; }
+
+        /* Legend + explanations collapse so they never push controls off-screen */
+        .extras {
+            background: #fff;
+            border-left: 4px solid #667eea;
+            border-radius: 8px;
+            min-height: 0;
+            overflow: auto;
+        }
+        .extras > summary {
+            cursor: pointer;
+            padding: 7px 12px;
+            font-size: 0.8em;
+            font-weight: 600;
+            color: #667eea;
+            user-select: none;
+        }
+        .extras[open] { padding-bottom: 6px; }
+        .extras .legend, .extras .info-box { margin-top: 0; border-radius: 0; }
+        .extras .legend { border-left: none; padding: 0 12px 8px; }
+        .extras .info-box { margin: 0 8px 8px; }
+        .legend-item { margin: 5px 0; font-size: 0.82em; }
+        .info-box { font-size: 0.82em; padding: 10px; line-height: 1.45; }
+
+        @media (max-width: 1024px) {
+            .main-content { grid-template-rows: 1fr auto; }
+            /* graph panel becomes a collapsed drawer so the sim keeps the space */
+            .panel.graph-panel { grid-template-rows: auto 0 auto; }
+            .panel.graph-panel .canvas-wrap { display: none; }
+        }
+        @media (max-width: 700px) {
+            /* graph is hidden here; collapse its panel to one compact row */
+            .panel.graph-panel { grid-template-rows: auto; padding: 6px 8px; gap: 4px;
+                grid-auto-flow: column; align-items: center; justify-content: space-between; }
+            .panel.graph-panel h2 { font-size: 0.9em; }
+            .panel.graph-panel .extras { display: none; }
+            .main-content { gap: 6px; }
+            header { padding: 8px 12px; }
+            h1 { font-size: 1.05em; }
+            .subtitle { display: none; }
+            .main-content { padding: 8px; gap: 8px; }
+            .panel { padding: 8px; }
+            .slider-grid { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
+            button { padding: 7px 12px; font-size: 0.8em; }
+        }
     </style>
 </head>
 <body>
@@ -222,14 +333,16 @@
             <!-- Left Panel - Simulation -->
             <div class="panel">
                 <h2>Simulation</h2>
-                <canvas id="simulationCanvas" width="600" height="600"></canvas>
-                
+                <div class="canvas-wrap"><canvas id="simulationCanvas" width="600" height="600"></canvas></div>
+
+                <div class="panel-foot">
                 <div class="controls">
                     <button id="startPauseBtn">⏸️ Pause</button>
                     <button id="resetBtn">🔄 Reset</button>
                     <button id="traceBtn" class="active">✨ Show Pollen Path</button>
                 </div>
 
+                <div class="slider-grid">
                 <div class="slider-control">
                     <label for="particleSlider">
                         <strong>Number of Air Particles:</strong> 
@@ -269,7 +382,10 @@
                     </label>
                     <input type="range" id="speedSlider" min="10" max="100" value="100" step="10">
                 </div>
+                </div>
 
+                <details class="extras">
+                <summary>Legend &amp; what you're seeing</summary>
                 <div class="legend">
                     <div class="legend-item">
                         <div class="legend-color" style="background: #888888; width: 8px; height: 8px;"></div>
@@ -290,21 +406,28 @@
                     which causes more energetic Brownian motion. This demonstrates the direct relationship 
                     between temperature and molecular kinetic energy!
                 </div>
+                </details>
+                </div>
             </div>
 
             <!-- Right Panel - Graph -->
-            <div class="panel">
+            <div class="panel graph-panel">
                 <h2>Displacement vs Time</h2>
-                <canvas id="graphCanvas" width="600" height="600"></canvas>
-                
+                <div class="canvas-wrap"><canvas id="graphCanvas" width="600" height="600"></canvas></div>
+
+                <div class="panel-foot">
                 <div class="controls">
                     <button id="clearGraphBtn">🗑️ Clear Graph</button>
                 </div>
 
+                <details class="extras">
+                <summary>Graph explanation</summary>
                 <div class="info-box">
                     <strong>📊 Graph Explanation:</strong> This graph shows how far the pollen grain has moved 
                     from its starting position over time. The jagged, irregular pattern is characteristic of 
                     Brownian motion - there's no smooth predictable path!
+                </div>
+                </details>
                 </div>
             </div>
         </div>
