@@ -99,6 +99,17 @@
             display: flex; align-items: center; justify-content: center; flex-shrink: 0;
         }
 
+        /* ── Sound toggle (top right) ────────────────────── */
+        #sound-toggle {
+            position: fixed; top: 16px; right: 16px; z-index: 10;
+            width: 36px; height: 36px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--text-muted); cursor: pointer; border: none;
+            transition: color 0.2s, border-color 0.2s;
+        }
+        #sound-toggle:hover { color: var(--cream); }
+        #sound-toggle.muted { color: var(--coral); border-color: rgba(232,99,63,0.35); }
+
         /* ── Controls toggle (bottom-left) ───────────────── */
         @keyframes ctrl-glow {
             0%, 100% { box-shadow: 0 0 0 0 rgba(232,99,63,0); }
@@ -759,6 +770,20 @@
     </button>
 </div>
 
+<!-- Sound toggle -->
+<button id="sound-toggle" class="glass" title="Mute sound">
+    <svg id="sound-icon-on" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+        <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+        <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+    </svg>
+    <svg id="sound-icon-off" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+        <line x1="23" y1="9" x2="17" y2="15"></line>
+        <line x1="17" y1="9" x2="23" y2="15"></line>
+    </svg>
+</button>
+
 <!-- Tutorial pointer arrow -->
 <div id="controls-arrow">
     <svg width="56" height="70" viewBox="0 0 38 48" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1002,10 +1027,50 @@ const toRepoURL   = u => REPO_BASE + u.split('/').map(encodeURIComponent).join('
 const nativeFetch = window.fetch.bind(window);
 window.fetch = (input, init) => nativeFetch(isRepoAsset(input) ? toRepoURL(input) : input, init);
 
+// The sim's audio module constructs its own AudioContext and keeps it private,
+// so a mute toggle has to intercept at construction time: every sound (sfx +
+// bg music) connects to `audioCtx.destination`, so shadowing that with a gain
+// node we control gives us a single master-volume switch for all of it.
+const NativeAudioContext = window.AudioContext || window.webkitAudioContext;
+class PatchedAudioContext extends NativeAudioContext {
+    constructor(...args) {
+        super(...args);
+        const realDestination = this.destination;
+        const master = this.createGain();
+        master.gain.value = localStorage.getItem('ns-muted') === '1' ? 0 : 1;
+        master.connect(realDestination);
+        Object.defineProperty(this, 'destination', { get: () => master, configurable: true });
+        window.__nsMasterGain = master;
+    }
+}
+window.AudioContext = PatchedAudioContext;
+window.webkitAudioContext = PatchedAudioContext;
+
 const THREE = await import('three');
 THREE.DefaultLoadingManager.setURLModifier(u => isRepoAsset(u) ? toRepoURL(u) : u);
 
 await import(REPO_BASE + 'main.js');
+
+// ── Sound toggle ─────────────────────────────────────────────
+const soundBtn = document.getElementById('sound-toggle');
+const iconOn   = document.getElementById('sound-icon-on');
+const iconOff  = document.getElementById('sound-icon-off');
+let muted = localStorage.getItem('ns-muted') === '1';
+
+function applyMuteUI() {
+    iconOn.style.display  = muted ? 'none' : '';
+    iconOff.style.display = muted ? '' : 'none';
+    soundBtn.classList.toggle('muted', muted);
+    soundBtn.title = muted ? 'Unmute sound' : 'Mute sound';
+}
+applyMuteUI();
+
+soundBtn.addEventListener('click', () => {
+    muted = !muted;
+    if (window.__nsMasterGain) window.__nsMasterGain.gain.value = muted ? 0 : 1;
+    localStorage.setItem('ns-muted', muted ? '1' : '0');
+    applyMuteUI();
+});
 </script>
 </body>
 </html>
