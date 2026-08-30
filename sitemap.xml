@@ -34,4 +34,5 @@
   <!-- Astronomy -->
   <url><loc>https://curiomindsinc.pages.dev/Astronomy/solar-system-simulator</loc><priority>0.8</priority></url>
   <url><loc>https://curiomindsinc.pages.dev/Astronomy/wayfinder/wayfinder_v9</loc><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Astronomy/moonphase</loc><priority>0.8</priority></url>
 </urlset>
