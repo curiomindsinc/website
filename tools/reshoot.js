@@ -38,6 +38,22 @@ function readSims() {
 
 // slug -> how many "advance" clicks, whether a name field needs filling, and
 // whether the intro is dismissed by clicking anywhere on the canvas (bodyClick).
+//
+// `preWait` overrides the default 4s pause before the first click — the launcher
+// sims pull their code from jsDelivr, so their intro does not exist yet at 4s.
+// `until` is the intro's own element: clicking stops as soon as it goes away, so
+// a "Skip" that closes the whole deck cannot spill the remaining clicks onto the
+// HUD underneath. `clicks` is then just an upper bound.
+// `dismiss` names the advance button outright instead of hunting for one by its
+// label; `escape` presses Esc afterwards, for sims that open on a cinematic.
+// `then` is a list of selectors clicked once each after the intro is gone — for
+// putting the sim into the state worth photographing rather than its first frame.
+//
+// `prep` runs in the page instead of clicking anything, and is what the three
+// jsDelivr-hosted EcoVerse sims use. Clicking their intro decks through was
+// unreliable — a click would intermittently never settle and wedge the run — and
+// the deck is only an overlay over an already-running scene, so removing the node
+// gets the same frame without the click loop. Sims with a `prep` take no clicks.
 const PLAN = {
   'chemical-equation-balancer':   { fill: 'Class 2E', clicks: 2, settle: 4000 },
   'coral-reef-explorer':          { clicks: 8, settle: 8000 },
@@ -45,6 +61,19 @@ const PLAN = {
   'natural-selection-simulator':  { clicks: 6, settle: 6000 },
   'solar-system-builder':         { clicks: 5, settle: 6000 },
   'ray-diagram-simulator':        { clicks: 2, settle: 4000 },
+  'ecoverse-ant-colony':          { clicks: 0, preWait: 9000, settle: 9000,
+    prep: `document.querySelector('#intro')?.remove();` },
+  'ecoverse-hydrothermal-vent':   { clicks: 0, preWait: 9000, settle: 9000,
+    prep: `document.querySelector('#intro-overlay')?.remove();` },
+  // Parked at spring low: at high tide the flats are under water and the shore
+  // the sim is about is not in the picture at all. The tide panel's own slider
+  // holds the waterline, so this is the state a visitor can reach too.
+  'ecoverse-chek-jawa':           { clicks: 0, preWait: 9000, settle: 20000,
+    prep: `document.querySelector('#intro-overlay')?.remove();
+           const s = document.querySelector('#tide-scrub');
+           if (s) { s.value = '-0.45';
+                    s.dispatchEvent(new Event('input',  { bubbles: true }));
+                    s.dispatchEvent(new Event('change', { bubbles: true })); }` },
 };
 
 const ADVANCE = /^(next|start|begin|continue|play|got it|skip|enter|let's go|let's dive|launch|go|ok|okay|start session|start simulation|begin voyage|explore|dive in|dive|get started|i'm ready|ready)/i;
@@ -112,7 +141,9 @@ async function scrubBadges(page) {
     try {
       await page.goto(url, { waitUntil: 'load', timeout: 45000 });
       try { await page.waitForLoadState('networkidle', { timeout: 15000 }); } catch {}
-      await page.waitForTimeout(4000);
+      await page.waitForTimeout(plan.preWait || 4000);
+
+      if (plan.prep) { await page.evaluate(plan.prep); trail.push('(prep)'); await page.waitForTimeout(1000); }
 
       if (plan.fill) {
         for (const inp of await page.$$('input[type="text"], input:not([type])')) {
@@ -125,9 +156,26 @@ async function scrubBadges(page) {
         await page.waitForTimeout(2000);
       }
       for (let i = 0; i < plan.clicks; i++) {
-        const hit = await clickAdvance(page);
+        if (plan.until && !await page.$(plan.until).then(el => el && el.isVisible()).catch(() => false)) break;
+        let hit;
+        if (plan.dismiss) {
+          const el = await page.$(plan.dismiss);
+          if (!el || !await el.isVisible().catch(() => false)) break;
+          await el.click({ timeout: 3000 }).catch(() => {});
+          hit = ((await el.textContent().catch(() => '')) || plan.dismiss).trim();
+        } else {
+          hit = await clickAdvance(page);
+        }
         if (!hit) break;
         trail.push(hit);
+        await page.waitForTimeout(1500);
+      }
+      if (plan.escape) { await page.keyboard.press('Escape'); await page.waitForTimeout(1500); }
+      for (const sel of plan.then || []) {
+        const el = await page.$(sel);
+        if (!el) { console.log('  (then: no', sel + ')'); continue; }
+        await el.click({ timeout: 3000 }).catch(() => {});
+        trail.push(sel);
         await page.waitForTimeout(1500);
       }
       await page.waitForTimeout(plan.settle);

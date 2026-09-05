@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EcoVerse: Hydrothermal Vent</title>
+
+  <!-- ============================================================
+       STANDALONE LAUNCHER — this one file IS the whole simulation.
+
+       It carries no code of its own. Every script, the stylesheet and
+       the vent audio are pulled from the public repository at
+       github.com/curiomindsinc/hydrothermalvent, served through
+       jsDelivr's CDN.
+
+       The <base> tag below is what does it: every relative path in this
+       page — and in the scripts it loads — resolves against that URL
+       instead of against this file's own folder. So the markup below is
+       byte-for-byte the repo's index.html, unchanged. That includes the
+       paths the scripts build at runtime: sfx.js's `new Audio(
+       'sound/select.mp3')` resolves against the document base too, so
+       the click sample comes from the CDN as well.
+
+       Raw github.com URLs would not work here — raw.githubusercontent.com
+       serves .js as text/plain with nosniff, and the browser refuses to
+       execute it. jsDelivr serves the same files with real MIME types.
+
+       Double-click it. Nothing to install, no server, no download.
+       It needs an internet connection; index.html in the repo is the
+       offline copy.
+
+       @main tracks the repository, so this file picks up any future fix
+       automatically (jsDelivr caches a branch for up to 12 hours). To
+       freeze it to today's code instead, replace @main with a commit
+       hash — @8588b95 is the version current when this was written.
+       ============================================================ -->
+  <base href="https://cdn.jsdelivr.net/gh/curiomindsinc/hydrothermalvent@main/">
+
+  <link rel="stylesheet" href="theme.css">
+
+  <!-- Boot overlay. Styled inline on purpose: theme.css is itself coming
+       from the network, so this has to stand up before anything arrives.
+       z-index clears 101, the highest the theme uses (the intro overlay). -->
+  <style>
+    #boot {
+      position: fixed; inset: 0; z-index: 9999;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 18px;
+      background: #2a1c0a; color: #f1e7d6;
+      font: 400 14px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
+      text-align: center; padding: 24px;
+      transition: opacity .5s ease;
+    }
+    #boot.gone { opacity: 0; pointer-events: none; }
+    #boot .mark { font-size: 34px; letter-spacing: .2em; }
+    #boot .note { max-width: 34em; opacity: .62; font-size: 12.5px; }
+    #boot .bar {
+      width: 190px; height: 2px; border-radius: 2px;
+      background: rgba(255,255,255,.13); overflow: hidden;
+    }
+    #boot .bar i {
+      display: block; width: 40%; height: 100%; border-radius: 2px;
+      background: #f0b24e; animation: bootslide 1.15s ease-in-out infinite;
+    }
+    @keyframes bootslide {
+      0%   { transform: translateX(-105%); }
+      100% { transform: translateX(360%); }
+    }
+    #boot.failed .bar { display: none; }
+    #boot.failed .mark { font-size: 26px; }
+    #boot .err { color: #ffb3a0; max-width: 34em; }
+  </style>
+</head>
+<body>
+
+  <div id="boot">
+    <div class="mark">🌋 🐙</div>
+    <div>Descending to the vent field…</div>
+    <div class="bar"><i></i></div>
+    <div class="note">
+      Fetching the simulation from github.com/curiomindsinc/hydrothermalvent.
+      First run pulls a few megabytes; after that your browser has it cached.
+    </div>
+  </div>
+
+  <div id="scene-holder"></div>
+  <div id="vignette"></div>
+
+  <!-- ambient vent loop — plays on load / first gesture, mute via 🔊 button (wiring at bottom of file) -->
+  <audio id="ambient" loop preload="auto" src="sound/vent.mp3"></audio>
+
+  <!-- top-centre title pill -->
+  <div id="topbar" class="glass">🌋 EcoVerse: Hydrothermal Vent 🌊</div>
+
+  <!-- top-right round buttons -->
+  <div id="topright">
+    <button id="btn-sound" class="round-btn" title="Mute / unmute ambient sound">🔊</button>
+    <button id="btn-cinematic" class="round-btn" title="Film trailer — a guided dive, ending with a vent surge and a full blackout">🎬</button>
+    <button id="btn-population" class="round-btn" title="Population tracker">📊</button>
+    <button id="btn-foodweb" class="round-btn" title="Food web">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8">
+        <circle cx="12" cy="5" r="2.4"/><circle cx="5" cy="18" r="2.4"/><circle cx="19" cy="18" r="2.4"/>
+        <path d="M10.8 7.1 6.2 15.9 M13.2 7.1 17.8 15.9 M7.4 18 16.6 18"/>
+      </svg>
+    </button>
+    <button id="btn-species" class="round-btn" title="Species list">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M4 6 20 6 M4 12 20 12 M4 18 20 18"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- bottom-left controls legend -->
+  <div id="controls" class="glass">
+    <div class="panel-title">CONTROLS</div>
+    <div class="ctl-row"><span class="ctl-key">🖱 Drag</span><span class="ctl-desc">Rotate camera</span></div>
+    <div class="ctl-row"><span class="ctl-key">🔍 Scroll</span><span class="ctl-desc">Zoom in/out</span></div>
+    <div class="ctl-row"><span class="ctl-key">👆 Click</span><span class="ctl-desc">Inspect organism</span></div>
+    <div class="ctl-row"><span class="ctl-key">⌨ WASD</span><span class="ctl-desc">Move camera</span></div>
+    <div class="ctl-row"><span class="ctl-key">Q·E</span><span class="ctl-desc">Zoom in / out</span></div>
+  </div>
+
+  <!-- bottom-right organisms badge -->
+  <div id="organisms-badge" class="glass">
+    <div class="badge-label">ORGANISMS</div>
+    <div class="badge-count" id="species-count">— Species</div>
+    <div class="badge-hint">Click any to learn more</div>
+  </div>
+
+  <!-- bottom-centre credit -->
+  <div id="credit" class="glass">
+    <div class="credit-line">Created by <b>Mr Lau Chin Hang</b></div>
+    <div class="credit-links">🏫 <a href="https://www.instagram.com/curiominds.inc/" target="_blank" rel="noopener noreferrer">@curiominds.inc</a> · ▶ <a href="https://www.youtube.com/@Curiominds.inc88" target="_blank" rel="noopener noreferrer">YouTube</a> · 🌐 <a href="https://curiomindsinc.pages.dev/" target="_blank" rel="noopener noreferrer">Website</a></div>
+  </div>
+
+  <!-- right slide-out species panel -->
+  <aside id="species-panel" class="glass hidden">
+    <div class="panel-head">
+      <div class="panel-title">VENT SPECIES</div>
+      <div class="panel-sub">Click to follow · U next · i for facts</div>
+    </div>
+    <div id="species-list"></div>
+    <div id="follow-bar" class="hidden">
+      <span>📍 <span id="follow-label"></span></span>
+      <button id="follow-stop">Stop</button>
+    </div>
+  </aside>
+
+  <!-- inspect / facts card (2 pages) -->
+  <div id="inspect-card" class="glass hidden">
+    <div class="card-banner">
+      <div class="card-icon" id="card-emoji"></div>
+      <div class="card-head-text">
+        <span class="card-badge" id="card-badge"></span>
+        <div class="card-name" id="card-name"></div>
+        <div class="card-role" id="card-role"></div>
+        <div class="card-dots"><span data-d="1"></span><span data-d="2"></span></div>
+        <button id="card-follow" class="hidden">📍 Follow</button>
+      </div>
+      <button id="card-close">✕</button>
+    </div>
+
+    <div class="card-body-scroll" id="card-body-scroll">
+      <!-- page 1 -->
+      <div class="card-page" id="card-page-1">
+        <div class="sec-label">ABOUT</div>
+        <p id="card-about" class="sec-text"></p>
+        <div class="sec-label">WHY IT MATTERS</div>
+        <p id="card-why" class="sec-text"></p>
+        <div class="fun-fact">
+          <span class="fun-ico">💡</span>
+          <div><div class="fun-label">FUN FACT</div><p id="card-funfact"></p></div>
+        </div>
+      </div>
+
+      <!-- page 2 -->
+      <div class="card-page hidden" id="card-page-2">
+        <div class="sec-label accent">🔧 STRUCTURAL ADAPTATIONS</div>
+        <div id="card-structural"></div>
+        <div class="sec-label accent">⚙️ BEHAVIOURAL ADAPTATIONS</div>
+        <div id="card-behavioural"></div>
+      </div>
+    </div>
+
+    <div class="card-nav">
+      <button id="card-back" class="nav-btn">‹ Back</button>
+      <span id="card-page-ind">1 / 2</span>
+      <button id="card-next" class="nav-btn primary">Next ›</button>
+    </div>
+    <div class="card-hint">Click outside or press ESC to close</div>
+  </div>
+
+  <!-- toast -->
+  <div id="toast" class="hidden"></div>
+
+  <!-- cinematic ("film trailer") overlay: letterbox bars, timecode, caption,
+       skip. Purely chrome — the sim keeps running live underneath. -->
+  <div id="cine-overlay" class="hidden">
+    <div class="cine-bar top"></div>
+    <div class="cine-bar bottom"></div>
+    <div id="cine-time"><i class="cine-dot"></i><span>0:00 / 1:01</span></div>
+    <div id="cine-caption">
+      <div id="cine-cap"></div>
+      <div id="cine-sub"></div>
+    </div>
+    <button id="cine-skip">Skip ✕</button>
+  </div>
+
+  <!-- classic scripts, no modules, no build step — double-click to run -->
+  <script src="vendor/three.min.js"></script>
+  <script src="js/voxel.js"></script>
+  <script src="js/facet.js"></script>
+  <script src="js/sfx.js"></script>
+  <script src="js/species.js"></script>
+  <script src="js/world.js"></script>
+  <script src="js/organisms.js"></script>
+  <script src="js/camera.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/foodweb.js"></script>
+  <script src="js/population.js"></script>
+  <script src="js/cinematic.js"></script>
+  <script src="js/intro.js"></script>
+  <script src="js/main.js"></script>
+
+  <!-- ambient sound: try autoplay, fall back to first user gesture -->
+  <script>
+    (function () {
+      var audio = document.getElementById('ambient');
+      var btn = document.getElementById('btn-sound');
+      var muted = false;
+      audio.volume = 0.35;
+
+      function play() {
+        if (muted) return;
+        audio.play().catch(function () {}); // ignore autoplay block
+      }
+
+      // browsers block autoplay until a gesture — start on first one
+      function unlock() {
+        play();
+        window.removeEventListener('pointerdown', unlock);
+        window.removeEventListener('keydown', unlock);
+      }
+      window.addEventListener('pointerdown', unlock);
+      window.addEventListener('keydown', unlock);
+
+      // try immediately in case autoplay is allowed
+      play();
+
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        muted = !muted;
+        if (window.SFX) SFX.setMuted(muted);
+        if (muted) { audio.pause(); btn.textContent = '🔇'; }
+        else { audio.play().catch(function () {}); btn.textContent = '🔊'; }
+      });
+    })();
+  </script>
+
+  <!-- Clear the boot overlay once the vent field is actually up. A script
+       that 404s still lets `load` fire, so success is checked against THREE
+       and the world being present rather than against the event alone —
+       otherwise a dead connection would fade the overlay onto a black page
+       and look like the simulation's fault. -->
+  <script>
+    (function () {
+      var boot = document.getElementById('boot');
+      if (!boot) return;
+
+      function ok()   { return typeof THREE !== 'undefined' && typeof World !== 'undefined'; }
+      function clear() {
+        boot.classList.add('gone');
+        setTimeout(function () { if (boot.parentNode) boot.parentNode.removeChild(boot); }, 600);
+      }
+      function fail() {
+        boot.classList.add('failed');
+        boot.innerHTML =
+          '<div class="mark">🌋</div>' +
+          '<div class="err"><b>The vent field could not load.</b></div>' +
+          '<div class="note">This file holds no code of its own — it pulls the simulation ' +
+          'from github.com/curiomindsinc/hydrothermalvent each time it opens, so it needs a ' +
+          'working internet connection. Check the connection and reload. If you are offline, ' +
+          'run index.html from a local copy of the repository instead.</div>';
+      }
+
+      window.addEventListener('load', function () {
+        // One frame's grace: main.js builds the world on load too, and the
+        // order the two listeners fire in is not ours to assume.
+        requestAnimationFrame(function () {
+          requestAnimationFrame(function () { ok() ? clear() : fail(); });
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

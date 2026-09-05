@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Ant Colony — CurioMinds Ecoverse</title>
+
+  <!-- ============================================================
+       STANDALONE LAUNCHER — this one file IS the whole simulation.
+
+       It carries no code of its own. Every script, the stylesheet, the
+       baked models and the two logos are pulled from the public
+       repository at github.com/curiomindsinc/antcolony, served through
+       jsDelivr's CDN.
+
+       The <base> tag below is what does it: every relative path in this
+       page — and in the scripts it loads — resolves against that URL
+       instead of against this file's own folder. So the markup below is
+       byte-for-byte the repo's index.html, unchanged, right down to the
+       ?v= cache tags.
+
+       Double-click it. Nothing to install, no server, no download.
+       It needs an internet connection; index.html in the repo is the
+       offline copy.
+
+       @main tracks the repository, so this file picks up any future fix
+       automatically (jsDelivr caches a branch for up to 12 hours). To
+       freeze it to today's code instead, replace @main with a commit
+       hash — @e2ce923 is the version current when this was written.
+       ============================================================ -->
+  <base href="https://cdn.jsdelivr.net/gh/curiomindsinc/antcolony@main/">
+
+  <script>window.ANTCOLONY_BUILD = "20260826k";</script>
+  <link rel="stylesheet" href="theme.css?v=20260827c" />
+
+  <!-- Boot overlay. Styled inline on purpose: theme.css is itself coming
+       from the network, so this has to stand up before anything arrives.
+       z-index clears 65, the highest the theme uses. -->
+  <style>
+    #boot {
+      position: fixed; inset: 0; z-index: 9999;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 18px;
+      background: #0b0c0d; color: #e8e6e3;
+      font: 400 14px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
+      text-align: center; padding: 24px;
+      transition: opacity .5s ease;
+    }
+    #boot.gone { opacity: 0; pointer-events: none; }
+    #boot .mark { font-size: 34px; letter-spacing: .2em; }
+    #boot .note { max-width: 34em; opacity: .55; font-size: 12.5px; }
+    #boot .bar {
+      width: 190px; height: 2px; border-radius: 2px;
+      background: rgba(255,255,255,.11); overflow: hidden;
+    }
+    #boot .bar i {
+      display: block; width: 40%; height: 100%; border-radius: 2px;
+      background: #ffc861; animation: bootslide 1.15s ease-in-out infinite;
+    }
+    @keyframes bootslide {
+      0%   { transform: translateX(-105%); }
+      100% { transform: translateX(360%); }
+    }
+    #boot.failed .bar { display: none; }
+    #boot.failed .mark { font-size: 26px; }
+    #boot .err { color: #ff7a6b; max-width: 34em; }
+  </style>
+</head>
+<body>
+
+  <div id="boot">
+    <div class="mark">🐜 🕳</div>
+    <div>Digging the nest…</div>
+    <div class="bar"><i></i></div>
+    <div class="note">
+      Fetching the simulation from github.com/curiomindsinc/antcolony.
+      First run pulls a few megabytes; after that your browser has it cached.
+    </div>
+  </div>
+  <div id="scene-holder"></div>
+  <div id="vignette"></div>
+  <!-- The clocks over the colony. Screen space, above the scene and
+       the vignette, under every panel, and never in the way of a
+       click — see hud.js. -->
+  <canvas id="hud"></canvas>
+
+  <!-- The one thing in here that is worth stopping you for. Not a
+       popup for an event — a popup for an ending. -->
+  <div id="queenfall" class="modal hidden">
+    <div class="modal-card">
+      <div class="pages">
+        <article class="page active">
+          <h2>The queen is dead</h2>
+          <p>A raider reached the royal chamber. Nothing in this colony can replace her —
+            there is no second queen, and no worker can be fed into one.</p>
+          <p><b>No more eggs will be laid.</b> The brood already in the nurseries will hatch,
+            those callows will harden and go to work, and then the colony will simply run
+            down as its ants wear out. About <b>fifteen minutes</b>, and there will be
+            nothing left.</p>
+          <p class="dim">The ants do not know. A real colony finds out over days, by the
+            smell of her going out of the nest. Nothing here will change its behaviour, sound
+            an alarm, or try to do anything about it — you are the only one watching the
+            number fall.</p>
+        </article>
+      </div>
+      <div class="modal-foot">
+        <button id="queenfall-reset" class="text-btn">Start again</button>
+        <button id="queenfall-ok" class="cta">Watch it end</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== status strip ===================== -->
+  <header id="statusbar">
+    <span class="sb-title"><span class="sb-mark">🐜</span>Asian Marauder Ant</span>
+    <span class="sb-sep"></span>
+    <span class="sb-live">
+      <b id="sb-ants">0</b><span class="sb-unit">ants</span>
+      <i class="sb-dot"></i>
+      <b id="sb-alarm">0%</b><span class="sb-unit">alarm</span>
+    </span>
+    <span class="sb-raid">Raid — soldiers converging, the nest is mobbing them</span>
+    <!-- The wasp gets its own line and its own colour. A raid is an
+         emergency the colony can see; this is one it cannot. -->
+    <span class="sb-wasp">Wasp overhead</span>
+    <!-- And the one that never goes away again. -->
+    <span class="sb-queenless">The queen is dead</span>
+  </header>
+
+  <!-- ======================= icon bar =======================
+       Nothing is open by default. Every panel is one click away and
+       gives the screen back the moment you are done with it. -->
+  <div id="iconbar">
+    <button class="round-btn" data-pop="pop-brush" title="Brush — drop food, grubs, walls">🖌</button>
+    <button class="round-btn" data-pop="pop-view" title="View — nest, trails, mist">👁</button>
+
+    <span class="split">
+      <button id="btn-pause" class="round-btn" aria-label="Pause">
+        <svg viewBox="0 0 16 16" aria-hidden="true" class="i-pause"><rect x="4" y="3" width="3" height="10" rx="1"/><rect x="9" y="3" width="3" height="10" rx="1"/></svg>
+        <svg viewBox="0 0 16 16" aria-hidden="true" class="i-play"><path d="M5 3.2v9.6L13 8z"/></svg>
+      </button>
+      <button class="caret" data-pop="pop-speed" aria-label="Speed">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg>
+      </button>
+    </span>
+
+    <button class="round-btn" data-pop="pop-wind" title="Wind — strength and direction">💨</button>
+    <button class="round-btn" data-pop="pop-follow" title="Follow — ride along with one ant">🎥</button>
+    <button class="round-btn" data-pop="pop-key" title="Key — castes and signals">📊</button>
+    <button class="round-btn alarm" data-pop="pop-summon" title="Summon — raiders or a wasp">⚔</button>
+    <button class="round-btn" data-pop="pop-reset" title="Reset &amp; clear">↺</button>
+    <button id="btn-help" class="round-btn" title="How this works">?</button>
+  </div>
+
+  <!-- ========================= popups ========================= -->
+
+  <!-- brush -->
+  <div id="pop-brush" class="pop" style="--w:252px">
+    <div class="pop-title">Brush</div>
+    <div class="tiles">
+      <button class="tile" data-tool="food"><span class="tile-ico">🍃</span>Crumbs<kbd>1</kbd></button>
+      <button class="tile" data-tool="prey"><span class="tile-ico">🐛</span>Grub<kbd>2</kbd></button>
+      <button class="tile" data-tool="wall"><span class="tile-ico">🧱</span>Wall<kbd>3</kbd></button>
+      <button class="tile" data-tool="erase"><span class="tile-ico">🧹</span>Erase<kbd>4</kbd></button>
+    </div>
+    <p class="hint">Pick a tool, then <b>drag on the ground</b>. A <b>grub</b> is too heavy for
+      one ant — a crew drags it home whole and cuts it up in the larder.</p>
+
+    <!-- what used to be the Look tool. A brush takes the left button,
+         so this says how to move the camera without putting it down. -->
+    <div class="cam-note">
+      <div class="cam-row"><kbd class="cap">Right-drag</kbd><span>rotate, even mid-brush</span></div>
+      <div class="cam-row"><kbd class="cap">Esc</kbd><span>put the brush away</span></div>
+    </div>
+  </div>
+
+  <!-- view -->
+  <div id="pop-view" class="pop" style="--w:264px">
+    <div class="pop-title">View</div>
+
+    <button id="btn-nest" class="row-btn hero">
+      <span class="row-label">Nest view</span>
+      <span class="row-value">below ground</span>
+      <kbd>N</kbd>
+    </button>
+
+    <button id="btn-view" class="row-btn menu-btn" aria-expanded="false">
+      <span class="row-label">Trails</span>
+      <span class="row-value" id="v-view">food + home</span>
+      <svg class="chev" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg>
+      <kbd>P</kbd>
+    </button>
+
+    <!-- one switch per channel: the overlay is a custom blend, not a cycle -->
+    <div id="trail-menu" class="menu">
+      <button class="menu-row" data-layer="food"    aria-pressed="true"><i class="sw" style="--c:#28ff50"></i><span>Food trail</span><span class="track"><span class="knob"></span></span></button>
+      <button class="menu-row" data-layer="home"    aria-pressed="true"><i class="sw" style="--c:#2882ff"></i><span>Home trail</span><span class="track"><span class="knob"></span></span></button>
+      <button class="menu-row" data-layer="recruit" aria-pressed="false"><i class="sw" style="--c:#ffaa28"></i><span>Recruitment</span><span class="track"><span class="knob"></span></span></button>
+      <button class="menu-row" data-layer="help"    aria-pressed="false"><i class="sw" style="--c:#c850ff"></i><span>Help</span><span class="track"><span class="knob"></span></span></button>
+      <button class="menu-row" data-layer="alarm"   aria-pressed="false"><i class="sw" style="--c:#ff3c32"></i><span>Alarm</span><span class="track"><span class="knob"></span></span></button>
+      <button class="menu-row" data-layer="smell"   aria-pressed="false"><i class="sw" style="--c:#ebe196"></i><span>Food smell</span><span class="track"><span class="knob"></span></span></button>
+    </div>
+
+    <!-- Not a trail layer: those five composite into one overlay sheet
+         and this paints ants. It is an instrument for a question the
+         scene cannot answer — which of these is carrying an egg. -->
+    <button id="btn-stung" class="row-btn switch" aria-pressed="false">
+      <span class="row-label">Show parasitized</span>
+      <span class="track"><span class="knob"></span></span>
+    </button>
+
+    <!-- The stopwatches. On by default, unlike the mark above it: the
+         green one is how you find out an ant is dying without having
+         gone looking for it. -->
+    <button id="btn-timers" class="row-btn switch" aria-pressed="true">
+      <span class="row-label">Show timers</span>
+      <span class="track"><span class="knob"></span></span>
+    </button>
+
+    <button id="btn-smell" class="row-btn switch" aria-pressed="true">
+      <span class="row-label">Ants can smell</span>
+      <span class="track"><span class="knob"></span></span>
+    </button>
+
+    <button id="btn-mist" class="row-btn switch" aria-pressed="true">
+      <span class="row-label">Scent mist</span>
+      <span class="track"><span class="knob"></span></span>
+    </button>
+
+    <button id="btn-top" class="row-btn">
+      <span class="row-label">Snap to top-down</span>
+      <kbd>T</kbd>
+    </button>
+  </div>
+
+  <!-- follow -->
+  <div id="pop-follow" class="pop scroll" style="--w:262px">
+    <div class="pop-title">Follow</div>
+    <p class="hint">Pick something and the camera goes with it — <b>down the hole too</b>, if
+      that is where it goes. Click the same row again for the next one.</p>
+    <div id="follow-list" class="follow-list"></div>
+
+    <!-- The strip at the bottom of the screen has a Stop on it too, but
+         that one is only there while you are already following. This is
+         the one you can see before you start, so the way out is visible
+         from the same panel as the way in. -->
+    <button id="follow-off" class="row-btn" disabled>
+      <span class="row-label">Stop following</span>
+      <kbd>Esc</kbd>
+    </button>
+  </div>
+
+  <!-- speed -->
+  <div id="pop-speed" class="pop" style="--w:186px">
+    <div class="pop-title">Speed</div>
+    <div class="segmented" role="group" aria-label="Speed">
+      <button class="seg speed-btn" data-speed="0.5">0.5×</button>
+      <button class="seg speed-btn active" data-speed="1">1×</button>
+      <button class="seg speed-btn" data-speed="2">2×</button>
+      <button class="seg speed-btn" data-speed="4">4×</button>
+    </div>
+    <p class="hint">Space pauses.</p>
+  </div>
+
+  <!-- wind -->
+  <div id="pop-wind" class="pop" style="--w:248px">
+    <div class="pop-title">Wind</div>
+
+    <!-- the dial is the direction control AND the readout: it turns on
+         its own as the wind swings round, the way a weather vane does -->
+    <div class="wind-dial" id="wind-dial" title="Drag to steer the wind">
+      <svg viewBox="-50 -50 100 100" aria-hidden="true">
+        <circle class="dial-ring" cx="0" cy="0" r="42" />
+        <g class="dial-ticks">
+          <path d="M0 -42 V-35" /><path d="M0 42 V35" />
+          <path d="M-42 0 H-35" /><path d="M42 0 H35" />
+          <path d="M-29.7 -29.7 l5 5" /><path d="M29.7 -29.7 l-5 5" />
+          <path d="M-29.7 29.7 l5 -5" /><path d="M29.7 29.7 l-5 -5" />
+        </g>
+        <g id="dial-arrow" class="dial-arrow">
+          <path class="dial-shaft" d="M-26 0 H14" />
+          <path class="dial-head" d="M6 -8 L20 0 L6 8 Z" />
+          <g class="dial-gust">
+            <path d="M-34 -7 h9" /><path d="M-34 7 h9" />
+          </g>
+        </g>
+        <circle class="dial-hub" cx="0" cy="0" r="2.4" />
+      </svg>
+      <span class="dial-cap" id="dial-cap">light breeze</span>
+    </div>
+
+    <div class="sl" data-default="2.5">
+      <div class="sl-head">
+        <label for="sl-wind">Strength</label>
+        <input class="sl-val" id="v-wind" inputmode="decimal" aria-label="Wind value" />
+        <span class="sl-unit">u/s</span>
+        <button class="sl-reset" aria-label="Reset wind">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13 8a5 5 0 1 1-1.6-3.7"/><path d="M13 2.5V5.4H10.1"/></svg>
+        </button>
+      </div>
+      <input type="range" id="sl-wind" min="0" max="8" step="0.5" value="2.5" />
+      <p class="sl-note">carries food smell downwind — foragers find a
+        pile from further away if they are standing in its plume</p>
+    </div>
+  </div>
+
+  <!-- key -->
+  <div id="pop-key" class="pop scroll" style="--w:252px">
+    <div class="pop-title">Key</div>
+
+    <section class="group">
+      <h3>Who the colony is</h3>
+      <ul class="bars" role="img" aria-label="Caste composition">
+        <li>
+          <span class="bar-head"><i class="sw s-minim"></i>Minims <em>nurses</em>
+            <b id="cp-minim">0</b></span>
+          <span class="bar"><b class="s-minim" id="cs-minim"></b></span>
+        </li>
+        <li>
+          <span class="bar-head"><i class="sw s-media"></i>Minors <em>workers</em>
+            <b id="cp-media">0</b></span>
+          <span class="bar"><b class="s-media" id="cs-media"></b></span>
+        </li>
+        <li>
+          <span class="bar-head"><i class="sw s-major"></i>Majors <em>soldiers</em>
+            <b id="cp-major">0</b></span>
+          <span class="bar"><b class="s-major" id="cs-major"></b></span>
+        </li>
+        <li>
+          <span class="bar-head"><i class="sw s-soldier"></i>Supermajors <em>large soldiers</em>
+            <b id="cp-soldier">0</b></span>
+          <span class="bar"><b class="s-soldier" id="cs-soldier"></b></span>
+        </li>
+      </ul>
+    </section>
+
+    <section class="group">
+      <h3>What the colours mean</h3>
+      <ul class="signals">
+        <li>
+          <i class="sw" style="--c:#28ff50"></i>
+          <span class="sig-name">Food trail</span>
+          <span class="sig-sub">this way to food</span>
+          <span class="meter"><b id="m-food"></b></span>
+        </li>
+        <li>
+          <i class="sw" style="--c:#2882ff"></i>
+          <span class="sig-name">Home trail</span>
+          <span class="sig-sub">this way to the nest</span>
+          <span class="meter"><b id="m-home"></b></span>
+        </li>
+        <li>
+          <i class="sw" style="--c:#ffaa28"></i>
+          <span class="sig-name">Recruitment</span>
+          <span class="sig-sub">food here, bring crops</span>
+          <span class="meter"><b id="m-recruit"></b></span>
+        </li>
+        <li>
+          <i class="sw" style="--c:#c850ff"></i>
+          <span class="sig-name">Help</span>
+          <span class="sig-sub">too big — bring jaws</span>
+          <span class="meter"><b id="m-help"></b></span>
+        </li>
+        <li>
+          <i class="sw" style="--c:#ff3c32"></i>
+          <span class="sig-name">Alarm</span>
+          <span class="sig-sub">the war drum</span>
+          <span class="meter"><b id="m-alarm"></b></span>
+        </li>
+        <li>
+          <i class="sw" style="--c:#ebe196"></i>
+          <span class="sig-name">Food smell</span>
+          <span class="sig-sub">drifting on the wind</span>
+          <span class="meter"><b id="m-smell"></b></span>
+        </li>
+      </ul>
+      <p class="hint">Bars show how much of each signal is on the map right now,
+        scaled against its own busiest moment.</p>
+    </section>
+
+    <section class="group">
+      <h3>On the ground</h3>
+      <ul class="signals plain">
+        <li><i class="sw" style="--c:#f2c81e"></i><span class="sig-name">Crumbs</span>
+          <span class="sig-sub">the mist above them is their scent</span></li>
+        <li><i class="sw" style="--c:#f2ece2"></i><span class="sig-name">Callows</span>
+          <span class="sig-sub">newly emerged, pale, cannot move</span></li>
+      </ul>
+    </section>
+  </div>
+
+  <!-- reset -->
+  <!-- Two ways to be attacked, and they could not be less alike. The
+       menu is discovery only — both still have their own key. -->
+  <div id="pop-summon" class="pop" style="--w:268px">
+    <div class="pop-title">Summon</div>
+    <button id="btn-raid" class="row-btn">
+      <span class="row-label">Raid</span>
+      <span class="row-value">twelve raiders</span>
+      <kbd>R</kbd>
+    </button>
+
+    <!-- How many. The colony survives everything up to the last one:
+         a rout is the only thing that can reach the queen, and it is
+         meant to take a deliberate choice to send. -->
+    <div class="segmented" role="group" aria-label="Raid size">
+      <button class="seg raid-btn active" data-raid="12">12</button>
+      <button class="seg raid-btn" data-raid="24">24</button>
+      <button class="seg raid-btn" data-raid="40">40</button>
+      <button class="seg raid-btn" data-raid="60">60</button>
+    </div>
+    <p class="hint" id="raid-note">A dozen is a probe. <b>Sixty is a rout</b> — enough to
+      destroy the deep defence, and the only size that can reach the queen.</p>
+    <button id="btn-wasp" class="row-btn">
+      <span class="row-label">Parasitic wasp</span>
+      <span class="row-value" id="v-wasp">one, for a while</span>
+      <kbd>K</kbd>
+    </button>
+    <p class="pop-note">
+      A raid is a fight, the nest knows it is happening, and it
+      <b>costs</b>: raiders kill what gets in their way and carry brood
+      back out of the hole.
+      <b>Kollasmosoma sentum</b> is not a fight: it hovers a few millimetres up,
+      picks a worker walking home with food, and puts an egg in its
+      gaster in a twentieth of a second. Nobody sounds an alarm,
+      because there is nothing left to sound one at. The stung ant
+      gets up and goes back to work — and wears out three times as
+      fast. About three minutes later the larva finishes it, and
+      whatever is left is carried to the rubbish tip by a nestmate.
+      Turn on <b>Show parasitized</b> in the View panel to see who is
+      carrying one, and keep an eye on the tip.
+    </p>
+  </div>
+
+  <div id="pop-reset" class="pop" style="--w:224px">
+    <div class="pop-title">Reset &amp; clear</div>
+    <div class="btn-grid">
+      <button id="btn-clear-trails" class="row-btn compact">Clear scent</button>
+      <button id="btn-clear-walls" class="row-btn compact">Clear walls</button>
+      <button id="btn-clear-food" class="row-btn compact">Clear food</button>
+      <button id="btn-digging" class="row-btn compact">Stop digging</button>
+      <button id="btn-redig" class="row-btn compact" data-confirm="Fill the nest in?">Dig the nest again</button>
+      <button id="btn-reset" class="row-btn compact danger" data-confirm="Reset everything?">Reset everything</button>
+    </div>
+  </div>
+
+  <!-- ======================= camera keycaps ======================= -->
+  <div id="controls">
+    <div class="ctl-row"><kbd class="cap">Drag</kbd><span>rotate</span></div>
+    <div class="ctl-row"><kbd class="cap">R-drag</kbd><span>rotate while painting</span></div>
+    <div class="ctl-row"><kbd class="cap">Scroll</kbd><span>zoom</span></div>
+    <div class="ctl-row"><kbd class="cap">W</kbd><kbd class="cap">A</kbd><kbd class="cap">S</kbd><kbd class="cap">D</kbd><span>pan</span></div>
+    <div class="ctl-row"><kbd class="cap">T</kbd><kbd class="cap">P</kbd><span>top view / trail menu</span></div>
+    <div class="ctl-row"><kbd class="cap">N</kbd><span>surface / nest view</span></div>
+    <div class="ctl-row"><kbd class="cap">R</kbd><kbd class="cap">K</kbd><span>raid / wasp</span></div>
+    <div class="ctl-row"><kbd class="cap">F</kbd><span>follow one ant</span></div>
+  </div>
+
+  <!-- ========================= credit =========================
+       One line, two links, and a preposition doing the work: the
+       author is a person, Tiny Kingdom is who it was made for, and
+       neither can be read as the other. The rest of the links live
+       in the About strip on the ? card. -->
+  <div id="credit">
+    <span class="credit-lead">Built by</span>
+    <a class="credit-chip" href="https://curiomindsinc.pages.dev/" target="_blank" rel="noopener noreferrer">
+      <img class="chip-logo round" src="brand/curiominds.webp" alt="" width="20" height="20" />
+      <b>Mr Lau Chin Hang</b>
+      <svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4 8l4-4M8 4H5.2M8 4v2.8"/></svg>
+    </a>
+    <span class="credit-lead">for</span>
+    <a class="credit-chip" href="https://www.tinykingdom.co/" target="_blank" rel="noopener noreferrer"
+       aria-label="Tiny Kingdom">
+      <img class="chip-logo wide" src="brand/tinykingdom.webp" alt="Tiny Kingdom" height="16" />
+      <svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4 8l4-4M8 4H5.2M8 4v2.8"/></svg>
+    </a>
+  </div>
+
+  <div id="scrim"></div>
+
+  <!-- ========================== intro ========================== -->
+  <div id="intro" class="modal">
+    <div class="modal-card">
+      <div class="modal-top">
+        <span class="dots">
+          <i class="dot active"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        </span>
+        <button id="intro-skip" class="text-btn">Skip</button>
+      </div>
+
+      <div class="pages">
+        <article class="page active">
+          <h2>The colony has no map</h2>
+          <p>These ants can see, but their world is blurry. They don't rely on sight to find food
+            or navigate their lives. Instead, each ant <b>wanders</b>, <b>follows</b> and
+            <b>leaves scent trails</b>, responding to simple cues around it.</p>
+          <p>Nobody is <b>in charge</b>, not even the <b>queen</b>, whose main role is to
+            <b>lay eggs</b>.</p>
+          <p class="dim">Everything you are about to watch <b>emerges</b> from these simple
+            actions, and nothing else.</p>
+        </article>
+
+        <article class="page" data-glow="pop-brush">
+          <h2>Feed it, block it, watch it react</h2>
+          <p>Click <b>🖌 Brush</b>, top left. Drag <b class="c-food">crumbs</b> for food, drop
+            a <b>grub</b> for a crew to haul home, or wall off a tunnel.</p>
+          <p class="dim">Keys <kbd class="cap">1</kbd>–<kbd class="cap">4</kbd> pick the tool.</p>
+        </article>
+
+        <article class="page" data-glow="pop-view">
+          <h2>See both halves of the colony</h2>
+          <p>Click <b>👁 View</b>. Switch to <b>Nest view</b> to drop underground, or flip
+            individual <b>trails</b> on and off to isolate a signal.</p>
+          <p class="dim"><kbd class="cap">N</kbd> for nest, <kbd class="cap">P</kbd> for trails.</p>
+        </article>
+
+        <article class="page" data-glow="pop-follow">
+          <h2>Ride along with one ant</h2>
+          <p>Click <b>🎥 Follow</b> and pick the queen, a caste, or whatever's happening now.
+            The camera goes wherever she goes — even down the hole.</p>
+          <p class="dim"><kbd class="cap">F</kbd> opens it.</p>
+        </article>
+
+        <article class="page" data-glow="pop-wind">
+          <h2>Steer the wind</h2>
+          <p>Click <b>💨 Wind</b> and drag the dial. Food scent rides the wind — foragers
+            standing downwind smell a pile from much further off.</p>
+        </article>
+
+        <article class="page" data-glow="pop-key">
+          <h2>Read the colony at a glance</h2>
+          <p>Click <b>📊 Key</b> for live bars on caste counts and every scent signal on the
+            map right now.</p>
+        </article>
+
+        <article class="page" data-glow="pop-summon">
+          <h2>Attack it</h2>
+          <p>Click <b>⚔ Summon</b> to send a <b>raid</b> or drop in a <b>parasitic wasp</b>.
+            Both cost the colony ants — watch how it responds.</p>
+          <p class="dim"><kbd class="cap">R</kbd> for raid, <kbd class="cap">K</kbd> for wasp.</p>
+        </article>
+      </div>
+
+      <div class="modal-foot">
+        <button id="intro-back" class="text-btn" disabled>Back</button>
+        <button id="intro-next" class="cta">Next ›</button>
+      </div>
+
+      <!-- About. Sits under the nav so it is on every page rather than
+           hidden behind a fifth one nobody would page to. -->
+      <div class="modal-credits">
+        <img class="mc-badge" src="brand/curiominds.webp" alt="" width="42" height="42" />
+        <div class="mc-body">
+          <p class="mc-line">
+            Built by <b>Mr Lau Chin Hang</b> of CurioMinds, for
+            <a class="mc-tk" href="https://www.tinykingdom.co/" target="_blank" rel="noopener noreferrer"
+               aria-label="Tiny Kingdom">
+              <img src="brand/tinykingdom.webp" alt="Tiny Kingdom" height="22" />
+            </a>
+          </p>
+          <p class="mc-links">
+            <a href="https://www.instagram.com/curiominds.inc/" target="_blank" rel="noopener noreferrer">🏫 @curiominds.inc</a>
+            <a href="https://www.youtube.com/@Curiominds.inc88" target="_blank" rel="noopener noreferrer">▶ YouTube</a>
+            <a href="https://curiomindsinc.pages.dev/" target="_blank" rel="noopener noreferrer">🌐 Website</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="vendor/three.min.js"></script>
+  <!-- the mound, baked out of model/AntHill.obj so it loads from file:// -->
+  <script src="model/anthill.js?v=20260814p"></script>
+  <!-- the grub, baked out of model/food_worm/scene.gltf for the same reason -->
+  <script src="model/foodworm.js?v=20260814p"></script>
+  <script src="js/voxel.js?v=20260814p"></script>
+  <!-- the ant's body parts, boxy or faceted -->
+  <script src="js/antbody.js?v=20260814p"></script>
+  <script src="js/pheromone.js?v=20260814p"></script>
+  <!-- the air made visible: streaks and ground drift, cosmetic only -->
+  <script src="js/wind.js?v=20260814p"></script>
+  <script src="js/world.js?v=20260814p"></script>
+  <script src="js/ants.js?v=20260826k"></script>
+  <script src="js/wasp.js?v=20260826g"></script>
+  <!-- Who the camera is on. Sits low and out of the way, and is the
+       only thing on screen while you are following. -->
+  <div id="follow-bar" class="hidden">
+    <span class="fb-eye">🎥</span>
+    <span id="follow-label" class="fb-label">—</span>
+    <button id="follow-next" class="fb-btn">Next</button>
+    <button id="follow-stop" class="fb-btn fb-stop">Stop</button>
+  </div>
+
+  <script src="js/hud.js?v=20260826g"></script>
+  <script src="js/camera.js?v=20260826c"></script>
+  <script src="js/ui.js?v=20260827b"></script>
+  <script src="js/main.js?v=20260826f"></script>
+
+  <!-- Clear the boot overlay once the colony is actually up. A script that
+       404s still lets `load` fire, so success is checked against THREE and
+       window.SIM — main.js publishes SIM on its last line, so its presence
+       means every file above it parsed and the world got built. Checking the
+       event alone would fade the overlay onto a black page on a dead
+       connection and make it look like the simulation's fault. -->
+  <script>
+    (function () {
+      var boot = document.getElementById('boot');
+      if (!boot) return;
+
+      function ok()   { return typeof THREE !== 'undefined' && typeof window.SIM !== 'undefined'; }
+      function clear() {
+        boot.classList.add('gone');
+        setTimeout(function () { if (boot.parentNode) boot.parentNode.removeChild(boot); }, 600);
+      }
+      function fail() {
+        boot.classList.add('failed');
+        boot.innerHTML =
+          '<div class="mark">🐜</div>' +
+          '<div class="err"><b>The colony could not load.</b></div>' +
+          '<div class="note">This file holds no code of its own — it pulls the simulation ' +
+          'from github.com/curiomindsinc/antcolony each time it opens, so it needs a working ' +
+          'internet connection. Check the connection and reload. If you are offline, run ' +
+          'index.html from a local copy of the repository instead.</div>';
+      }
+
+      window.addEventListener('load', function () {
+        // One frame's grace, in case anything defers its first build.
+        requestAnimationFrame(function () {
+          requestAnimationFrame(function () { ok() ? clear() : fail(); });
+        });
+      });
+    })();
+  </script>
+</body>
+</html>
