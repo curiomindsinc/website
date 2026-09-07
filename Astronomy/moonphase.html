@@ -33,6 +33,20 @@
   #info .row span:last-child { color:#fff; font-weight:500; }
   #credit { position:fixed; bottom:10px; right:14px; font-size:10px; color:#6b7299; }
 
+  /* bottom-centre author credit */
+  #author-credit {
+    position:fixed; bottom:10px; left:50%; transform:translateX(-50%);
+    text-align:center; font-size:11px; line-height:1.5; z-index:6;
+    background:rgba(10,12,24,0.72); backdrop-filter:blur(6px);
+    border:1px solid rgba(255,255,255,0.12); border-radius:10px;
+    padding:7px 16px; white-space:nowrap;
+  }
+  #author-credit .credit-line { color:#9aa3c7; }
+  #author-credit .credit-line b { color:#e8e8f0; font-weight:600; }
+  #author-credit .credit-links { margin-top:2px; color:#6b7299; }
+  #author-credit .credit-links a { color:#8fa2ff; text-decoration:none; }
+  #author-credit .credit-links a:hover { text-decoration:underline; }
+
   #recenterBtn {
     position:fixed; top:16px; right:16px; z-index:5;
     background:rgba(10,12,24,0.72); color:#e8e8f0; border:1px solid rgba(255,255,255,0.18);
@@ -98,6 +112,12 @@
 </div>
 
 <div id="credit">Drag to rotate · scroll to zoom</div>
+
+<!-- bottom-centre credit -->
+<div id="author-credit">
+  <div class="credit-line">Created by <b>Mr Lau Chin Hang</b></div>
+  <div class="credit-links">🏫 <a href="https://www.instagram.com/curiominds.inc/" target="_blank" rel="noopener noreferrer">@curiominds.inc</a> · ▶ <a href="https://www.youtube.com/@Curiominds.inc88" target="_blank" rel="noopener noreferrer">YouTube</a> · 🌐 <a href="https://curiomindsinc.pages.dev/" target="_blank" rel="noopener noreferrer">Website</a></div>
+</div>
 
 <script type="importmap">
 {
