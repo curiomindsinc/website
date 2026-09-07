@@ -105,6 +105,13 @@
     h1 { font-size: 0.88rem; }
     .layout { grid-template-rows: minmax(0,1fr) minmax(0,50vh); gap: 8px; }
   }
+  /* author credit */
+  .credit { max-width: 1400px; margin: 14px auto 4px; text-align: center; font-size: 0.72rem; line-height: 1.6; }
+  .credit .credit-line { color: #94a3b8; }
+  .credit .credit-line b { color: hsl(210,20%,95%); font-weight: 600; }
+  .credit .credit-links { margin-top: 2px; color: #64748b; }
+  .credit .credit-links a { color: #2dd4a8; text-decoration: none; }
+  .credit .credit-links a:hover { text-decoration: underline; }
 </style>
 </head>
 <body>
@@ -161,6 +168,12 @@
       </div>
     </div>
   </div>
+</div>
+
+<!-- author credit -->
+<div class="credit">
+  <div class="credit-line">Created by <b>Mr Lau Chin Hang</b></div>
+  <div class="credit-links">🏫 <a href="https://www.instagram.com/curiominds.inc/" target="_blank" rel="noopener noreferrer">@curiominds.inc</a> · ▶ <a href="https://www.youtube.com/@Curiominds.inc88" target="_blank" rel="noopener noreferrer">YouTube</a> · 🌐 <a href="https://curiomindsinc.pages.dev/" target="_blank" rel="noopener noreferrer">Website</a></div>
 </div>
 <script>
 const params = { temperature:35, pH:8, maltoseCount:10, enzymeCount:3, sucrose:3, lactose:3, paused:false, speed:1 };
