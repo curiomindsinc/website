@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Curiominds Physics Lab — Engine Prototype</title>
+    <script type="module" crossorigin src="https://cdn.jsdelivr.net/gh/curiomindsinc/fma@gh-pages/assets/index-BYnQj8To.js"></script>
+    <link rel="modulepreload" crossorigin href="https://cdn.jsdelivr.net/gh/curiomindsinc/fma@gh-pages/assets/three-CKHDyU54.js">
+    <link rel="stylesheet" crossorigin href="https://cdn.jsdelivr.net/gh/curiomindsinc/fma@gh-pages/assets/index-D5w1kl85.css">
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="stage"></canvas>
+
+      <header id="topbar">
+        <span class="brand">Curiominds <b>Physics Lab</b></span>
+        <nav id="sceneTabs">
+          <button data-scene="track" class="active">A / C — Track &amp; Pulley</button>
+          <button data-scene="ramp">B — Ramp</button>
+        </nav>
+        <button id="toggleResults" class="ghost">Hide results</button>
+        <span id="fps" class="fps">—</span>
+        <div id="credit">
+          <div class="credit-line">Created by <b>Mr Lau Chin Hang</b></div>
+          <div class="credit-links">🏫 <a href="https://www.instagram.com/curiominds.inc/" target="_blank" rel="noopener noreferrer">@curiominds.inc</a> · ▶ <a href="https://www.youtube.com/@Curiominds.inc88" target="_blank" rel="noopener noreferrer">YouTube</a> · 🌐 <a href="https://curiomindsinc.pages.dev/" target="_blank" rel="noopener noreferrer">Website</a></div>
+        </div>
+      </header>
+
+      <aside id="controls"></aside>
+
+      <section id="instruments">
+        <div id="readout"></div>
+      </section>
+
+      <section id="results"></section>
+
+      <div id="hint"></div>
+    </div>
+  </body>
+</html>
