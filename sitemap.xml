@@ -11,6 +11,7 @@
   <url><loc>https://curiomindsinc.pages.dev/Physics/brownian_motion</loc><priority>0.8</priority></url>
   <url><loc>https://curiomindsinc.pages.dev/Physics/heat-conduction-simulator</loc><priority>0.8</priority></url>
   <url><loc>https://curiomindsinc.pages.dev/Physics/catapult_simulator</loc><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Physics/fma</loc><priority>0.8</priority></url>
 
   <!-- Chemistry -->
   <url><loc>https://curiomindsinc.pages.dev/Chemistry/buildformula</loc><priority>0.8</priority></url>
@@ -33,6 +34,7 @@
 
   <!-- Earth Science -->
   <url><loc>https://curiomindsinc.pages.dev/Earth%20Science/onogoro_final</loc><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Earth%20Science/water_cycle</loc><priority>0.8</priority></url>
 
   <!-- Astronomy -->
   <url><loc>https://curiomindsinc.pages.dev/Astronomy/solar-system-simulator</loc><priority>0.8</priority></url>
