@@ -185,19 +185,117 @@ header p{
   display:block;
 }
 
-/* Stage indicator bar */
-.stage-bar{
-  display:flex;gap:4px;margin-top:10px;
-  justify-content:center;
+/* Timeline scrubber (YouTube-style) */
+.timeline{
+  margin-top:10px;
+  padding:10px 12px 8px;
+  background:rgba(3,3,10,0.55);
+  border:1px solid var(--border);
+  border-radius:10px;
+  user-select:none;-webkit-user-select:none;
 }
-.stage-pip{
-  height:3px;flex:1;border-radius:2px;
-  background:rgba(255,255,255,0.1);
-  transition:all 0.4s;
-  max-width:60px;
+.tl-head{
+  display:flex;justify-content:space-between;align-items:center;gap:10px;
+  margin-bottom:6px;
 }
-.stage-pip.active{background:var(--accent-violet);box-shadow:0 0 8px var(--accent-violet);}
-.stage-pip.done{background:rgba(139,92,246,0.4);}
+.tl-hint{
+  font-family:'Syne Mono',monospace;
+  font-size:0.62rem;letter-spacing:0.14em;
+  color:var(--accent-violet);
+  white-space:nowrap;
+}
+.tl-readout{
+  font-family:'Syne',sans-serif;font-weight:700;
+  font-size:0.78rem;color:var(--text);
+  text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.tl-readout .tl-pct{
+  font-family:'Syne Mono',monospace;font-weight:400;
+  color:var(--text-dim);margin-left:8px;
+}
+.tl-groups,.tl-labels{display:flex;}
+.tl-group{
+  font-family:'Syne Mono',monospace;
+  font-size:0.56rem;letter-spacing:0.14em;
+  color:var(--text-dim);text-align:center;
+  padding:0 3px 3px;margin:0 2px;
+  border:1px solid rgba(255,255,255,0.14);border-bottom:none;
+  border-radius:4px 4px 0 0;
+  white-space:nowrap;overflow:hidden;
+}
+.tl-group.blank{border-color:transparent;}
+.tl-track{
+  position:relative;
+  height:34px;
+  cursor:pointer;
+  touch-action:none;
+  outline:none;
+}
+.tl-segs{
+  position:absolute;left:0;right:0;top:50%;
+  height:12px;transform:translateY(-50%);
+  display:flex;
+  border-radius:6px;overflow:hidden;
+  background:rgba(255,255,255,0.06);
+  transition:height 0.15s;
+}
+.tl-track:hover .tl-segs,.tl-track.dragging .tl-segs,.tl-track:focus-visible .tl-segs{height:16px;}
+.tl-track:focus-visible .tl-segs{box-shadow:0 0 0 2px var(--accent-violet);}
+.tl-seg{
+  position:relative;height:100%;
+  border-right:2px solid var(--void);
+}
+.tl-seg:last-child{border-right:none;}
+.tl-seg-bg{position:absolute;inset:0;opacity:0.22;}
+.tl-seg-fill{position:absolute;left:0;top:0;bottom:0;width:0;}
+.tl-thumb{
+  position:absolute;top:50%;left:0;
+  width:22px;height:22px;border-radius:50%;
+  transform:translate(-50%,-50%);
+  background:#fff;
+  border:4px solid var(--accent-cyan);
+  box-shadow:0 0 14px var(--accent-cyan),0 2px 6px rgba(0,0,0,0.6);
+  pointer-events:none;
+  transition:transform 0.15s;
+}
+.tl-track:hover .tl-thumb,.tl-track.dragging .tl-thumb{transform:translate(-50%,-50%) scale(1.2);}
+.tl-thumb::after{
+  content:'';position:absolute;inset:-10px;border-radius:50%;
+  border:2px solid currentColor;opacity:0;
+}
+.timeline.untouched .tl-thumb::after{animation:tlPulse 1.6s ease-out infinite;}
+@keyframes tlPulse{
+  0%{transform:scale(0.6);opacity:0.9;}
+  100%{transform:scale(1.5);opacity:0;}
+}
+@media(prefers-reduced-motion:reduce){
+  .timeline.untouched .tl-thumb::after{animation:none;opacity:0.6;}
+}
+.tl-tip{
+  position:absolute;bottom:100%;left:0;
+  transform:translateX(-50%);
+  padding:3px 8px;border-radius:6px;
+  background:#fff;color:#07071a;
+  font-family:'Space Grotesk',sans-serif;font-size:0.68rem;font-weight:600;
+  white-space:nowrap;pointer-events:none;
+  opacity:0;transition:opacity 0.12s;
+}
+.tl-track:hover .tl-tip,.tl-track.dragging .tl-tip{opacity:1;}
+.tl-label{
+  text-align:center;
+  font-family:'Space Grotesk',sans-serif;
+  font-size:0.64rem;font-weight:600;
+  color:var(--text-dim);
+  white-space:nowrap;overflow:hidden;
+  transition:color 0.2s;
+}
+.tl-label.current{color:var(--text);}
+.tl-label .short{display:none;}
+@media(max-width:560px){
+  .tl-label .full{display:none;}
+  .tl-label .short{display:inline;}
+  .tl-hint{font-size:0.55rem;letter-spacing:0.08em;}
+}
 
 /* Info cards */
 .info-grid{
@@ -327,12 +425,76 @@ header p{font-size:0.72rem}
 .canvas-wrap{padding:10px}
 .credit{margin-top:0}
 
+/* 3 columns: controls | canvas + readouts (centre) | key facts */
+.wrapper{max-width:1500px}
+.layout{grid-template-columns:220px minmax(0,1fr) 250px}
+.facts-col{overflow-y:auto}
+
+/* Left column: stage picker + chromosome status (portrait 2×2) */
+.layout > div:first-child{display:flex;flex-direction:column;gap:10px}
+.layout > div:first-child > *{flex-shrink:0}
+.chr-card{padding:11px 12px}
+.chr-card .panel-title{margin-bottom:8px}
+.chr-display{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:0}
+.chr-cell{
+  background:rgba(139,92,246,0.06);
+  border:1px solid rgba(139,92,246,0.14);
+  border-radius:8px;padding:6px 4px;
+}
+.chr-num{font-size:1.35rem;line-height:1.2}
+.chr-label{font-size:0.56rem}
+
+/* Centre: canvas + timeline + phase card + events all fit one screen */
+.right-col{overflow:hidden;padding-right:0}
+.canvas-wrap{flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
+.right-col > .canvas-wrap{flex-shrink:1}
+.canvas-box{position:relative;flex:1 1 auto;min-height:160px}
+.canvas-box #cellCanvas{position:absolute;inset:0;width:100%;height:100%}
+.info-grid{height:172px}
+.info-grid .info-card{overflow-y:auto;padding:9px 12px}
+.info-grid .info-title{margin-bottom:5px}
+.info-grid .info-text{line-height:1.55}
+.info-grid .event-list{gap:3px}
+.info-grid .event-item{padding:3px 8px}
+.facts-col .eq-grid{grid-template-columns:1fr}
+
+/* Short screens (laptops): tighten chrome so the canvas keeps its size */
+@media(max-height:780px){
+  header p{display:none}
+  header{padding:2px 0 0}
+  .stage-btn{padding:5px 10px}
+  .stage-sub{display:none}
+  .chr-num{font-size:1.1rem}
+  .chr-cell{padding:4px}
+  .timeline{margin-top:6px}
+}
+
+/* Medium widths: centre fits one screen, key facts scroll below it */
+@media(max-width:1100px){
+  html,body{height:auto}
+  body{overflow-y:auto}
+  .wrapper{height:auto;overflow:visible}
+  .layout{grid-template-columns:200px minmax(0,1fr);grid-template-rows:calc(100dvh - 100px) auto}
+  .facts-col{grid-column:1 / -1;overflow:visible}
+  .facts-col .eq-grid{grid-template-columns:repeat(4,1fr)}
+}
+@media(max-width:860px){
+  .facts-col .eq-grid{grid-template-columns:1fr 1fr}
+}
+
+/* Phones: plain stacked page */
 @media(max-width:680px){
   .wrapper{padding:6px 10px 8px;gap:6px}
   header{padding:3px 0 2px}
   header p{display:none}
-  .layout{grid-template-columns:1fr;grid-template-rows:minmax(0,auto) minmax(0,1fr)}
-  .layout > div:first-child{max-height:42vh}
+  .layout{grid-template-columns:1fr;grid-template-rows:none}
+  .layout > div:first-child{overflow:visible}
+  .facts-col{grid-column:auto}
+  .right-col{overflow:visible}
+  .canvas-wrap{flex:none}
+  .canvas-box{flex:none;height:300px}
+  .info-grid{height:auto;grid-template-columns:1fr}
+  .info-grid .info-card{overflow:visible}
 }
 </style>
 </head>
@@ -391,38 +553,9 @@ header p{font-size:0.72rem}
           <span class="speed-val" id="speedVal">0.5×</span>
         </div>
       </div>
-    </div>
-
-    <!-- RIGHT -->
-    <div class="right-col">
-      <!-- Canvas -->
-      <div class="canvas-wrap">
-        <!-- Slightly taller canvas to fit new labels comfortably -->
-        <canvas id="cellCanvas" height="280"></canvas> 
-        <div class="stage-bar" id="stagePips">
-          <div class="stage-pip active" data-i="0"></div>
-          <div class="stage-pip" data-i="1"></div>
-          <div class="stage-pip" data-i="2"></div>
-          <div class="stage-pip" data-i="3"></div>
-          <div class="stage-pip" data-i="4"></div>
-          <div class="stage-pip" data-i="5"></div>
-        </div>
-      </div>
-
-      <!-- Info + events -->
-      <div class="info-grid">
-        <div class="info-card">
-          <div class="info-title" id="stageTitle">Interphase</div>
-          <div class="info-text" id="stageDesc">The cell prepares for division. DNA is replicated via semi-conservative replication, producing identical copies. The cell grows and organelles are duplicated. Chromatin remains <strong>uncondensed</strong> — visible only as a diffuse network.</div>
-        </div>
-        <div class="info-card">
-          <div class="info-title">Step-by-Step Events</div>
-          <div class="event-list" id="eventList"></div>
-        </div>
-      </div>
 
       <!-- Chromosome count card -->
-      <div class="info-card">
+      <div class="info-card chr-card">
         <div class="panel-title">🔢 Chromosome / Chromatid Status</div>
         <div class="chr-display">
           <div class="chr-cell">
@@ -443,8 +576,46 @@ header p{font-size:0.72rem}
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- Key facts -->
+    <!-- RIGHT -->
+    <div class="right-col">
+      <!-- Canvas -->
+      <div class="canvas-wrap">
+        <!-- Slightly taller canvas to fit new labels comfortably -->
+        <div class="canvas-box"><canvas id="cellCanvas" height="280"></canvas></div>
+        <!-- Timeline scrubber: drag to move through the cell cycle -->
+        <div class="timeline untouched" id="timeline">
+          <div class="tl-head">
+            <span class="tl-hint">⟵ DRAG TO MOVE THROUGH TIME ⟶</span>
+            <span class="tl-readout" id="tlReadout"></span>
+          </div>
+          <div class="tl-groups" id="tlGroups"></div>
+          <div class="tl-track" id="tlTrack" role="slider" tabindex="0"
+               aria-label="Cell cycle timeline" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+            <div class="tl-segs" id="tlSegs"></div>
+            <div class="tl-thumb" id="tlThumb"></div>
+            <div class="tl-tip" id="tlTip"></div>
+          </div>
+          <div class="tl-labels" id="tlLabels"></div>
+        </div>
+      </div>
+
+      <!-- Info + events -->
+      <div class="info-grid">
+        <div class="info-card">
+          <div class="info-title" id="stageTitle">Interphase</div>
+          <div class="info-text" id="stageDesc">The cell prepares for division. DNA is replicated via semi-conservative replication, producing identical copies. The cell grows and organelles are duplicated. Chromatin remains <strong>uncondensed</strong> — visible only as a diffuse network.</div>
+        </div>
+        <div class="info-card">
+          <div class="info-title">Step-by-Step Events</div>
+          <div class="event-list" id="eventList"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FAR RIGHT: Key facts -->
+    <div class="facts-col">
       <div class="eq-panel">
         <div class="panel-title">📋 A-Level Key Facts</div>
         <div class="eq-grid">
@@ -549,10 +720,13 @@ let animFrameId = null;
 const stageColors = ['#22d3ee','#a78bfa','#ec4899','#f59e0b','#84cc16','#34d399'];
 
 function resizeCanvas(){
-  canvas.width = canvas.offsetWidth;
+  // Canvas fills whatever height the centre column leaves for it
+  const box = canvas.parentElement;
+  canvas.width = box.clientWidth;
+  canvas.height = box.clientHeight;
 }
 resizeCanvas();
-window.addEventListener('resize',()=>{resizeCanvas(); drawStage(currentStage,animT);});
+new ResizeObserver(()=>{resizeCanvas(); drawStage(currentStage,animT);}).observe(canvas.parentElement);
 
 // Helper drawing functions
 function drawCell(cx,cy,rx,ry,color,alpha=1,glowAmt=20){
@@ -713,7 +887,9 @@ function drawStage(stage, t){
     const pulse=1+0.02*Math.sin(t*Math.PI*4);
     drawCell(cx,cy,cellR*pulse,cellR*0.9*pulse,color,1,25);
     drawNucleusDynamic(cx, cy, nuclR, '#8b5cf6', 0); // Solid
-    drawChromatinFixed(cx,cy,nuclR*0.85,'#c084fc', 1 + t*1.5); // Density increases showing replication
+    // Chromatin densifies only during S phase (DNA replication)
+    const sProg = Math.max(0, Math.min(1, (t - 0.25) / 0.25));
+    drawChromatinFixed(cx,cy,nuclR*0.85,'#c084fc', 1 + sProg*1.5);
     // Nucleolus
     ctx.save(); ctx.shadowBlur=10; ctx.shadowColor='#ec4899';
     ctx.beginPath(); ctx.arc(cx+nuclR*0.2,cy-nuclR*0.1,nuclR*0.22,0,Math.PI*2);
@@ -722,7 +898,10 @@ function drawStage(stage, t){
     ctx.restore();
     // DNA label
     ctx.save(); ctx.fillStyle='rgba(34,211,238,0.7)'; ctx.font="bold 11px 'Space Grotesk',sans-serif";
-    ctx.textAlign='center'; ctx.fillText('DNA replicating (chromatin densifying)',cx,cy+cellR*1.05+14);
+    const subLabel = t < 0.25 ? 'G1 — cell growing'
+                   : t < 0.5  ? 'S — DNA replicating (chromatin densifying)'
+                   : 'G2 — preparing for division';
+    ctx.textAlign='center'; ctx.fillText(subLabel,cx,cy+cellR*1.05+14);
     ctx.restore();
   }
 
@@ -925,6 +1104,8 @@ function drawStage(stage, t){
   ctx.shadowColor = color;
   ctx.fillText(`${STAGES[stage].events[activeIdx]}`, W/2, H - 18);
   ctx.restore();
+
+  updateTimeline();
 }
 
 // ── UI update ─────────────────────────────────────────────────
@@ -933,11 +1114,6 @@ function updateUI(stage){
   // Buttons
   document.querySelectorAll('.stage-btn').forEach((b,i)=>{
     b.classList.toggle('active',i===stage);
-  });
-  // Pips
-  document.querySelectorAll('.stage-pip').forEach((p,i)=>{
-    p.classList.toggle('active',i===stage);
-    p.classList.toggle('done',i<stage);
   });
   // Info
   document.getElementById('stageTitle').textContent=s.name;
@@ -1090,6 +1266,186 @@ document.querySelectorAll('.stage-btn').forEach((btn,i)=>{
 
 document.getElementById('speedSlider').addEventListener('input',function(){
   document.getElementById('speedVal').textContent=this.value+'×';
+});
+
+// ── Timeline scrubber ─────────────────────────────────────────
+// Whole cycle is one timeline. Each stage gets a width weight; Interphase
+// is split into G1 / S / G2 (aligned to its event list: G1, S, G2 + G2).
+const STAGE_W = [6, 4, 4, 4, 5, 5];
+const STAGE_START = STAGE_W.map((_, i) => STAGE_W.slice(0, i).reduce((a, b) => a + b, 0));
+const TL_TOTAL = STAGE_W.reduce((a, b) => a + b, 0);
+
+const TL_SEGMENTS = [
+  {stage:0, t0:0,    t1:0.25, full:'G1',          short:'G1',  color:'#67e8f9', tip:'Interphase · G1 (growth)'},
+  {stage:0, t0:0.25, t1:0.5,  full:'S',           short:'S',   color:'#22d3ee', tip:'Interphase · S (DNA replication)'},
+  {stage:0, t0:0.5,  t1:1,    full:'G2',          short:'G2',  color:'#0ea5c6', tip:'Interphase · G2 (preparation)'},
+  {stage:1, t0:0,    t1:1,    full:'Prophase',    short:'Pro', color:stageColors[1], tip:'Prophase'},
+  {stage:2, t0:0,    t1:1,    full:'Metaphase',   short:'Meta',color:stageColors[2], tip:'Metaphase'},
+  {stage:3, t0:0,    t1:1,    full:'Anaphase',    short:'Ana', color:stageColors[3], tip:'Anaphase'},
+  {stage:4, t0:0,    t1:1,    full:'Telophase',   short:'Telo',color:stageColors[4], tip:'Telophase'},
+  {stage:5, t0:0,    t1:1,    full:'Cytokinesis', short:'Cyto',color:stageColors[5], tip:'Cytokinesis'}
+];
+TL_SEGMENTS.forEach(s => {
+  s.g0 = (STAGE_START[s.stage] + s.t0 * STAGE_W[s.stage]) / TL_TOTAL;
+  s.g1 = (STAGE_START[s.stage] + s.t1 * STAGE_W[s.stage]) / TL_TOTAL;
+});
+
+function toGlobal(stage, t){
+  return (STAGE_START[stage] + t * STAGE_W[stage]) / TL_TOTAL;
+}
+function fromGlobal(g){
+  const u = Math.max(0, Math.min(1, g)) * TL_TOTAL;
+  for(let i = 0; i < STAGE_W.length; i++){
+    if(u < STAGE_START[i] + STAGE_W[i] || i === STAGE_W.length - 1){
+      return {stage:i, t:Math.min(1, (u - STAGE_START[i]) / STAGE_W[i])};
+    }
+  }
+}
+function segmentAtGlobal(g){
+  return TL_SEGMENTS.find(s => g < s.g1) || TL_SEGMENTS[TL_SEGMENTS.length - 1];
+}
+
+const tlRoot = document.getElementById('timeline');
+const tlTrack = document.getElementById('tlTrack');
+const tlThumb = document.getElementById('tlThumb');
+const tlTip = document.getElementById('tlTip');
+const tlReadout = document.getElementById('tlReadout');
+
+// Build segments, labels and group brackets
+(function buildTimeline(){
+  const segs = document.getElementById('tlSegs');
+  const labels = document.getElementById('tlLabels');
+  TL_SEGMENTS.forEach(s => {
+    const w = ((s.g1 - s.g0) * 100) + '%';
+    const seg = document.createElement('div');
+    seg.className = 'tl-seg';
+    seg.style.width = w;
+    seg.innerHTML = `<div class="tl-seg-bg" style="background:${s.color}"></div>` +
+                    `<div class="tl-seg-fill" style="background:${s.color};box-shadow:0 0 10px ${s.color}"></div>`;
+    segs.appendChild(seg);
+    s.fillEl = seg.lastChild;
+
+    const lab = document.createElement('div');
+    lab.className = 'tl-label';
+    lab.style.width = w;
+    lab.innerHTML = `<span class="full">${s.full}</span><span class="short">${s.short}</span>`;
+    labels.appendChild(lab);
+    s.labelEl = lab;
+  });
+
+  const groups = document.getElementById('tlGroups');
+  [
+    {label:'INTERPHASE', from:0, to:1},
+    {label:'MITOSIS', from:1, to:5},
+    {label:'', from:5, to:6}
+  ].forEach(gp => {
+    const span = STAGE_W.slice(gp.from, gp.to).reduce((a, b) => a + b, 0);
+    const el = document.createElement('div');
+    el.className = 'tl-group' + (gp.label ? '' : ' blank');
+    el.style.width = `calc(${span / TL_TOTAL * 100}% - 4px)`;
+    el.textContent = gp.label || ' ';
+    groups.appendChild(el);
+  });
+})();
+
+function updateTimeline(){
+  const g = toGlobal(currentStage, animT);
+  const pct = g * 100;
+  tlThumb.style.left = pct + '%';
+
+  let current = null;
+  TL_SEGMENTS.forEach(s => {
+    const f = Math.max(0, Math.min(1, (g - s.g0) / (s.g1 - s.g0)));
+    s.fillEl.style.width = (f * 100) + '%';
+    const isCur = s.stage === currentStage && animT >= s.t0 && (animT < s.t1 || s.t1 === 1);
+    s.labelEl.classList.toggle('current', isCur);
+    if(isCur && !current) current = s;
+  });
+
+  if(current){
+    tlThumb.style.borderColor = current.color;
+    tlThumb.style.color = current.color;
+    tlThumb.style.boxShadow = `0 0 14px ${current.color},0 2px 6px rgba(0,0,0,0.6)`;
+    tlReadout.innerHTML = `${current.tip}<span class="tl-pct">${Math.round(pct)}%</span>`;
+    tlTrack.setAttribute('aria-valuenow', Math.round(pct));
+    tlTrack.setAttribute('aria-valuetext', `${current.tip}, ${Math.round(pct)}%`);
+  }
+}
+
+function playBtnReset(){
+  autoPlay = false;
+  document.getElementById('playBtn').textContent = '▶ AUTO';
+}
+
+function scrubTo(g){
+  g = Math.max(0, Math.min(1, g));
+  const {stage, t} = fromGlobal(g);
+  if(autoTransitionTimeout){ clearTimeout(autoTransitionTimeout); autoTransitionTimeout = null; }
+  if(animFrameId){ cancelAnimationFrame(animFrameId); animFrameId = null; lastTime = 0; }
+  if(stage !== currentStage){
+    currentStage = stage;
+    updateUI(stage);
+  }
+  animT = t;
+  targetAnimT = t;
+  // STEP continues from the next event boundary after the scrubbed point
+  currentStep = Math.ceil(t * STAGES[stage].events.length - 1e-9);
+  drawStage(currentStage, animT);
+}
+
+function trackFraction(clientX){
+  const r = tlTrack.getBoundingClientRect();
+  return Math.max(0, Math.min(1, (clientX - r.left) / r.width));
+}
+function showTip(clientX){
+  const f = trackFraction(clientX);
+  tlTip.style.left = (f * 100) + '%';
+  tlTip.textContent = segmentAtGlobal(f).tip;
+}
+
+let tlDragging = false;
+let tlWasPlaying = false;
+
+tlTrack.addEventListener('pointerdown', e => {
+  if(e.button !== 0) return;
+  tlDragging = true;
+  tlWasPlaying = autoPlay;
+  playBtnReset();
+  tlRoot.classList.remove('untouched');
+  tlTrack.classList.add('dragging');
+  tlTrack.setPointerCapture(e.pointerId);
+  tlTrack.focus({preventScroll:true});
+  showTip(e.clientX);
+  scrubTo(trackFraction(e.clientX));
+  e.preventDefault();
+});
+tlTrack.addEventListener('pointermove', e => {
+  showTip(e.clientX);
+  if(tlDragging) scrubTo(trackFraction(e.clientX));
+});
+function endDrag(){
+  if(!tlDragging) return;
+  tlDragging = false;
+  tlTrack.classList.remove('dragging');
+  // Resume playback if it was running before the drag (like YouTube)
+  if(tlWasPlaying) document.getElementById('playBtn').click();
+}
+tlTrack.addEventListener('pointerup', endDrag);
+tlTrack.addEventListener('pointercancel', endDrag);
+
+tlTrack.addEventListener('keydown', e => {
+  const g = toGlobal(currentStage, animT);
+  const step = e.shiftKey ? 0.05 : 0.01;
+  let next = null;
+  if(e.key === 'ArrowRight' || e.key === 'ArrowUp') next = g + step;
+  else if(e.key === 'ArrowLeft' || e.key === 'ArrowDown') next = g - step;
+  else if(e.key === 'Home') next = 0;
+  else if(e.key === 'End') next = 1;
+  if(next === null) return;
+  e.preventDefault();
+  playBtnReset();
+  tlRoot.classList.remove('untouched');
+  scrubTo(next);
 });
 
 // Init
