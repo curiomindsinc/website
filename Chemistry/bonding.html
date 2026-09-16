@@ -1,0 +1,2238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>How Atoms Bond — Curiominds</title>
+<style>
+/* ===================== THEME ===================== */
+:root{
+  --bg:#0a0d14; --panel:#121722; --panel2:#161d2b; --panel3:#1c2434;
+  --border:#26314a; --text:#e9edf7; --muted:#8b96ab; --muted2:#5f6a82;
+  --accent:#5b8cff; --accent2:#34d1c1;
+  --ionic:#c86bff; --covalent:#4fd1ff;
+  --pos:#ff5c5c; --neg:#4fc3ff; --warn:#ffb648; --good:#4be36a;
+  --el-H:#dfe7ff; --el-C:#7b8291; --el-N:#4f8cff; --el-O:#ff5c5c;
+  --el-F:#34d1c1; --el-Na:#b56bff; --el-Mg:#ffb648; --el-Al:#c7ccd6; --el-Cl:#4be36a;
+}
+*{box-sizing:border-box;}
+html,body{height:100%;margin:0;}
+body{
+  background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+  overflow:hidden; display:flex; flex-direction:column; height:100vh;
+}
+button{font-family:inherit; cursor:pointer;}
+::-webkit-scrollbar{width:8px;height:8px;}
+::-webkit-scrollbar-thumb{background:var(--panel3); border-radius:4px;}
+
+/* ===================== TOP NAV ===================== */
+#topnav{
+  display:flex; align-items:center; gap:.4rem; padding:.55rem .9rem;
+  background:linear-gradient(180deg,var(--panel2),var(--panel)); border-bottom:1px solid var(--border);
+  flex:0 0 auto; flex-wrap:wrap;
+}
+#brand{display:flex; align-items:center; gap:.5rem; margin-right:.6rem; font-weight:700; letter-spacing:.2px;}
+#brand .logo{width:22px;height:22px;border-radius:50%;background:radial-gradient(circle at 35% 30%, #fff, var(--accent) 60%, #2a3a6b); box-shadow:0 0 10px var(--accent);}
+#brand small{display:block; font-weight:400; color:var(--muted); font-size:.68rem; margin-top:-2px;}
+.navtabs{display:flex; gap:.25rem; flex:1; flex-wrap:wrap;}
+.navbtn{
+  background:transparent; border:1px solid transparent; color:var(--muted); padding:.45rem .8rem;
+  border-radius:8px; font-size:.82rem; font-weight:600; letter-spacing:.3px; transition:.15s;
+}
+.navbtn:hover{color:var(--text); background:var(--panel3);}
+.navbtn.active{color:#fff; background:var(--accent); box-shadow:0 0 14px rgba(91,140,255,.5);}
+#modeToggle{display:flex; align-items:center; gap:.4rem; font-size:.72rem; color:var(--muted); background:var(--panel3); padding:.3rem .5rem; border-radius:20px; border:1px solid var(--border);}
+#modeToggle button{background:transparent;border:none;color:var(--muted);font-size:.72rem;padding:.2rem .55rem;border-radius:14px;font-weight:600;}
+#modeToggle button.active{background:var(--accent2); color:#04211d;}
+
+/* ===================== APP GRID ===================== */
+#app{display:grid; grid-template-columns:196px 1fr 300px; flex:1 1 auto; min-height:0;}
+#library, #inspector{background:var(--panel); overflow-y:auto; padding:.7rem;}
+#library{border-right:1px solid var(--border);}
+#inspector{border-left:1px solid var(--border);}
+#library h4, #inspector h4{margin:.6rem 0 .4rem; font-size:.68rem; text-transform:uppercase; letter-spacing:.08em; color:var(--muted2); font-weight:700;}
+#library h4:first-child{margin-top:0;}
+
+.atom-card{
+  display:flex; align-items:center; gap:.5rem; padding:.4rem .5rem; margin-bottom:.35rem;
+  background:var(--panel2); border:1px solid var(--border); border-radius:10px; cursor:grab; user-select:none;
+  transition:.15s;
+}
+.atom-card:hover{border-color:var(--accent); transform:translateX(2px); box-shadow:0 0 10px rgba(91,140,255,.25);}
+.atom-card:active{cursor:grabbing;}
+.atom-card .mini{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:800;flex:0 0 auto;}
+.atom-card .info{line-height:1.15;}
+.atom-card .info b{font-size:.82rem;}
+.atom-card .info span{display:block;font-size:.65rem;color:var(--muted);}
+.atom-card .cat{margin-left:auto;font-size:.6rem;padding:.1rem .4rem;border-radius:8px;font-weight:700;}
+.cat.metal{background:rgba(255,182,72,.15); color:var(--warn);}
+.cat.nonmetal{background:rgba(79,209,255,.15); color:var(--covalent);}
+
+#libHint{font-size:.68rem; color:var(--muted2); margin-top:.7rem; line-height:1.4;}
+.libBtn{width:100%; margin-top:.4rem; padding:.4rem; background:var(--panel3); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:.72rem; font-weight:600;}
+.libBtn:hover{border-color:var(--accent);}
+
+/* ===================== WORKSPACE ===================== */
+#workspaceWrap{position:relative; overflow:hidden; background:radial-gradient(circle at 50% 20%, #131a29, #080b11 75%);}
+#stage{width:100%; height:100%; touch-action:none; display:block;}
+#lattice3d{position:absolute; inset:0; display:none;}
+#lattice3d canvas{display:block;}
+#workspaceWrap.split-view{display:flex;}
+#workspaceWrap.split-view #stage{width:50%; height:100%; flex:none; border-right:1px solid var(--border);}
+#workspaceWrap.split-view #lattice3d{position:relative; inset:auto; width:50%; height:100%; flex:none;}
+#workspaceWrap.split-view #workspaceTop{right:auto; width:calc(50% - 20px);}
+#workspaceWrap.split-view .splitLabel{position:absolute; top:10px; z-index:4; font-size:.72rem; color:var(--muted); background:rgba(10,13,20,.75); border:1px solid var(--border); padding:.25rem .6rem; border-radius:8px; pointer-events:none;}
+#workspaceWrap.split-view .splitLabel.left{left:10px; top:auto; bottom:10px;}
+#workspaceWrap.split-view .splitLabel.right{right:10px;}
+#lattice3d .exitLattice{position:absolute; top:12px; left:12px; z-index:5;}
+#lattice3d .latticeLabel{position:absolute; bottom:14px; left:50%; transform:translateX(-50%); background:rgba(10,13,20,.75); border:1px solid var(--border); padding:.5rem .9rem; border-radius:10px; font-size:.75rem; color:var(--muted); text-align:center; max-width:80%;}
+
+#workspaceTop{position:absolute; top:10px; left:10px; right:10px; display:flex; justify-content:space-between; align-items:flex-start; gap:.5rem; pointer-events:none; z-index:4;}
+#goalBanner{pointer-events:auto; background:rgba(18,23,34,.9); border:1px solid var(--accent); border-radius:12px; padding:.6rem .9rem; font-size:.82rem; max-width:60%; display:none; backdrop-filter:blur(4px);}
+#goalBanner b{color:var(--accent);}
+#goalBanner .sub{color:var(--muted); font-size:.7rem; margin-top:.15rem;}
+.goalBtns{display:flex; gap:.4rem; margin-top:.5rem;}
+.goalBtns .iconbtn{font-size:.7rem; padding:.35rem .6rem;}
+#wsActions{pointer-events:auto; display:flex; gap:.4rem;}
+.iconbtn{background:var(--panel2); border:1px solid var(--border); color:var(--text); padding:.4rem .6rem; border-radius:9px; font-size:.75rem; font-weight:600;}
+.iconbtn:hover{border-color:var(--accent);}
+.iconbtn.active{border-color:var(--pos); background:rgba(255,92,92,.18); color:#ffd7d7;}
+#stage.sever-mode .atom-group{cursor:crosshair;}
+
+#feedback{
+  position:absolute; bottom:16px; left:50%; transform:translateX(-50%) translateY(20px); opacity:0; z-index:5;
+  background:var(--panel2); border:1px solid var(--border); padding:.6rem 1rem; border-radius:12px; font-size:.82rem;
+  max-width:70%; text-align:center; transition:.25s; pointer-events:none; box-shadow:0 8px 24px rgba(0,0,0,.4);
+}
+#feedback.show{opacity:1; transform:translateX(-50%) translateY(0);}
+#feedback.good{border-color:var(--good); color:#c9ffd6;}
+#feedback.bad{border-color:var(--warn); color:#ffe6c2;}
+#feedback.info{border-color:var(--accent);}
+
+#challengePanel{
+  position:absolute; top:10px; left:50%; transform:translateX(-50%); z-index:6; width:min(560px,92%);
+  background:var(--panel2); border:1px solid var(--accent); border-radius:14px; padding:.9rem 1rem; display:none;
+  box-shadow:0 10px 30px rgba(0,0,0,.5);
+}
+#challengePanel .ctag{font-size:.62rem; text-transform:uppercase; letter-spacing:.08em; color:var(--accent2); font-weight:800;}
+#challengePanel .cq{font-size:.95rem; margin:.35rem 0 .6rem; font-weight:600;}
+#challengeOptions{display:flex; flex-wrap:wrap; gap:.4rem;}
+.optbtn{flex:1 1 auto; min-width:110px; background:var(--panel3); border:1px solid var(--border); color:var(--text); padding:.55rem .7rem; border-radius:9px; font-size:.8rem; font-weight:600; text-align:left;}
+.optbtn:hover{border-color:var(--accent);}
+.optbtn.correct{border-color:var(--good); background:rgba(75,227,106,.15);}
+.optbtn.wrong{border-color:var(--pos); background:rgba(255,92,92,.15);}
+#challengeFoot{display:flex; justify-content:space-between; align-items:center; margin-top:.6rem;}
+#challengeFoot span{font-size:.7rem; color:var(--muted);}
+
+/* ===================== EXPLORE ATOM LAB ===================== */
+#atomLab{position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:min(720px, calc(100% - 20px)); max-height:calc(100% - 20px); overflow-y:auto; background:var(--panel2); border:1px solid var(--border);
+  border-radius:14px; padding:1rem 1.2rem; font-size:.9rem; z-index:4; display:none; box-shadow:0 12px 36px rgba(0,0,0,.55);}
+#atomLab h4{margin:0 0 .7rem; font-size:.78rem; text-transform:uppercase; color:var(--muted2); letter-spacing:.06em;}
+#atomLab label{display:block; margin:.75rem 0 .3rem; color:var(--muted);}
+#atomLab label:first-child{margin-top:0;}
+#atomLab input[type=range]{width:100%;}
+#atomLab .verdict{margin-top:.9rem; padding:.75rem .85rem; background:var(--panel3); border-radius:10px; line-height:1.5;}
+.labBody{display:flex; flex-wrap:wrap; gap:1.2rem;}
+.labCol{flex:1 1 230px; min-width:0;}
+#labPreview{display:block; width:100%; height:auto; aspect-ratio:224/190; max-height:310px; border-radius:12px; background:radial-gradient(circle at 50% 50%, #131a29, #0c1019 75%);}
+#labMatch{display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; margin:.7rem 0 0; font-size:1.1rem;}
+#labMatch .dot{width:13px; height:13px; border-radius:50%; flex:0 0 auto;}
+#labMatch .cat{font-size:.72rem; padding:.15rem .5rem; border-radius:8px; font-weight:700;}
+#labMatch .note{flex-basis:100%; font-size:.8rem; color:var(--muted2);}
+.cat.noble{background:rgba(75,227,106,.15); color:var(--good);}
+.labHint{font-size:.8rem; color:var(--warn); margin-top:.25rem;}
+.attractMeter{height:10px; background:var(--panel3); border-radius:5px; overflow:hidden;}
+#labAttractFill{height:100%; width:0; background:linear-gradient(90deg, var(--warn), var(--accent2)); transition:width .25s;}
+.labAdd{width:100%; margin-top:.8rem; padding:.6rem; font-size:.9rem;}
+.labAdd:disabled{opacity:.5; cursor:not-allowed;}
+.labAdd:disabled:hover{border-color:var(--border);}
+.labGhost{fill:rgba(255,255,255,.04); stroke:rgba(255,255,255,.4); stroke-dasharray:3 3;}
+.labFullShell{fill:none; stroke:var(--good); stroke-width:2;}
+.electron.valence.incoming{fill:#bfefff; stroke:#fff; stroke-width:.8; filter:drop-shadow(0 0 4px var(--covalent));}
+@media (prefers-reduced-motion: reduce){ #labPreview .shellring{animation:none!important;} }
+
+/* ===================== SVG ATOM ELEMENTS ===================== */
+.shellring{transform-origin:0 0;}
+.electron{filter:none;}
+.electron.valence{fill:#ffd23f; filter:drop-shadow(0 0 3px #ffd23f);}
+.electron.core{fill:#9fb0cf; opacity:.85;}
+.shell-outline{fill:none; stroke:rgba(255,255,255,.14); stroke-width:1;}
+.nucleus-label{font-weight:800; text-anchor:middle; dominant-baseline:central; pointer-events:none;}
+.atomname-label{font-size:9px; fill:var(--muted); text-anchor:middle; pointer-events:none;}
+.chargebadge-bg{stroke:#0a0d14; stroke-width:1.5;}
+.chargebadge-txt{font-size:10px; font-weight:800; text-anchor:middle; dominant-baseline:central; pointer-events:none;}
+.atom-group{cursor:grab;}
+.atom-group:active{cursor:grabbing;}
+.bond-ionic{stroke:var(--ionic); stroke-width:2; stroke-dasharray:3 4; opacity:.75;}
+.sharedpair{fill:#eafcff; filter:drop-shadow(0 0 4px var(--covalent));}
+.pairlens{fill:none; stroke:#ff8fd6; stroke-width:1.3; stroke-dasharray:2 2; opacity:.9;}
+.bond-stick{fill:rgba(255,143,214,.38); stroke:none;}
+.bond-stick.line{fill:none; stroke:rgba(255,143,214,.5); stroke-width:3.5;}
+.bond-hit{stroke:transparent; stroke-width:14; stroke-linecap:round; cursor:pointer; pointer-events:stroke;}
+.bond-hit:hover{stroke:rgba(255,92,92,.35);}
+@keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+@keyframes spinRev{from{transform:rotate(360deg);}to{transform:rotate(0deg);}}
+.flyElectron{fill:#ffd23f; filter:drop-shadow(0 0 5px #ffd23f);}
+.delocLayer{pointer-events:none;}
+.delocElectron{fill:#ffd23f; filter:drop-shadow(0 0 5px #ffd23f);}
+
+/* ===================== INSPECTOR ===================== */
+.insp-section{display:none; margin-bottom:.9rem; animation:fadeIn .3s;}
+.insp-section.visible{display:block;}
+@keyframes fadeIn{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);}}
+.chip{display:inline-flex; align-items:center; gap:.3rem; background:var(--panel3); border:1px solid var(--border); padding:.25rem .55rem; border-radius:20px; font-size:.72rem; margin:.15rem .2rem .15rem 0;}
+.chip .dot{width:9px;height:9px;border-radius:50%;}
+.insp-row{display:flex; justify-content:space-between; font-size:.76rem; padding:.28rem 0; border-bottom:1px dashed var(--border); color:var(--muted);}
+.insp-row b{color:var(--text); font-weight:600;}
+.bondtypebar{display:flex; align-items:center; gap:.5rem; padding:.5rem .6rem; border-radius:10px; font-size:.78rem; font-weight:700; margin-top:.3rem;}
+.bondtypebar.ionic{background:rgba(200,107,255,.15); color:var(--ionic); border:1px solid rgba(200,107,255,.4);}
+.bondtypebar.covalent{background:rgba(79,209,255,.15); color:var(--covalent); border:1px solid rgba(79,209,255,.4);}
+.resultCard{background:var(--panel2); border:1px solid var(--border); border-radius:12px; padding:.7rem .8rem; margin-top:.3rem;}
+.resultCard .formula{font-size:1.15rem; font-weight:800; margin-bottom:.15rem;}
+.resultCard .name{color:var(--muted); font-size:.78rem;}
+.zoomBtn{width:100%; margin-top:.6rem; padding:.55rem; background:var(--accent); border:none; color:#fff; border-radius:9px; font-weight:700; font-size:.8rem; box-shadow:0 0 14px rgba(91,140,255,.4);}
+.zoomBtn:hover{filter:brightness(1.1);}
+.propList{list-style:none; margin:.4rem 0 0; padding:0; font-size:.76rem;}
+.propList li{padding:.3rem 0; border-bottom:1px dashed var(--border); display:flex; gap:.4rem;}
+.propList li:before{content:"›"; color:var(--accent2); font-weight:800;}
+.exceptionNote{margin-top:.4rem; padding:.4rem .55rem; background:rgba(255,182,72,.12); border:1px solid rgba(255,182,72,.35); border-radius:8px; font-size:.7rem; color:var(--warn);}
+.advInfo{font-size:.68rem; color:var(--muted2); margin-top:.2rem; display:none;}
+body.advanced .advInfo{display:block;}
+.clusterSwitch{display:flex; gap:.3rem; flex-wrap:wrap; margin-bottom:.5rem;}
+.clusterSwitch button{background:var(--panel3); border:1px solid var(--border); color:var(--muted); font-size:.68rem; padding:.25rem .55rem; border-radius:8px;}
+.clusterSwitch button.active{border-color:var(--accent); color:var(--text);}
+
+/* ===================== STRUCTURES GALLERY ===================== */
+#structuresGallery{position:absolute; inset:0; overflow-y:auto; padding:1.2rem; display:none;}
+.gcat{font-size:.7rem; text-transform:uppercase; letter-spacing:.08em; color:var(--muted2); font-weight:800; margin:1rem 0 .5rem;}
+.gcat:first-child{margin-top:0;}
+.gallery-row{display:flex; flex-wrap:wrap; gap:.7rem;}
+.gcard{width:150px; background:var(--panel2); border:1px solid var(--border); border-radius:14px; padding:.7rem; text-align:center; transition:.15s;}
+.gcard:hover{border-color:var(--accent); transform:translateY(-3px); box-shadow:0 8px 20px rgba(0,0,0,.4);}
+.gcard .gicon{font-size:1.6rem; margin-bottom:.3rem;}
+.gcard b{font-size:.82rem; display:block;}
+.gcard span{font-size:.66rem; color:var(--muted); display:block; margin-top:.15rem;}
+
+/* ===================== MASTER BAR ===================== */
+#masterbar{display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:1rem; padding:.4rem .9rem; background:var(--panel2); border-top:1px solid var(--border); flex:0 0 auto; font-size:.72rem;}
+#masterStats{grid-column:2; display:flex; justify-content:center; gap:1.4rem; flex-wrap:wrap;}
+.mstat{display:flex; align-items:center; gap:.35rem; color:var(--muted);}
+.mstat .mk{font-weight:700;}
+.mstat.done{color:var(--good);}
+.mstat .icon{font-size:.85rem;}
+
+/* ===================== CREDIT ===================== */
+#credit{grid-column:3; justify-self:end; text-align:right; font-size:.66rem; line-height:1.35; white-space:nowrap;}
+#credit .credit-line{color:var(--muted);}
+#credit .credit-line b{color:var(--text);}
+#credit .credit-links{color:var(--muted);}
+#credit .credit-links a{color:var(--accent2); text-decoration:none;}
+#credit .credit-links a:hover{text-decoration:underline;}
+@media(max-width:1100px){
+  #masterbar{grid-template-columns:1fr; gap:.3rem;}
+  #masterStats, #credit{grid-column:1; justify-self:center; text-align:center;}
+}
+
+/* responsive */
+@media(max-width:900px){
+  #app{grid-template-columns:1fr; grid-template-rows:auto 1fr auto; overflow-y:auto;}
+  #library{order:1; max-height:130px; display:flex; flex-wrap:wrap; gap:.3rem; align-content:flex-start;}
+  #library h4{width:100%;}
+  #workspaceWrap{order:2; min-height:340px;}
+  #inspector{order:3; max-height:260px;}
+  #goalBanner{max-width:96%;}
+}
+.hidden{display:none!important;}
+</style>
+</head>
+<body>
+
+<header id="topnav">
+  <div id="brand"><div class="logo"></div><div>How Atoms Bond<small>Curiominds</small></div></div>
+  <nav class="navtabs" id="navtabs">
+    <button class="navbtn active" data-tab="explore">EXPLORE</button>
+    <button class="navbtn" data-tab="bond">BOND</button>
+    <button class="navbtn" data-tab="structures">STRUCTURES</button>
+    <button class="navbtn" data-tab="challenges">CHALLENGES</button>
+    <button class="navbtn" data-tab="master">MASTER</button>
+  </nav>
+  <div id="modeToggle">
+    <span>Mode</span>
+    <button id="btnBeginner" class="active">Beginner</button>
+    <button id="btnAdvanced">Advanced</button>
+  </div>
+</header>
+
+<div id="app">
+  <aside id="library">
+    <h4>Atom Library</h4>
+    <div id="atomCards"></div>
+    <div id="libHint">Drag an atom into the workspace. Bring two atoms close together to see what happens to their electrons.</div>
+    <button class="libBtn" id="clearBtn">Clear Workspace</button>
+  </aside>
+
+  <section id="workspaceWrap">
+    <svg id="stage"></svg>
+    <div id="lattice3d"></div>
+    <div id="structuresGallery"></div>
+
+    <div id="workspaceTop">
+      <div id="goalBanner">
+        <b id="goalTitle"></b><div class="sub" id="goalSub"></div>
+        <div class="goalBtns" id="goalBtns">
+          <button class="iconbtn" id="goalCheckBtn">Check my structure</button>
+          <button class="iconbtn" id="goalNextBtn">Next goal →</button>
+        </div>
+      </div>
+      <div id="wsActions">
+        <button class="iconbtn" id="severBtn" title="Click an atom to break all its bonds (or click any single bond to break just that one)">✂ Sever Bonds</button>
+        <button class="iconbtn" id="advToggleAtomLab">Atom Explorer</button>
+      </div>
+    </div>
+
+    <div id="atomLab">
+      <h4>Investigate an Atom</h4>
+      <div class="labBody">
+        <div class="labCol">
+          <svg id="labPreview" viewBox="-112 -95 224 190" role="img" aria-label="Atom preview"></svg>
+          <div id="labMatch"></div>
+        </div>
+        <div class="labCol">
+          <label>Number of shells: <b id="lv"></b></label>
+          <input type="range" id="slShells" min="1" max="3" value="2" step="1">
+          <label>Valence (outer shell) electrons: <b id="lve"></b></label>
+          <input type="range" id="slValence" min="1" max="8" value="4" step="1">
+          <div class="labHint" id="labShellHint"></div>
+          <label>Electron attraction: <b id="lat"></b></label>
+          <div class="attractMeter"><div id="labAttractFill"></div></div>
+          <div class="verdict" id="labVerdict"></div>
+          <button class="iconbtn labAdd" id="labAddBtn">+ Add to workspace</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="challengePanel">
+      <div class="ctag" id="ctag">Challenge 1 · Build It</div>
+      <div class="cq" id="cq">Build sodium chloride.</div>
+      <div id="challengeOptions"></div>
+      <div id="challengeFoot"><span id="cprogress"></span><button class="iconbtn" id="skipChallenge">Skip →</button></div>
+    </div>
+
+    <div id="feedback"></div>
+  </section>
+
+  <aside id="inspector">
+    <h4>Bonding Inspector</h4>
+    <div class="insp-section visible" id="insp-empty"><p style="color:var(--muted);font-size:.8rem;">Drag atoms into the workspace to begin. Bring two atoms near each other and watch their electrons.</p></div>
+    <div class="clusterSwitch hidden" id="clusterSwitch"></div>
+    <div class="insp-section" id="insp-elements">
+      <h4>Elements Present</h4>
+      <div id="elementChips"></div>
+      <div class="insp-row"><span>Atoms</span><b id="atomCount">0</b></div>
+    </div>
+    <div class="insp-section" id="insp-electrons">
+      <h4>Valence Electrons</h4>
+      <div id="valenceList"></div>
+    </div>
+    <div class="insp-section" id="insp-bonding">
+      <h4>Electron Behaviour</h4>
+      <div id="bondingDesc" style="font-size:.78rem;color:var(--muted);line-height:1.4;"></div>
+      <div id="bondtypebar"></div>
+    </div>
+    <div class="insp-section" id="insp-result">
+      <h4>Result</h4>
+      <div class="resultCard">
+        <div class="formula" id="resFormula"></div>
+        <div class="name" id="resName"></div>
+        <div class="insp-row"><span>Structure type</span><b id="resStructure"></b></div>
+      </div>
+      <button class="zoomBtn hidden" id="zoomBtn">🔍 Zoom Out to Structure</button>
+    </div>
+    <div class="insp-section" id="insp-properties">
+      <h4>Properties</h4>
+      <ul class="propList" id="propList"></ul>
+      <div class="exceptionNote hidden" id="propException"></div>
+    </div>
+  </aside>
+</div>
+
+<footer id="masterbar">
+  <div id="masterStats">
+    <div class="mstat" id="mstat-bonding"><span class="icon">○</span><span class="mk">Bonding</span></div>
+    <div class="mstat" id="mstat-structures"><span class="icon">○</span><span class="mk">Structures</span></div>
+    <div class="mstat" id="mstat-electrons"><span class="icon">○</span><span class="mk">Electron behaviour</span></div>
+    <div class="mstat" id="mstat-apply"><span class="icon">○</span><span class="mk">Application</span></div>
+  </div>
+  <!-- bottom-right credit -->
+  <div id="credit">
+    <div class="credit-line">Created by <b>Mr Lau Chin Hang</b></div>
+    <div class="credit-links">🏫 <a href="https://www.instagram.com/curiominds.inc/" target="_blank" rel="noopener noreferrer">@curiominds.inc</a> · ▶ <a href="https://www.youtube.com/@Curiominds.inc88" target="_blank" rel="noopener noreferrer">YouTube</a> · 🌐 <a href="https://curiomindsinc.pages.dev/" target="_blank" rel="noopener noreferrer">Website</a></div>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* =====================================================================
+   HOW ATOMS BOND — Curiominds
+   Single-file simulation. Sections:
+   1. Element data & chemistry rules
+   2. Atom / bond state model
+   3. SVG rendering (atoms, shells, electrons, bonds)
+   4. Drag + proximity + bonding engine (animated transfer/sharing)
+   5. Inspector panel rendering
+   6. Zoom-out 3D lattice/structure viewer (Three.js)
+   7. Structures gallery
+   8. Challenge + Master (mastery tracking) engine
+   9. Navigation, mode toggle, atom explorer, boot
+   ===================================================================== */
+
+/* ---------- 1. ELEMENT DATA ---------- */
+const ELEMENTS = {
+  H:  {sym:'H', name:'Hydrogen', z:1, shells:[1], target:2, category:'nonmetal', attract:2.20, color:'var(--el-H)', hex:'#dfe7ff'},
+  C:  {sym:'C', name:'Carbon', z:6, shells:[2,4], target:8, category:'nonmetal', attract:2.55, color:'var(--el-C)', hex:'#7b8291'},
+  N:  {sym:'N', name:'Nitrogen', z:7, shells:[2,5], target:8, category:'nonmetal', attract:3.04, color:'var(--el-N)', hex:'#4f8cff'},
+  O:  {sym:'O', name:'Oxygen', z:8, shells:[2,6], target:8, category:'nonmetal', attract:3.44, color:'var(--el-O)', hex:'#ff5c5c'},
+  F:  {sym:'F', name:'Fluorine', z:9, shells:[2,7], target:8, category:'nonmetal', attract:3.98, color:'var(--el-F)', hex:'#34d1c1'},
+  Na: {sym:'Na', name:'Sodium', z:11, shells:[2,8,1], target:0, category:'metal', attract:0.93, color:'var(--el-Na)', hex:'#b56bff'},
+  Mg: {sym:'Mg', name:'Magnesium', z:12, shells:[2,8,2], target:0, category:'metal', attract:1.31, color:'var(--el-Mg)', hex:'#ffb648'},
+  Al: {sym:'Al', name:'Aluminium', z:13, shells:[2,8,3], target:0, category:'metal', attract:1.61, color:'var(--el-Al)', hex:'#c7ccd6'},
+  Cl: {sym:'Cl', name:'Chlorine', z:17, shells:[2,8,7], target:8, category:'nonmetal', attract:3.16, color:'var(--el-Cl)', hex:'#4be36a'},
+};
+const ELORDER = ['H','C','N','O','F','Na','Mg','Al','Cl'];
+const FORMULA_ORDER = ['Na','Mg','Al','C','N','H','Cl','O','F']; // order symbols are written in a chemical formula
+function valenceOf(el){ return el.shells[el.shells.length-1]; }
+
+// key = sorted "Sym#count" concatenation
+function fKey(counts){ return Object.keys(counts).sort().map(s=>s+counts[s]).join(''); }
+const KNOWN = {};
+function reg(counts, name, kind){ KNOWN[fKey(counts)] = {name, kind}; }
+reg({Na:1,Cl:1}, 'Sodium chloride', 'ionic');
+reg({Mg:1,O:1}, 'Magnesium oxide', 'ionic');
+reg({Mg:1,Cl:2}, 'Magnesium chloride', 'ionic');
+reg({Na:2,O:1}, 'Sodium oxide', 'ionic');
+reg({Al:2,O:3}, 'Aluminium oxide', 'ionic');
+reg({Al:1,Cl:3}, 'Aluminium chloride', 'ionic');
+reg({H:2}, 'Hydrogen gas', 'covalent-simple');
+reg({Cl:2}, 'Chlorine gas', 'covalent-simple');
+reg({O:2}, 'Oxygen gas', 'covalent-simple');
+reg({N:2}, 'Nitrogen gas', 'covalent-simple');
+reg({H:2,O:1}, 'Water', 'covalent-simple');
+reg({C:1,H:4}, 'Methane', 'covalent-simple');
+reg({C:1,O:2}, 'Carbon dioxide', 'covalent-simple');
+
+// simple molecules for the Structures gallery: real geometry in ångströms (x, y, z), bonds as [atomA, atomB, order]
+const MOLECULES = {
+  water: {name:'Water', formula:{H:2,O:1}, state:'liquid', mass:18, shape:'bent, 104.5°', bpText:'boils at only 100 °C',
+    atoms:[['O',0,0,0],['H',0.759,-0.587,0],['H',-0.759,-0.587,0]], bonds:[[0,1,1],[0,2,1]],
+    about:'Oxygen shares one electron pair with each hydrogen atom, completing its outer shell of 8. Oxygen keeps 2 lone pairs that are not used in bonding.'},
+  methane: {name:'Methane', formula:{C:1,H:4}, state:'gas', mass:16, shape:'tetrahedral, 109.5°', bpText:'boils at −162 °C',
+    atoms:[['C',0,0,0],['H',.629,.629,.629],['H',.629,-.629,-.629],['H',-.629,.629,-.629],['H',-.629,-.629,.629]], bonds:[[0,1,1],[0,2,1],[0,3,1],[0,4,1]],
+    about:'Carbon shares one electron pair with each of 4 hydrogen atoms, completing its outer shell of 8.'},
+  carbonDioxide: {name:'Carbon dioxide', formula:{C:1,O:2}, state:'gas', mass:44, shape:'linear, 180°', bpText:'turns from solid straight to gas at −78 °C',
+    atoms:[['C',0,0,0],['O',1.16,0,0],['O',-1.16,0,0]], bonds:[[0,1,2],[0,2,2]],
+    about:'Carbon shares two electron pairs with each oxygen atom (two C=O double bonds), so every atom has a full outer shell of 8.'},
+  hydrogen: {name:'Hydrogen', formula:{H:2}, state:'gas', mass:2, shape:'linear', bpText:'boils at −253 °C',
+    atoms:[['H',-0.37,0,0],['H',0.37,0,0]], bonds:[[0,1,1]],
+    about:'The two hydrogen atoms share one electron pair (a single covalent bond), giving each atom a full outer shell of 2.'},
+};
+
+const PROPERTIES = {
+  ionic: ['High melting point','Conducts electricity when molten or dissolved','Does NOT conduct electricity as a solid','Brittle — shatters when layers shift'],
+  'covalent-simple': ['Low melting / boiling point','Does not conduct electricity','Exists as separate, individual molecules'],
+  'covalent-giant': ['Very high melting point','Extremely hard','Does not conduct electricity'],
+};
+
+/* ---------- 2. STATE ---------- */
+const state = {
+  tab:'explore',
+  advanced:false,
+  atoms: new Map(), // id -> atom obj
+  nextId: 1,
+  guidedGoal: null, // {formula counts, label}
+  selectedCluster: null,
+  attemptedPairs: new Set(),
+  pendingBonds: new Set(),
+  severMode: false,
+  mastery:{bonding:0, structures:0, electrons:0, apply:0},
+  masteryDone:{bonding:false, structures:false, electrons:false, apply:false},
+};
+const BOND_THRESHOLD = 60;
+const SVGNS = 'http://www.w3.org/2000/svg';
+
+function newAtom(sym, x, y){
+  const el = ELEMENTS[sym];
+  const a = {
+    id: state.nextId++,
+    sym, x, y,
+    ionicGiven:0, ionicReceived:0, covalentShared:0,
+    transferredElectrons: [], // hex colors of electrons received via ionic transfer, in source order
+    bonds: [], // {otherId, order, kind}
+    dragging:false,
+  };
+  state.atoms.set(a.id, a);
+  return a;
+}
+function getAtom(id){ return state.atoms.get(id); }
+function elOf(atom){ return ELEMENTS[atom.sym]; }
+function chargeOf(atom){
+  const el = elOf(atom);
+  if(el.category==='metal') return atom.ionicGiven;
+  return -atom.ionicReceived;
+}
+function remainingOf(atom){
+  const el = elOf(atom);
+  if(el.category==='metal') return valenceOf(el) - atom.ionicGiven;
+  return (el.target - valenceOf(el)) - atom.ionicReceived - atom.covalentShared - (atom.delocalised||0);
+}
+function clusterOf(atom){
+  const seen = new Set(); const q=[atom]; seen.add(atom.id);
+  while(q.length){
+    const a=q.pop();
+    for(const b of a.bonds){ if(!seen.has(b.otherId)){ seen.add(b.otherId); q.push(getAtom(b.otherId)); } }
+  }
+  return [...seen].map(getAtom);
+}
+function allClusters(){
+  const seen=new Set(); const out=[];
+  for(const a of state.atoms.values()){
+    if(seen.has(a.id)) continue;
+    const c = clusterOf(a);
+    c.forEach(x=>seen.add(x.id));
+    out.push(c);
+  }
+  return out;
+}
+
+/* ---------- 3. SVG RENDERING ---------- */
+const stage = document.getElementById('stage');
+function svgEl(tag, attrs){
+  const e = document.createElementNS(SVGNS, tag);
+  for(const k in attrs) e.setAttribute(k, attrs[k]);
+  return e;
+}
+function luma(hex){
+  const c = hex.replace('#','');
+  const r=parseInt(c.substr(0,2),16), g=parseInt(c.substr(2,2),16), b=parseInt(c.substr(4,2),16);
+  return (0.299*r+0.587*g+0.114*b);
+}
+function outerRadius(el){ return 20 + (el.shells.length-1)*17; }
+function nucleusRadius(el){ return 15 + (el.shells.length-1)*1.5; }
+function ringCountOf(atom){
+  const el = elOf(atom);
+  return Math.max(0, valenceOf(el) - atom.covalentShared - atom.ionicGiven + atom.ionicReceived - (atom.delocalised||0));
+}
+function outerElectronAngles(atom, count){
+  if(count<=0) return [];
+  const covBonds = atom.bonds.filter(b=>b.kind==='covalent');
+  if(covBonds.length===0) return Array.from({length:count},(_,i)=>(2*Math.PI/count)*i - Math.PI/2);
+  const N=180, blocked=new Array(N).fill(false);
+  covBonds.forEach(b=>{
+    const other = getAtom(b.otherId); if(!other) return;
+    const ang = Math.atan2(other.y-atom.y, other.x-atom.x);
+    const half = 0.55 + (b.order-1)*0.35;
+    for(let i=0;i<N;i++){
+      const a = (i/N)*2*Math.PI - Math.PI;
+      let d = Math.abs(a-ang); if(d>Math.PI) d = 2*Math.PI-d;
+      if(d<half) blocked[i]=true;
+    }
+  });
+  const free=[];
+  for(let i=0;i<N;i++) if(!blocked[i]) free.push((i/N)*2*Math.PI - Math.PI);
+  if(free.length===0) return Array.from({length:count},(_,i)=>(2*Math.PI/count)*i);
+  const angles=[];
+  for(let k=0;k<count;k++){
+    const idx = Math.min(Math.floor((k+0.5)/count*free.length), free.length-1);
+    angles.push(free[idx]);
+  }
+  return angles;
+}
+function drawAtom(atom){
+  const el = elOf(atom);
+  const g = svgEl('g', {class:'atom-group', 'data-id':atom.id, transform:`translate(${atom.x},${atom.y})`});
+  const hasCovalent = atom.bonds.some(b=>b.kind==='covalent');
+  const outerIdx = el.shells.length-1;
+  const outerCount = ringCountOf(atom);
+  let visibleShells = outerCount>0 ? el.shells.length : Math.max(1, el.shells.length-1);
+  // shells
+  el.shells.forEach((staticCount, i)=>{
+    const isOuter = i===outerIdx;
+    const count = isOuter ? outerCount : staticCount;
+    if(count<=0) return; // shell fully emptied (e.g. Na+ losing its outer shell) — don't draw it
+    const r = 20 + i*17;
+    g.appendChild(svgEl('circle', {class:'shell-outline', r}));
+    const ring = svgEl('g', {class:'shellring'});
+    const freeze = isOuter && hasCovalent;
+    if(!freeze){
+      const spinDur = (3.5 + i*2.2).toFixed(1)+'s';
+      ring.style.animation = `${i%2? 'spinRev':'spin'} ${spinDur} linear infinite`;
+    }
+    const angles = isOuter ? outerElectronAngles(atom, count) : Array.from({length:count},(_,e2)=>(Math.PI*2/count)*e2 + i*0.4);
+    const transferred = isOuter ? atom.transferredElectrons : [];
+    angles.forEach((ang, idx)=>{
+      const ex = r*Math.cos(ang), ey = r*Math.sin(ang);
+      const dot = svgEl('circle', {cx:ex, cy:ey, r:isOuter?4.2:3.2, class:'electron '+(isOuter?'valence':'core')});
+      const transferIdx = idx - (angles.length - transferred.length);
+      if(transferIdx>=0){
+        const srcHex = transferred[transferIdx];
+        dot.style.fill = srcHex;
+        dot.style.filter = `drop-shadow(0 0 4px ${srcHex})`;
+        dot.style.stroke = '#fff'; dot.style.strokeWidth = '0.8';
+        dot.appendChild(Object.assign(svgEl('title',{}), {textContent:'Transferred from another atom'}));
+      }
+      ring.appendChild(dot);
+    });
+    g.appendChild(ring);
+  });
+  // nucleus
+  const nr = nucleusRadius(el);
+  const nucleus = svgEl('circle', {r:nr, fill:el.hex, stroke:'rgba(0,0,0,.35)', 'stroke-width':1.4});
+  g.appendChild(nucleus);
+  const txt = svgEl('text', {class:'nucleus-label', y:0.5, fill: luma(el.hex)>150?'#0a0d14':'#ffffff', 'font-size':nr*0.95});
+  txt.textContent = el.sym;
+  g.appendChild(txt);
+  // name label
+  if(!atom.hideName){
+    const nm = svgEl('text', {class:'atomname-label', y: -(20+(visibleShells-1)*17+12)});
+    nm.textContent = state.advanced? `${el.name} (Z=${el.z})` : el.name;
+    g.appendChild(nm);
+  }
+  // charge badge
+  const ch = chargeOf(atom);
+  if(ch!==0){
+    const bx = nr*0.72, by = -nr*0.72;
+    g.appendChild(svgEl('circle', {cx:bx, cy:by, r:9, fill: ch>0?'var(--pos)':'var(--neg)', class:'chargebadge-bg'}));
+    const bt = svgEl('text', {class:'chargebadge-txt', x:bx, y:by+0.5, fill:'#fff'});
+    bt.textContent = (Math.abs(ch)>1?Math.abs(ch):'') + (ch>0?'+':'−');
+    g.appendChild(bt);
+  }
+  // advanced tooltip
+  const title = svgEl('title', {});
+  title.textContent = state.advanced
+    ? `${el.name}\nElectron configuration: ${el.shells.join(',')}\nElectronegativity: ${el.attract}\nAtomic number: ${el.z}`
+    : `${el.name}\nValence electrons: ${valenceOf(el)}\nElectron attraction: ${el.category==='metal'?'weak':'strong'}`;
+  g.appendChild(title);
+  g.addEventListener('pointerdown', onAtomPointerDown);
+  return g;
+}
+function bondPath(a,b){
+  return `M${a.x},${a.y} L${b.x},${b.y}`;
+}
+function renderStage(){
+  stage.innerHTML='';
+  // bonds first (under atoms)
+  const drawn = new Set();
+  const pairs = [];
+  for(const a of state.atoms.values()){
+    for(const bd of a.bonds){
+      const key = [a.id,bd.otherId].sort().join('-');
+      if(drawn.has(key)) continue; drawn.add(key);
+      const b = getAtom(bd.otherId);
+      if(!b) continue;
+      pairs.push([a,b]);
+      if(bd.kind==='ionic'){
+        stage.appendChild(svgEl('path',{d:bondPath(a,b), class:'bond-ionic', fill:'none'}));
+      } else {
+        // covalent: shells overlap (drawn via atom radii/positions) — shared pair(s) sit in the lens
+        const dx=b.x-a.x, dy=b.y-a.y; const len=Math.hypot(dx,dy)||1;
+        const ux=dx/len, uy=dy/len, px=-uy, py=ux;
+        const rotDeg = Math.atan2(uy,ux)*180/Math.PI;
+        if(bd.stick==='wedge'){
+          const from = bd.from===a.id ? a : b, to = from===a ? b : a;
+          stage.appendChild(svgEl('polygon',{class:'bond-stick', points:
+            `${from.x+px},${from.y+py} ${to.x+px*6},${to.y+py*6} ${to.x-px*6},${to.y-py*6} ${from.x-px},${from.y-py}`}));
+        } else if(bd.stick==='line'){
+          stage.appendChild(svgEl('path',{d:bondPath(a,b), class:'bond-stick line'}));
+        }
+        for(let o=0;o<bd.order;o++){
+          const perpOff = (o-(bd.order-1)/2)*8;
+          const cx=(a.x+b.x)/2+px*perpOff, cy=(a.y+b.y)/2+py*perpOff;
+          stage.appendChild(svgEl('ellipse',{cx,cy,rx:8.5,ry:4.2,class:'pairlens',transform:`rotate(${rotDeg} ${cx} ${cy})`}));
+          stage.appendChild(svgEl('circle',{cx:cx-ux*3,cy:cy-uy*3,r:2.6,class:'sharedpair'}));
+          stage.appendChild(svgEl('circle',{cx:cx+ux*3,cy:cy+uy*3,r:2.6,class:'sharedpair'}));
+        }
+      }
+    }
+  }
+  for(const a of state.atoms.values()) stage.appendChild(drawAtom(a));
+  // click targets sit above atoms but stop short of each nucleus, so atoms stay draggable
+  pairs.forEach(([a,b])=>{
+    const dx=b.x-a.x, dy=b.y-a.y, len=Math.hypot(dx,dy)||1, ux=dx/len, uy=dy/len;
+    const ra=nucleusRadius(elOf(a))+3, rb=nucleusRadius(elOf(b))+3;
+    if(len<=ra+rb) return;
+    const hit = svgEl('line',{x1:a.x+ux*ra, y1:a.y+uy*ra, x2:b.x-ux*rb, y2:b.y-uy*rb, class:'bond-hit'});
+    hit.appendChild(Object.assign(svgEl('title',{}), {textContent:'Click to sever this bond'}));
+    hit.addEventListener('click', ()=> severBond(a,b));
+    stage.appendChild(hit);
+  });
+  if(state.deloc) stage.appendChild(state.deloc.layer);
+}
+/* graphite: each carbon's 4th outer electron wanders bond-to-bond through the layer */
+function startDelocalisedElectrons(atoms){
+  const layer = svgEl('g', {class:'delocLayer'});
+  const pickNext = (atom, avoid)=>{
+    const ids = atom.bonds.filter(b=>b.kind==='covalent').map(b=>b.otherId);
+    const pool = ids.length>1 ? ids.filter(id=>id!==avoid) : ids;
+    return pool.length ? pool[Math.floor(Math.random()*pool.length)] : null;
+  };
+  const els = atoms.map((a,i)=>({dot:layer.appendChild(svgEl('circle',{r:3.6, class:'delocElectron'})), from:a.id, prev:null, to:null, t:Math.random(), side:i%2? 1:-1}));
+  const d = state.deloc = {layer};
+  let last = performance.now();
+  requestAnimationFrame(function frame(now){
+    if(state.deloc!==d) return; // workspace cleared or a new demo started
+    const dt = Math.max(0, Math.min(0.05, (now-last)/1000)); last = now;
+    els.forEach(e=>{
+      const a = getAtom(e.from); if(!a) return;
+      if(!a.bonds.some(bd=>bd.otherId===e.to)) e.to = pickNext(a, e.prev);
+      const b = getAtom(e.to);
+      if(!b){ e.dot.setAttribute('cx', a.x); e.dot.setAttribute('cy', a.y); return; }
+      e.t += dt*0.8;
+      if(e.t>=1){ e.t -= 1; e.prev = e.from; e.from = e.to; e.to = null; e.dot.setAttribute('cx', b.x); e.dot.setAttribute('cy', b.y); return; }
+      // bow sideways so electrons don't sit on top of the shared pairs
+      const dx=b.x-a.x, dy=b.y-a.y, len=Math.hypot(dx,dy)||1, bow=e.side*9*Math.sin(Math.PI*e.t);
+      e.dot.setAttribute('cx', a.x + dx*e.t - dy/len*bow);
+      e.dot.setAttribute('cy', a.y + dy*e.t + dx/len*bow);
+    });
+    requestAnimationFrame(frame);
+  });
+}
+
+/* ---------- 4. DRAG + BONDING ENGINE ---------- */
+let dragCtx = null;
+function onAtomPointerDown(evt){
+  evt.preventDefault();
+  const id = +evt.currentTarget.getAttribute('data-id');
+  const atom = getAtom(id);
+  if(!atom) return;
+  if(state.severMode){ severAtomBonds(atom); return; }
+  const cluster = clusterOf(atom);
+  const pt = stagePoint(evt);
+  dragCtx = { clusterIds: cluster.map(a=>a.id), startX:pt.x, startY:pt.y, origins: cluster.map(a=>({id:a.id,x:a.x,y:a.y})) };
+  state.selectedCluster = atom.id;
+  window.addEventListener('pointermove', onAtomPointerMove);
+  window.addEventListener('pointerup', onAtomPointerUp);
+}
+function stagePoint(evt){
+  const p = stage.createSVGPoint(); p.x = evt.clientX; p.y = evt.clientY;
+  const m = p.matrixTransform(stage.getScreenCTM().inverse());
+  return { x: m.x, y: m.y };
+}
+function onAtomPointerMove(evt){
+  if(!dragCtx) return;
+  const pt = stagePoint(evt);
+  const dx = pt.x-dragCtx.startX, dy = pt.y-dragCtx.startY;
+  dragCtx.origins.forEach(o=>{
+    const a = getAtom(o.id); if(!a) return;
+    a.x = o.x+dx; a.y = o.y+dy;
+  });
+  renderStage();
+  checkProximity(dragCtx.clusterIds);
+}
+function onAtomPointerUp(){
+  window.removeEventListener('pointermove', onAtomPointerMove);
+  window.removeEventListener('pointerup', onAtomPointerUp);
+  dragCtx = null;
+  updateInspector();
+}
+function checkProximity(movingIds){
+  const movingSet = new Set(movingIds);
+  for(const id of movingIds){
+    const a = getAtom(id); if(!a) continue;
+    for(const b of state.atoms.values()){
+      if(movingSet.has(b.id)) continue;
+      const alreadyBonded = a.bonds.some(bd=>bd.otherId===b.id);
+      if(alreadyBonded) continue;
+      const dist = Math.hypot(a.x-b.x, a.y-b.y);
+      if(dist < BOND_THRESHOLD){
+        tryBond(a,b);
+      }
+    }
+  }
+}
+function tryBond(a,b){
+  const elA = elOf(a), elB = elOf(b);
+  const pairKey = [a.id,b.id].sort().join('-');
+  if(elA.category==='metal' && elB.category==='metal'){
+    if(!state.attemptedPairs.has(pairKey)){
+      state.attemptedPairs.add(pairKey);
+      showFeedback(`${elA.name} and ${elB.name} are both metals — they don't transfer or share electrons with each other this way. No bond forms.`, 'bad');
+    }
+    return;
+  }
+  const remA = remainingOf(a), remB = remainingOf(b);
+  if(remA<=0 || remB<=0) return; // both/either already satisfied — nothing to do
+  if(state.pendingBonds.has(pairKey)) return; // animation already in flight for this pair — don't stack another transfer
+
+  if(elA.category!==elB.category){
+    // IONIC
+    const metal = elA.category==='metal'? a:b;
+    const nonmetal = metal===a? b:a;
+    const transferable = Math.min(remainingOf(metal), remainingOf(nonmetal));
+    if(transferable<1) return;
+    state.pendingBonds.add(pairKey);
+    animateTransfer(metal, nonmetal, transferable, ()=>{
+      metal.ionicGiven += transferable;
+      nonmetal.ionicReceived += transferable;
+      for(let i=0;i<transferable;i++) nonmetal.transferredElectrons.push(elOf(metal).hex);
+      metal.bonds.push({otherId:nonmetal.id, order:transferable, kind:'ionic'});
+      nonmetal.bonds.push({otherId:metal.id, order:transferable, kind:'ionic'});
+      layoutCluster(hubOf(metal,nonmetal));
+      renderStage();
+      const metalLeft = remainingOf(metal), nmLeft = remainingOf(nonmetal);
+      let msg = `Electron transfer: ${elOf(metal).name} → ${elOf(nonmetal).name}. ${elOf(metal).sym} becomes ${chargeOf(metal)>1?chargeOf(metal):''}+ , ${elOf(nonmetal).sym} becomes ${Math.abs(chargeOf(nonmetal))>1?Math.abs(chargeOf(nonmetal)):''}−.`;
+      if(metalLeft>0) msg += ` ${elOf(metal).sym} still needs to lose ${metalLeft} more electron${metalLeft>1?'s':''} — try adding another ${elOf(nonmetal).sym} atom.`;
+      else if(nmLeft>0) msg += ` ${elOf(nonmetal).sym} still needs ${nmLeft} more electron${nmLeft>1?'s':''} — this compound needs more ${elOf(metal).sym}.`;
+      showFeedback(msg, 'good');
+      onBondFormed();
+      updateInspector();
+      state.pendingBonds.delete(pairKey);
+    });
+  } else {
+    // COVALENT
+    const order = Math.min(remainingOf(a), remainingOf(b), 3);
+    if(order<1) return;
+    state.pendingBonds.add(pairKey);
+    animateShare(a,b,order, ()=>{
+      a.covalentShared += order; b.covalentShared += order;
+      a.bonds.push({otherId:b.id, order, kind:'covalent'});
+      b.bonds.push({otherId:a.id, order, kind:'covalent'});
+      layoutCluster(hubOf(a,b));
+      renderStage();
+      const bondWord = order===1?'single':order===2?'double':'triple';
+      let msg = `Electron sharing: ${elA.name} and ${elB.name} form a ${bondWord} covalent bond, sharing ${order} electron pair${order>1?'s':''}.`;
+      const aLeft=remainingOf(a), bLeft=remainingOf(b);
+      if(aLeft>0) msg += ` ${elA.sym} still needs ${aLeft} more electron${aLeft>1?'s':''} — add another atom.`;
+      else if(bLeft>0) msg += ` ${elB.sym} still needs ${bLeft} more electron${bLeft>1?'s':''} — add another atom.`;
+      showFeedback(msg,'good');
+      onBondFormed();
+      updateInspector();
+      state.pendingBonds.delete(pairKey);
+    });
+  }
+}
+function animateTransfer(metal, nonmetal, count, done){
+  let remaining=count;
+  function step(){
+    if(remaining<=0){ done(); return; }
+    remaining--;
+    const dot = svgEl('circle', {r:5, class:'flyElectron', cx:metal.x, cy:metal.y});
+    stage.appendChild(dot);
+    const t0=performance.now(), dur=520;
+    function frame(t){
+      const p=Math.min(1,(t-t0)/dur);
+      const ease = 1-Math.pow(1-p,3);
+      dot.setAttribute('cx', metal.x + (nonmetal.x-metal.x)*ease);
+      dot.setAttribute('cy', metal.y + (nonmetal.y-metal.y)*ease - Math.sin(p*Math.PI)*30);
+      if(p<1) requestAnimationFrame(frame); else { dot.remove(); step(); }
+    }
+    requestAnimationFrame(frame);
+  }
+  step();
+}
+function animateShare(a,b,count,done){
+  let remaining=count;
+  function step(){
+    if(remaining<=0){ done(); return; }
+    remaining--;
+    const dA = svgEl('circle', {r:4.2, class:'flyElectron', cx:a.x, cy:a.y});
+    const dB = svgEl('circle', {r:4.2, class:'flyElectron', cx:b.x, cy:b.y});
+    stage.appendChild(dA); stage.appendChild(dB);
+    const mx=(a.x+b.x)/2, my=(a.y+b.y)/2;
+    const t0=performance.now(), dur=480;
+    function frame(t){
+      const p=Math.min(1,(t-t0)/dur);
+      dA.setAttribute('cx', a.x+(mx-a.x)*p); dA.setAttribute('cy', a.y+(my-a.y)*p);
+      dB.setAttribute('cx', b.x+(mx-b.x)*p); dB.setAttribute('cy', b.y+(my-b.y)*p);
+      if(p<1) requestAnimationFrame(frame); else { dA.remove(); dB.remove(); step(); }
+    }
+    requestAnimationFrame(frame);
+  }
+  step();
+}
+function bondRecordBetween(a,b){ return a.bonds.find(x=>x.otherId===b.id); }
+function hubOf(x,y){ return x.bonds.length>=y.bonds.length ? x : y; }
+function covalentDistance(elA, elB, order){
+  const rSum = outerRadius(elA) + outerRadius(elB);
+  const minSafeDist = nucleusRadius(elA) + nucleusRadius(elB) + 8;
+  return Math.max(minSafeDist, rSum - (16 + (order-1)*12));
+}
+function bondLength(a, b, bd){
+  return bd.kind==='ionic'
+    ? outerRadius(elOf(a)) + outerRadius(elOf(b)) + 14
+    : covalentDistance(elOf(a), elOf(b), bd.order);
+}
+function layoutCluster(root){
+  const TAU = Math.PI*2;
+  const visited = new Set([root.id]);
+  place(root, root.x, root.y, null);
+  function place(atom, x, y, incomingAngle){
+    const neighbors = atom.bonds.map(b=>getAtom(b.otherId)).filter(n=>n && !visited.has(n.id));
+    neighbors.forEach(n=> visited.add(n.id)); // claim all first so a ring can't reach a sibling and place it twice
+    const count = neighbors.length;
+    // directions are read before this atom moves, so the molecule keeps the arrangement the user built
+    const angleOf = n=> Math.atan2(n.y-atom.y, n.x-atom.x);
+    let slots;
+    if(incomingAngle===null){
+      // the root spreads its bonds evenly all the way round, turned to match where its neighbours already are
+      const sorted = neighbors.map(n=>({n, a:angleOf(n)})).sort((p,q)=>p.a-q.a);
+      let s=0, c=0;
+      sorted.forEach((p,k)=>{ s+=Math.sin(p.a-TAU*k/count); c+=Math.cos(p.a-TAU*k/count); });
+      const offset = Math.atan2(s, c);
+      slots = sorted.map((p,k)=>({n:p.n, angle:offset+TAU*k/count}));
+    } else {
+      // any other atom: the bond back to its parent takes one of count+1 evenly spaced directions,
+      // so no branch folds back onto the parent (the old layout sent a single onward bond straight back — N–O–H put H on N)
+      const back = incomingAngle + Math.PI;
+      const rel = n=> ((angleOf(n)-back) % TAU + TAU) % TAU;
+      const sorted = neighbors.map(n=>({n, a:rel(n)})).sort((p,q)=>p.a-q.a);
+      slots = sorted.map((p,k)=>({n:p.n, angle:back+TAU*(k+1)/(count+1)}));
+    }
+    atom.x = x; atom.y = y;
+    slots.forEach(({n, angle})=>{
+      const dist = bondLength(atom, n, bondRecordBetween(atom, n));
+      place(n, x+dist*Math.cos(angle), y+dist*Math.sin(angle), angle);
+    });
+  }
+  // branches of bigger molecules (and rings) can still land on each other: push apart atoms that overlap
+  // without being bonded, while bonds pull back to their proper length
+  const rootX = root.x, rootY = root.y;
+  const atoms = clusterOf(root);
+  for(let it=0; it<150; it++){
+    for(let i=0; i<atoms.length; i++) for(let j=i+1; j<atoms.length; j++){
+      const a = atoms[i], b = atoms[j];
+      let dx = b.x-a.x, dy = b.y-a.y, d = Math.hypot(dx, dy);
+      if(d<0.01){ dx = Math.cos(i+j); dy = Math.sin(i+j); d = 1; }
+      const bd = bondRecordBetween(a, b);
+      const want = bd ? bondLength(a, b, bd) : (outerRadius(elOf(a))+outerRadius(elOf(b)))*0.85;
+      if(!bd && d>=want) continue;
+      const shift = (d-want)/d*0.25;
+      a.x += dx*shift; a.y += dy*shift; b.x -= dx*shift; b.y -= dy*shift;
+    }
+  }
+  atoms.forEach(a=>{ a.x += rootX-root.x; a.y += rootY-root.y; });
+}
+function severAtomBonds(atom){
+  if(atom.bonds.length===0){ showFeedback(`${elOf(atom).name} has no bonds to sever.`,'info'); return; }
+  const brokenWith = atom.bonds.slice().map(bd=>breakBond(atom, bd)).filter(Boolean).map(o=>elOf(o).sym);
+  renderStage();
+  updateInspector();
+  showFeedback(`Severed ${elOf(atom).sym}'s bond${brokenWith.length>1?'s':''} with ${brokenWith.join(', ')}. Electrons return — atoms revert toward neutral.`, 'info');
+}
+function breakBond(atom, bd){
+  const other = getAtom(bd.otherId);
+  if(!other) return null;
+  [atom, other].forEach(x=>{
+    if(elOf(x).category==='metal') x.ionicGiven -= bd.order;
+    else if(bd.kind==='ionic') x.ionicReceived -= bd.order;
+    else x.covalentShared -= bd.order;
+  });
+  if(bd.kind==='ionic'){
+    const nonmetal = elOf(atom).category==='metal'? other : atom;
+    const donorHex = elOf(elOf(atom).category==='metal'? atom : other).hex;
+    for(let i=0;i<bd.order;i++){
+      const idx = nonmetal.transferredElectrons.lastIndexOf(donorHex);
+      if(idx>=0) nonmetal.transferredElectrons.splice(idx,1);
+    }
+  }
+  atom.bonds = atom.bonds.filter(b=>b.otherId!==other.id);
+  other.bonds = other.bonds.filter(b=>b.otherId!==atom.id);
+  return other;
+}
+function severBond(a, b){
+  const bd = bondRecordBetween(a, b);
+  if(!bd) return;
+  breakBond(a, bd);
+  renderStage();
+  updateInspector();
+  showFeedback(`Severed the ${elOf(a).sym}–${elOf(b).sym} bond. Electrons return — atoms revert toward neutral.`, 'info');
+}
+
+/* ---------- feedback toast ---------- */
+let fbTimer=null;
+function showFeedback(msg, cls){
+  const el = document.getElementById('feedback');
+  el.textContent = msg;
+  el.className = 'show '+cls;
+  clearTimeout(fbTimer);
+  fbTimer = setTimeout(()=>{ el.classList.remove('show'); }, 5200);
+}
+
+/* ---------- 5. INSPECTOR ---------- */
+function subscript(n){ return n<=1? '' : String(n).split('').map(d=>'₀₁₂₃₄₅₆₇₈₉'[+d]).join(''); }
+function gcd(x,y){ return y? gcd(y, x%y) : x; }
+function formulaString(counts){
+  // written order: metals first, then nonmetals from least to most electronegative — MgO not OMg, Al₂O₃, HCl, H₂O —
+  // except H goes after C and N by convention (CH₄, NH₃)
+  const order = FORMULA_ORDER.filter(s=>counts[s]);
+  return order.map(s=>s+subscript(counts[s])).join('');
+}
+// formulas with 3+ elements depend on how the atoms are joined (NaOH, Mg(OH)₂, HCN, HClO), so these read the bonds
+function covalentParts(cluster){
+  // each part is one molecule or one ion: atoms held together by shared electrons only
+  const seen = new Set(), parts = [];
+  cluster.forEach(a=>{
+    if(seen.has(a.id)) return;
+    seen.add(a.id);
+    const part = [], q = [a];
+    while(q.length){
+      const x = q.pop(); part.push(x);
+      x.bonds.forEach(b=>{ if(b.kind==='covalent' && !seen.has(b.otherId)){ seen.add(b.otherId); q.push(getAtom(b.otherId)); } });
+    }
+    parts.push(part);
+  });
+  return parts;
+}
+function groupFormula(atoms, isIon){
+  const counts = clusterCounts(atoms);
+  const syms = Object.keys(counts);
+  if(syms.length===1) return syms[0]+subscript(counts[syms[0]]);
+  const inGroup = new Set(atoms.map(a=>a.id));
+  const nbrs = a=> a.bonds.filter(b=>b.kind==='covalent' && inGroup.has(b.otherId)).map(b=>getAtom(b.otherId));
+  // carbon compounds (C–C or C–H bonds, but not H–C≡N) use Hill order: C, H, then the rest alphabetically — CH₄O, CH₃Cl
+  const organic = atoms.some(a=> a.sym==='C' && nbrs(a).some(n=> n.sym==='C' || n.sym==='H')
+    && !a.bonds.some(b=> b.kind==='covalent' && b.order===3 && getAtom(b.otherId).sym==='N'));
+  if(organic){
+    const order = ['C','H', ...syms.filter(s=>s!=='C' && s!=='H').sort()];
+    return order.filter(s=>counts[s]).map(s=>s+subscript(counts[s])).join('');
+  }
+  // H joined to O (or to the C of C≡N) is acidic: written first in acids — H₂O, HClO, H₂CO₃, HCN, HCO₃⁻ — but last in OH⁻
+  const acidH = atoms.filter(a=> a.sym==='H' && nbrs(a).some(n=> n.sym==='O' || n.sym==='C'));
+  if(acidH.length && acidH.length===counts.H){
+    const rest = atoms.filter(a=> a.sym!=='H');
+    const restText = groupFormula(rest, isIon);
+    return isIon && rest.length===1 ? restText+'H'+subscript(acidH.length) : 'H'+subscript(acidH.length)+restText;
+  }
+  if(syms.length===2) return formulaString(counts); // ClO, CO₃, NO₂, CN, NH₂
+  // 3+ elements around one central atom: centre first, then the atoms joined to it — COCl₂, NOCl, NH₂Cl
+  const central = atoms.find(a=> nbrs(a).length===atoms.length-1);
+  if(central){
+    const LIGAND_ORDER = ['H','O','N','C','Cl','F'];
+    return central.sym+subscript(counts[central.sym])
+      + LIGAND_ORDER.filter(s=>s!==central.sym && counts[s]).map(s=>s+subscript(counts[s])).join('');
+  }
+  return formulaString(counts);
+}
+function ionsOf(cluster){
+  // identical ions are counted together, then reduced to the simplest whole-number ratio (8 Na⁺ + 8 OH⁻ is still NaOH)
+  const byText = new Map();
+  covalentParts(cluster).forEach(p=>{
+    const text = groupFormula(p, true);
+    if(!byText.has(text)){
+      // colour/lead atom of a polyatomic ion: its most-bonded non-hydrogen atom (O in OH⁻, C in CO₃²⁻)
+      const lead = [...p].sort((a,b)=> (a.sym==='H')-(b.sym==='H') || b.bonds.length-a.bonds.length)[0];
+      byText.set(text, {text, lead:lead.sym, charge:p.reduce((s,a)=>s+chargeOf(a),0), poly:p.length>1,
+        metal:elOf(lead).category==='metal', count:0});
+    }
+    byText.get(text).count++;
+  });
+  const ions = [...byText.values()];
+  const div = ions.map(i=>i.count).reduce(gcd);
+  ions.forEach(i=> i.count/=div);
+  // positive ions first, then single-atom negative ions, then polyatomic ones
+  const rank = i=> i.metal? 0 : i.poly? 2 : 1;
+  return ions.sort((a,b)=> rank(a)-rank(b) || FORMULA_ORDER.indexOf(a.lead)-FORMULA_ORDER.indexOf(b.lead));
+}
+function clusterFormula(cluster){
+  if(!cluster.length) return '';
+  if(!clusterHasIonic(cluster)) return groupFormula(cluster, false);
+  return ionsOf(cluster).map(i=> (i.poly && i.count>1? '('+i.text+')' : i.text) + subscript(i.count)).join('');
+}
+function clusterCounts(cluster){
+  const counts={};
+  cluster.forEach(a=>{ counts[a.sym]=(counts[a.sym]||0)+1; });
+  return counts;
+}
+function clusterComplete(cluster){
+  return cluster.every(a=>remainingOf(a)<=0);
+}
+function clusterHasIonic(cluster){
+  return cluster.some(a=>a.bonds.some(b=>b.kind==='ionic'));
+}
+function updateInspector(){
+  const clusters = allClusters().filter(c=>c.length>0);
+  const hasAny = clusters.length>0;
+  document.getElementById('insp-empty').classList.toggle('visible', !hasAny);
+  ['insp-elements','insp-electrons','insp-bonding','insp-result','insp-properties'].forEach(id=>{
+    document.getElementById(id).classList.toggle('visible', hasAny);
+  });
+  document.getElementById('clusterSwitch').classList.toggle('hidden', clusters.length<2);
+  if(!hasAny) return;
+
+  let target = clusters.find(c=>c.some(a=>a.id===state.selectedCluster)) || clusters[clusters.length-1];
+  const sw = document.getElementById('clusterSwitch'); sw.innerHTML='';
+  clusters.forEach((c,i)=>{
+    const b=document.createElement('button');
+    b.textContent = clusterFormula(c) || ('Group '+(i+1));
+    if(c===target) b.classList.add('active');
+    b.onclick=()=>{ state.selectedCluster=c[0].id; updateInspector(); };
+    sw.appendChild(b);
+  });
+
+  // elements present
+  const counts = clusterCounts(target);
+  const chips = document.getElementById('elementChips'); chips.innerHTML='';
+  Object.keys(counts).forEach(sym=>{
+    const el = ELEMENTS[sym];
+    const c = document.createElement('span'); c.className='chip';
+    c.innerHTML = `<span class="dot" style="background:${el.hex}"></span>${el.sym} × ${counts[sym]}`;
+    chips.appendChild(c);
+  });
+  document.getElementById('atomCount').textContent = target.length;
+
+  // valence electrons
+  const vl = document.getElementById('valenceList'); vl.innerHTML='';
+  target.forEach(a=>{
+    const el = elOf(a);
+    const row = document.createElement('div'); row.className='insp-row';
+    row.innerHTML = `<span>${el.sym} (${el.name})</span><b>${valenceOf(el)} valence e⁻ ${state.advanced?`· config ${el.shells.join(',')}`:''}</b>`;
+    vl.appendChild(row);
+  });
+
+  // bonding description
+  const anyBond = target.some(a=>a.bonds.length>0);
+  const bdesc = document.getElementById('bondingDesc');
+  const btbar = document.getElementById('bondtypebar');
+  if(!anyBond){
+    bdesc.textContent = 'Bring these atoms closer together to see what happens to their electrons.';
+    btbar.innerHTML='';
+  } else {
+    const ionic = clusterHasIonic(target);
+    const totalTransferred = target.reduce((s,a)=>s+a.ionicGiven,0);
+    const totalShared = target.reduce((s,a)=>s+a.covalentShared,0)/2;
+    if(ionic){
+      bdesc.textContent = `${totalTransferred} electron${totalTransferred>1?'s':''} transferred from metal atom(s) to nonmetal atom(s). The atoms are no longer neutral — they are now charged ions.`;
+      btbar.innerHTML = `<div class="bondtypebar ionic">⚡ IONIC BONDING — electrons transferred</div>`;
+    } else {
+      bdesc.textContent = `${totalShared} electron pair${totalShared>1?'s':''} shared between atoms. Both atoms keep a claim on the shared electrons — neither becomes a full ion.`;
+      btbar.innerHTML = `<div class="bondtypebar covalent">🔗 COVALENT BONDING — electrons shared</div>`;
+    }
+  }
+
+  // result — ionic formulas are the simplest whole-number ratio (a lattice of 8 Na⁺ + 8 Cl⁻ is still NaCl)
+  const complete = clusterComplete(target);
+  const ionic2 = clusterHasIonic(target);
+  const div = ionic2 ? Object.values(counts).reduce(gcd) : 1;
+  const formulaCounts = Object.fromEntries(Object.entries(counts).map(([s,n])=>[s, n/div]));
+  const key = fKey(formulaCounts);
+  const known = KNOWN[key];
+  document.getElementById('resFormula').textContent = clusterFormula(target) || '—';
+  let structureType = '—';
+  let kind = ionic2 ? 'ionic' : 'covalent-simple';
+  if(complete){
+    structureType = ionic2 ? 'Giant ionic structure (pending)' : 'Simple molecular structure';
+    document.getElementById('resName').textContent = known? known.name : (ionic2? 'Ionic compound':'Covalent molecule');
+  } else {
+    document.getElementById('resName').textContent = 'Structure not yet complete — keep adding atoms.';
+  }
+  document.getElementById('resStructure').textContent = complete? structureType : 'incomplete';
+  const zb = document.getElementById('zoomBtn');
+  if(complete && ionic2){
+    const demo = !!state.latticeDemo;
+    zb.classList.remove('hidden');
+    zb.textContent = demo ? '🔍 Zoom Out — Full 3D Crystal' : '🔍 Zoom Out to Structure';
+    zb.onclick = ()=> openLattice('ionic', target, counts, {split:demo});
+  } else if(complete && target.length>=1 && !ionic2 && target.every(a=>a.sym==='C') && target.length>=4){
+    zb.classList.remove('hidden'); zb.textContent='🔍 Zoom Out — Giant Covalent Network';
+    zb.onclick = ()=> openLattice('diamond', target, counts, {split:true});
+  } else {
+    zb.classList.add('hidden'); zb.textContent='🔍 Zoom Out to Structure';
+  }
+
+  // properties (progressive: only after complete)
+  document.getElementById('insp-properties').classList.toggle('visible', complete);
+  if(complete){
+    const pk = ionic2? 'ionic' : 'covalent-simple';
+    const list = document.getElementById('propList'); list.innerHTML='';
+    PROPERTIES[pk].forEach(p=>{ const li=document.createElement('li'); li.textContent=p; list.appendChild(li); });
+    document.getElementById('propException').classList.add('hidden');
+  }
+  // curated demo structures (graphite) describe the whole crystal, not the finite patch on screen
+  const demo = state.structureDemo;
+  if(demo){
+    if(demo.bonding) document.getElementById('bondingDesc').textContent = demo.bonding;
+    if(demo.name){
+      document.getElementById('resFormula').textContent = demo.formula;
+      document.getElementById('resName').textContent = demo.name;
+      document.getElementById('resStructure').textContent = demo.structure;
+      document.getElementById('insp-properties').classList.add('visible');
+      const list = document.getElementById('propList'); list.innerHTML='';
+      demo.props.forEach(p=>{ const li=document.createElement('li'); li.textContent=p; list.appendChild(li); });
+      const ex = document.getElementById('propException');
+      ex.textContent = demo.exception; ex.classList.remove('hidden');
+    }
+    zb.classList.remove('hidden'); zb.textContent = demo.zoomText || '🔍 Zoom Out — Full 3D Crystal'; zb.onclick = demo.zoom;
+  }
+}
+function onBondFormed(){
+  bumpMastery('electrons');
+}
+
+/* ---------- 6. ZOOM-OUT 3D VIEWER ---------- */
+let three = null;
+function initThree(){
+  if(three) return three;
+  const container = document.getElementById('lattice3d');
+  const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  container.appendChild(renderer.domElement);
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(45, 1, 1, 5000);
+  scene.add(new THREE.AmbientLight(0xffffff, 0.65));
+  const dl = new THREE.DirectionalLight(0xffffff, 0.9); dl.position.set(200,300,400); scene.add(dl);
+  const dl2 = new THREE.DirectionalLight(0x88aaff, 0.35); dl2.position.set(-300,-100,-200); scene.add(dl2);
+  three = {renderer, scene, camera, group:null, labels:[], tickers:[], radius:600, theta:0.6, phi:1.1};
+  let dragging=false, lastX=0, lastY=0;
+  container.addEventListener('pointerdown', e=>{ dragging=true; lastX=e.clientX; lastY=e.clientY; });
+  window.addEventListener('pointerup', ()=> dragging=false);
+  window.addEventListener('pointermove', e=>{
+    if(!dragging || container.style.display==='none') return;
+    const dx=e.clientX-lastX, dy=e.clientY-lastY; lastX=e.clientX; lastY=e.clientY;
+    three.theta -= dx*0.006; three.phi = Math.max(0.2, Math.min(Math.PI-0.2, three.phi - dy*0.006));
+    updateCam();
+  });
+  container.addEventListener('wheel', e=>{
+    e.preventDefault();
+    three.radius = Math.max(120, Math.min(2400, three.radius + e.deltaY*0.4));
+    updateCam();
+  }, {passive:false});
+  function updateCam(){
+    const {radius,theta,phi} = three;
+    camera.position.set(radius*Math.sin(phi)*Math.cos(theta), radius*Math.cos(phi), radius*Math.sin(phi)*Math.sin(theta));
+    camera.lookAt(0,0,0);
+  }
+  three.updateCam = updateCam;
+  updateCam();
+  let lastFrame = performance.now();
+  function animate(){
+    requestAnimationFrame(animate);
+    const now = performance.now(), dt = Math.min(0.05, (now-lastFrame)/1000); lastFrame = now;
+    if(container.style.display==='none') return;
+    three.tickers.forEach(fn=> fn(dt));
+    // keep each ion's charge sign on the sphere surface facing the camera
+    three.labels.forEach(l=> l.sprite.position.copy(camera.position).sub(l.centre).setLength(l.r*1.03).add(l.centre));
+    renderer.render(scene,camera);
+  }
+  animate();
+  window.addEventListener('resize', resizeThree);
+  return three;
+}
+function resizeThree(){
+  if(!three) return;
+  const container = document.getElementById('lattice3d');
+  const w = container.clientWidth||800, h = container.clientHeight||600;
+  three.renderer.setSize(w,h);
+  three.camera.aspect = w/h; three.camera.updateProjectionMatrix();
+}
+function clearThreeGroup(){
+  if(three.group){ three.scene.remove(three.group); }
+  three.group = new THREE.Group();
+  three.labels = []; three.tickers = [];
+  three.scene.add(three.group);
+}
+// pull the camera back until a structure of radius boundR fits, even in the narrow split-view panel
+function fitCamera(boundR){
+  const cam = three.camera, vHalf = cam.fov*Math.PI/360, hHalf = Math.atan(Math.tan(vHalf)*cam.aspect);
+  three.radius = boundR*1.15 / Math.sin(Math.min(vHalf, hHalf));
+  three.updateCam();
+}
+let glowTex = null;
+function glowTexture(){
+  if(glowTex) return glowTex;
+  const c = document.createElement('canvas'); c.width = c.height = 64;
+  const ctx = c.getContext('2d'), g = ctx.createRadialGradient(32,32,0,32,32,32);
+  g.addColorStop(0,'rgba(255,255,255,1)'); g.addColorStop(.25,'rgba(255,255,255,.85)'); g.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.fillStyle = g; ctx.fillRect(0,0,64,64);
+  return glowTex = new THREE.CanvasTexture(c);
+}
+function ionSphere(x,y,z,r,color){
+  const m = new THREE.Mesh(new THREE.SphereGeometry(r,36,28),
+    new THREE.MeshPhongMaterial({color, shininess:70, specular:0x555555}));
+  m.position.set(x,y,z);
+  return m;
+}
+// white charge sign ("+", "−", "2+", "2−") drawn as thick bars like reference/400px-GiantIonicSodiumChloride.png
+const signTextures = {};
+function ionSignTexture(charge){
+  const key = String(charge);
+  if(signTextures[key]) return signTextures[key];
+  const c = document.createElement('canvas'); c.width = c.height = 128;
+  const ctx = c.getContext('2d');
+  const mag = Math.abs(charge);
+  ctx.fillStyle = '#fff'; ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = 4;
+  const L = mag>1 ? 46 : 64, T = L*0.22, cx = mag>1 ? 82 : 64, cy = 64;
+  ctx.fillRect(cx-L/2, cy-T/2, L, T);
+  if(charge>0) ctx.fillRect(cx-T/2, cy-L/2, T, L);
+  if(mag>1){
+    ctx.font = '800 66px "Segoe UI", system-ui, sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(mag, 34, cy+4);
+  }
+  return signTextures[key] = new THREE.CanvasTexture(c);
+}
+function addIonSign(x,y,z,r,charge){
+  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({map:ionSignTexture(charge), transparent:true, depthWrite:false}));
+  sprite.scale.set(r*1.5, r*1.5, 1);
+  three.group.add(sprite);
+  three.labels.push({sprite, centre:new THREE.Vector3(x,y,z), r});
+}
+function sphere(x,y,z,r,color){
+  const geo = new THREE.SphereGeometry(r,24,18);
+  const mat = new THREE.MeshStandardMaterial({color, roughness:.4, metalness:.15});
+  const m = new THREE.Mesh(geo,mat);
+  m.position.set(x,y,z);
+  return m;
+}
+function cylinderBetween(p1,p2,r,color){
+  const dir = new THREE.Vector3().subVectors(p2,p1);
+  const len = dir.length();
+  const geo = new THREE.CylinderGeometry(r,r,len,8);
+  const mat = new THREE.MeshStandardMaterial({color, roughness:.5});
+  const m = new THREE.Mesh(geo,mat);
+  const mid = new THREE.Vector3().addVectors(p1,p2).multiplyScalar(0.5);
+  m.position.copy(mid);
+  m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), dir.clone().normalize());
+  return m;
+}
+function buildIonicLattice(n, spacing){
+  const nodes=[];
+  for(let i=0;i<n;i++)for(let j=0;j<n;j++)for(let k=0;k<n;k++){
+    const type=((i+j+k)%2===0)?'a':'b';
+    nodes.push({x:(i-(n-1)/2)*spacing, y:(j-(n-1)/2)*spacing, z:(k-(n-1)/2)*spacing, type});
+  }
+  return nodes;
+}
+function buildDiamond(bondLen, depth){
+  const norm=(v)=>{ const m=Math.hypot(...v); return v.map(x=>x/m*bondLen); };
+  const dirsA=[[1,1,1],[1,-1,-1],[-1,1,-1],[-1,-1,1]].map(norm);
+  const dirsB=[[-1,-1,-1],[-1,1,1],[1,-1,1],[1,1,-1]].map(norm);
+  const key=(x,y,z)=>Math.round(x*100)+','+Math.round(y*100)+','+Math.round(z*100);
+  const nodes=new Map();
+  const start={x:0,y:0,z:0,type:'A'};
+  nodes.set(key(0,0,0), start);
+  let frontier=[start];
+  const edgeSet=new Set(); const edges=[];
+  for(let d=0; d<depth; d++){
+    const next=[];
+    for(const atom of frontier){
+      const dirs = atom.type==='A'?dirsA:dirsB;
+      for(const v of dirs){
+        const nx=atom.x+v[0], ny=atom.y+v[1], nz=atom.z+v[2];
+        const k=key(nx,ny,nz);
+        let n=nodes.get(k);
+        if(!n){ n={x:nx,y:ny,z:nz,type:atom.type==='A'?'B':'A'}; nodes.set(k,n); next.push(n); }
+        const ek=[key(atom.x,atom.y,atom.z),k].sort().join('|');
+        if(!edgeSet.has(ek)){ edgeSet.add(ek); edges.push([atom,n]); }
+      }
+    }
+    frontier=next;
+  }
+  return {nodes:[...nodes.values()], edges};
+}
+// 2D projection matching reference/Diamond.png: each centre C bonds up, down (lines) and lower-left/right (wedges)
+function buildDiamondNetwork2D(V, dx, dy, rows){
+  const nodes=new Map(); const edges=[];
+  const nodeAt=(x,y)=>{ const k=Math.round(x)+','+Math.round(y); if(!nodes.has(k)) nodes.set(k,{x,y}); return nodes.get(k); };
+  const dirs=[[0,-V,'line'],[0,V,'line'],[-dx,dy,'wedge'],[dx,dy,'wedge']];
+  for(let r=0;r<rows;r++) for(let c=0;c<=r;c++){
+    const x=(2*c-r)*dx, y=r*(dy+V);
+    const centre=nodeAt(x,y);
+    dirs.forEach(([ox,oy,style])=> edges.push({a:centre, b:nodeAt(x+ox,y+oy), style}));
+  }
+  return {nodes:[...nodes.values()], edges};
+}
+// centres of a brick-offset grid of pointy-top hexagons with side (= C–C bond) s
+function hexCentres(s, rows, cols){
+  const w = Math.sqrt(3)*s, out = [];
+  for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) out.push([c*w + (r%2)*w/2, r*1.5*s]);
+  return out;
+}
+// one graphite sheet: shared hexagon corners become atoms (3 neighbours each), sides become bonds
+function honeycomb(s, centres, keep){
+  const q = s/20, key = (x,y)=> Math.round(x/q)+','+Math.round(y/q);
+  const nodes = new Map(), edgeSet = new Set(), edges = [];
+  const nodeAt = (x,y)=>{ const k=key(x,y); if(!nodes.has(k)) nodes.set(k, {x, y, k, nbrs:[]}); return nodes.get(k); };
+  centres.forEach(([cx,cy])=>{
+    const vs = [0,1,2,3,4,5].map(i=>{ const ang=(60*i-90)*Math.PI/180; return [cx+s*Math.cos(ang), cy+s*Math.sin(ang)]; });
+    vs.forEach((v,i)=>{
+      const u = vs[(i+1)%6];
+      if(keep && !(keep(...v) && keep(...u))) return;
+      const a = nodeAt(...v), b = nodeAt(...u), ek = a.k<b.k ? a.k+'|'+b.k : b.k+'|'+a.k;
+      if(edgeSet.has(ek)) return;
+      edgeSet.add(ek); edges.push([a,b]); a.nbrs.push(b); b.nbrs.push(a);
+    });
+  });
+  return {nodes:[...nodes.values()], edges, find:(x,y)=> nodes.get(key(x,y))};
+}
+function randomNbr(node, avoid){
+  const pool = node.nbrs.length>1 ? node.nbrs.filter(n=>n!==avoid) : node.nbrs;
+  return pool[Math.floor(Math.random()*pool.length)];
+}
+function closeLattice(){
+  document.getElementById('lattice3d').style.display='none';
+  document.getElementById('workspaceWrap').classList.remove('split-view');
+  document.querySelectorAll('.splitLabel').forEach(el=>el.remove());
+}
+function openLattice(kind, cluster, counts, opts){
+  opts = opts || {};
+  const wrap = document.getElementById('workspaceWrap');
+  wrap.classList.toggle('split-view', !!opts.split);
+  document.getElementById('lattice3d').style.display='block';
+  if(!opts.split) document.getElementById('workspaceTop').style.display='none';
+  const t = initThree();
+  resizeThree();
+  clearThreeGroup();
+  const label = document.querySelector('#lattice3d .latticeLabel') || (()=>{
+    const d=document.createElement('div'); d.className='latticeLabel'; document.getElementById('lattice3d').appendChild(d); return d;
+  })();
+  const exitBtn = document.querySelector('#lattice3d .exitLattice') || (()=>{
+    const b=document.createElement('button'); b.className='iconbtn exitLattice'; document.getElementById('lattice3d').appendChild(b);
+    b.onclick=()=>{
+      closeLattice();
+      document.getElementById('workspaceTop').style.display='flex';
+    };
+    return b;
+  })();
+  exitBtn.textContent = opts.split ? '✕ Close 3D view' : '← Back to atoms';
+  document.querySelectorAll('.splitLabel').forEach(el=>el.remove());
+  if(opts.split){
+    const LEFT = {ionic:'2D layer of ions', graphite:'Top view of one layer', molecular:'One molecule'};
+    const RIGHT = {graphite:'3D stacked layers', molecular:'Many separate molecules'};
+    const ll=document.createElement('div'); ll.className='splitLabel left'; ll.textContent= LEFT[kind] || '2D bonded network'; wrap.appendChild(ll);
+    const rl=document.createElement('div'); rl.className='splitLabel right'; rl.textContent= RIGHT[kind] || '3D crystal lattice'; wrap.appendChild(rl);
+  }
+
+  if(kind==='ionic'){
+    const syms = Object.keys(counts);
+    // built structures read their real ions (OH⁻ in NaOH, not O²⁻); gallery demos only pass element symbols
+    const ions = cluster.length? ionsOf(cluster) : [];
+    const posIon = ions.find(i=>i.metal), negIon = ions.find(i=>!i.metal);
+    const metalEl = ELEMENTS[posIon? posIon.lead : syms.find(s=>ELEMENTS[s].category==='metal')];
+    const nmEl = ELEMENTS[negIon? negIon.lead : syms.find(s=>ELEMENTS[s].category==='nonmetal')];
+    const posCharge = valenceOf(metalEl), negCharge = negIon? negIon.charge : -(nmEl.target - valenceOf(nmEl));
+    // space-filling look: neighbouring ions touch, the negative ion is the larger one
+    const n = 4, spacing = 70, rPos = spacing*0.43, rNeg = spacing*0.55;
+    // deepen element colours a little so the spheres read as solid, glossy ions rather than pastel
+    const posCol = new THREE.Color(metalEl.hex).multiplyScalar(0.8), negCol = new THREE.Color(nmEl.hex).multiplyScalar(0.8);
+    buildIonicLattice(n, spacing).forEach(p=>{
+      const isMetal = p.type==='a', r = isMetal? rPos : rNeg;
+      t.group.add(ionSphere(p.x,p.y,p.z, r, isMetal? posCol : negCol));
+      addIonSign(p.x,p.y,p.z, r, isMetal? posCharge : negCharge);
+    });
+    fitCamera((n-1)/2*spacing*Math.sqrt(3) + rNeg);
+    const ion = (text,q)=> text + (Math.abs(q)>1? '⁰¹²³⁴⁵⁶⁷⁸⁹'[Math.abs(q)] : '') + (q>0? '⁺':'⁻');
+    label.textContent = `Giant ionic lattice (simplified model): ${ion(posIon? posIon.text : metalEl.sym, posCharge)} and ${ion(negIon? negIon.text : nmEl.sym, negCharge)} ions alternate in a repeating 3D array. Each ion is surrounded by 6 oppositely charged ions and held by strong electrostatic attraction in every direction — there are no individual molecules. Drag to rotate, scroll to zoom.`;
+    bumpMastery('structures');
+  } else if(kind==='diamond'){
+    const {nodes,edges} = buildDiamond(46, 4);
+    let cx=0,cy=0,cz=0; nodes.forEach(n=>{cx+=n.x;cy+=n.y;cz+=n.z;}); cx/=nodes.length;cy/=nodes.length;cz/=nodes.length;
+    nodes.forEach(n=> t.group.add(sphere(n.x-cx,n.y-cy,n.z-cz, 12, ELEMENTS.C.hex)));
+    edges.forEach(([a,b])=> t.group.add(cylinderBetween(
+      new THREE.Vector3(a.x-cx,a.y-cy,a.z-cz), new THREE.Vector3(b.x-cx,b.y-cy,b.z-cz), 3, '#cfd3da')));
+    label.textContent = `Giant covalent structure — diamond (simplified model): every carbon atom forms strong covalent bonds to four neighbours, repeating throughout the whole crystal. This is why diamond is extremely hard with a very high melting point. Drag to rotate, scroll to zoom.`;
+    bumpMastery('structures');
+  } else if(kind==='graphite'){
+    // true proportions: C–C bond 0.142 nm, layers 0.335 nm apart, stacked ABAB
+    const s = 26, gap = s*0.335/0.142, R = 4.4*s, nLayers = 4, w = Math.sqrt(3)*s;
+    const sheet = honeycomb(s, hexCentres(s, 13, 13).map(([x,y])=>[x-6*w, y-9*s]), (x,y)=> x*x+y*y <= R*R);
+    // alternate layers slide by one bond length: half their atoms sit over atoms below, half over hexagon centres
+    const layerPos = (n, L)=> new THREE.Vector3(n.x, (L-(nLayers-1)/2)*gap, n.y + (L%2? s/2 : -s/2));
+    const dashMat = new THREE.LineDashedMaterial({color:0x9fb0cf, dashSize:4, gapSize:5, transparent:true, opacity:.6});
+    for(let L=0; L<nLayers; L++){
+      sheet.nodes.forEach(n=>{ const p = layerPos(n,L); t.group.add(sphere(p.x,p.y,p.z, 6.5, ELEMENTS.C.hex)); });
+      sheet.edges.forEach(([a,b])=> t.group.add(cylinderBetween(layerPos(a,L), layerPos(b,L), 2, '#cfd3da')));
+      // weak forces between layers: dashed line from each atom to the atom directly above it
+      if(L<nLayers-1) sheet.nodes.forEach(n=>{
+        const above = sheet.find(n.x, n.y + (L%2? s : -s)); if(!above) return;
+        const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([layerPos(n,L), layerPos(above,L+1)]), dashMat);
+        line.computeLineDistances(); t.group.add(line);
+      });
+      // delocalised electrons: glowing dots wandering bond to bond, confined to their own layer
+      sheet.nodes.filter((_,i)=> i%3===L%3).forEach((start,i)=>{
+        const sp = new THREE.Sprite(new THREE.SpriteMaterial({map:glowTexture(), color:0xffd23f, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending}));
+        sp.scale.set(16,16,1); t.group.add(sp);
+        const e = {from:start, prev:null, to:randomNbr(start,null), t:Math.random(), lift:(i%2? 1:-1)*4};
+        t.tickers.push(dt=>{
+          e.t += dt*0.9;
+          if(e.t>=1){ e.t -= 1; e.prev = e.from; e.from = e.to; e.to = randomNbr(e.from, e.prev); }
+          sp.position.lerpVectors(layerPos(e.from,L), layerPos(e.to,L), e.t).y += e.lift;
+        });
+      });
+    }
+    t.phi = 1.3; // lower viewpoint so the gaps between layers are visible
+    fitCamera(Math.hypot(R, (nLayers-1)/2*gap + s/2) + 8);
+    label.textContent = `Giant covalent structure — graphite: each carbon forms 3 strong covalent bonds in flat hexagonal layers. Its 4th outer electron is delocalised (glowing dots) and moves along the layer, so graphite conducts electricity. Only weak forces hold the layers together (dashed lines), so they slide over each other — graphite is soft and slippery.${state.advanced? ' Layers stack ABAB: C–C bond 0.142 nm, layer spacing 0.335 nm.' : ''} Drag to rotate, scroll to zoom.`;
+    bumpMastery('structures');
+  } else if(kind==='molecular'){
+    const key = opts.molecule, mol = MOLECULES[key], liquid = mol.state==='liquid';
+    const S = 40; // scene units per ångström: real bond lengths and angles
+    const centroid = mol.atoms.reduce((c,[,x,y,z])=> c.add(new THREE.Vector3(x,y,z)), new THREE.Vector3()).multiplyScalar(S/mol.atoms.length);
+    const local = mol.atoms.map(([,x,y,z])=> new THREE.Vector3(x,y,z).multiplyScalar(S).sub(centroid));
+    const atomR = sym=> sym==='H'? 9 : 13;
+    const molR = Math.max(...local.map((p,i)=> p.length() + atomR(mol.atoms[i][0])));
+    function buildMolecule(){
+      const g = new THREE.Group();
+      local.forEach((p,i)=>{ const sym = mol.atoms[i][0]; g.add(sphere(p.x,p.y,p.z, atomR(sym), ELEMENTS[sym].hex)); });
+      mol.bonds.forEach(([i,j,order])=>{
+        const perp = new THREE.Vector3(0,0,1).cross(local[j].clone().sub(local[i]));
+        if(perp.lengthSq()<1e-6) perp.set(0,1,0);
+        perp.normalize();
+        for(let o=0;o<order;o++){
+          const off = perp.clone().multiplyScalar((o-(order-1)/2)*9);
+          g.add(cylinderBetween(local[i].clone().add(off), local[j].clone().add(off), order>1? 2.4 : 3, '#cfd3da'));
+        }
+      });
+      g.rotation.set(Math.random()*6.3, Math.random()*6.3, Math.random()*6.3);
+      t.group.add(g);
+      return g;
+    }
+    const rand3 = (scale)=> new THREE.Vector3((Math.random()*2-1)*scale, (Math.random()*2-1)*scale, (Math.random()*2-1)*scale);
+    // liquid: molecules touching (~2.9 Å apart) and jostling in place; gas: few molecules, far apart, flying and colliding
+    const spacing = 116, box = liquid ? 2*spacing + 2*molR + 30 : 400, half = box/2, lim = half - molR;
+    const mols = [];
+    if(liquid){
+      for(let i=-1;i<=1;i++) for(let j=-1;j<=1;j++) for(let k=-1;k<=1;k++){
+        const g = buildMolecule();
+        mols.push({g, home:new THREE.Vector3(i,j,k).multiplyScalar(spacing).add(rand3(8)), phase:rand3(3.2), freq:rand3(0.6).addScalar(1.6), spin:rand3(0.6)});
+      }
+    } else {
+      // lighter molecules move faster at the same temperature
+      const count = key==='hydrogen'? 18 : 11, speed = 60 + 160*Math.sqrt(2/mol.mass);
+      for(let tries=0; mols.length<count && tries<2000; tries++){
+        const p = rand3(lim);
+        if(mols.some(m=> m.g.position.distanceTo(p) < 2*molR+10)) continue;
+        const g = buildMolecule(); g.position.copy(p);
+        mols.push({g, vel:rand3(1).normalize().multiplyScalar(speed*(0.7+Math.random()*0.6)), spin:rand3(1.5)});
+      }
+    }
+    t.group.add(new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(box,box,box)),
+      new THREE.LineBasicMaterial({color:0x5f6a82, transparent:true, opacity:.45})));
+    // weak forces between molecules, rebuilt every frame as molecules move
+    const MAX_SEG = 160, segPos = new Float32Array(MAX_SEG*6), segGeo = new THREE.BufferGeometry();
+    segGeo.setAttribute('position', new THREE.BufferAttribute(segPos, 3));
+    const forceLines = new THREE.LineSegments(segGeo, new THREE.LineDashedMaterial({color:0x9fb0cf, dashSize:4, gapSize:4, transparent:true, opacity:.75}));
+    forceLines.frustumCulled = false; t.group.add(forceLines);
+    const hIdx = mol.atoms.map(([s],i)=> s==='H'? i : -1).filter(i=>i>=0), oIdx = mol.atoms.findIndex(([s])=> s==='O');
+    const tmpA = new THREE.Vector3(), tmpB = new THREE.Vector3();
+    let clock = 0;
+    t.tickers.push(dt=>{
+      clock += dt;
+      mols.forEach(m=>{
+        if(liquid){
+          m.g.position.set(
+            m.home.x + 14*Math.sin(clock*m.freq.x + m.phase.x),
+            m.home.y + 14*Math.sin(clock*m.freq.y + m.phase.y),
+            m.home.z + 14*Math.sin(clock*m.freq.z + m.phase.z));
+        } else {
+          m.g.position.addScaledVector(m.vel, dt);
+          for(let a=0;a<3;a++){
+            const p = m.g.position.getComponent(a);
+            if(Math.abs(p) > lim){ m.g.position.setComponent(a, Math.sign(p)*lim); m.vel.setComponent(a, -Math.sign(p)*Math.abs(m.vel.getComponent(a))); }
+          }
+        }
+        m.g.rotation.x += m.spin.x*dt; m.g.rotation.y += m.spin.y*dt; m.g.rotation.z += m.spin.z*dt;
+        m.g.updateMatrixWorld();
+      });
+      let segs = 0;
+      const addSeg = (p,q)=>{ if(segs<MAX_SEG){ segPos.set([p.x,p.y,p.z,q.x,q.y,q.z], segs*6); segs++; } };
+      if(liquid){
+        // hydrogen bonds: an H on one molecule close to the O of a neighbour
+        mols.forEach(m=> hIdx.forEach(h=>{
+          const hp = tmpA.copy(local[h]).applyMatrix4(m.g.matrixWorld);
+          mols.forEach(o=>{
+            if(o===m) return;
+            const op = tmpB.copy(local[oIdx]).applyMatrix4(o.g.matrixWorld);
+            if(hp.distanceTo(op) < 2.3*S) addSeg(hp, op);
+          });
+        }));
+      } else {
+        for(let i=0;i<mols.length;i++) for(let j=i+1;j<mols.length;j++){
+          const A = mols[i], B = mols[j];
+          const n = tmpA.subVectors(B.g.position, A.g.position), d = n.length();
+          if(d < 2*molR + 35) addSeg(A.g.position, B.g.position);
+          if(d===0 || d > 1.7*molR) continue;
+          // equal-mass elastic collision: swap the velocity components along the line of centres
+          n.divideScalar(d);
+          const approach = tmpB.subVectors(A.vel, B.vel).dot(n);
+          if(approach > 0){ A.vel.addScaledVector(n, -approach); B.vel.addScaledVector(n, approach); }
+        }
+      }
+      segGeo.setDrawRange(0, segs*2);
+      segGeo.attributes.position.needsUpdate = true;
+      forceLines.computeLineDistances();
+    });
+    t.phi = 1.15;
+    fitCamera(half*Math.sqrt(3)); // cube corners stay in view from any angle
+    const nm = mol.name.toLowerCase();
+    label.textContent = `Simple molecular structure — ${nm}: made of separate ${formulaString(mol.formula)} molecules. Strong covalent bonds hold the atoms together inside each molecule, but only weak forces act between molecules (dashed lines${liquid? '' : ', only when molecules pass close'}). Little energy is needed to overcome these weak forces, so ${nm} ${mol.bpText} — it is a ${mol.state} at room temperature.${state.advanced? ` Shape: ${mol.shape}.${liquid? ' The forces between water molecules are hydrogen bonds.' : ''}` : ''} Drag to rotate, scroll to zoom.`;
+    bumpMastery('structures');
+  }
+}
+
+/* ---------- 7. STRUCTURES GALLERY ---------- */
+function buildGallery(){
+  const g = document.getElementById('structuresGallery');
+  g.innerHTML = '';
+  const cats = [
+    {title:'Simple Molecular Structures', items:[
+      {icon:'💧', name:'Water · H₂O', action:()=>demoMoleculeDirect('water')},
+      {icon:'🟢', name:'Methane · CH₄', action:()=>demoMoleculeDirect('methane')},
+      {icon:'🌫️', name:'Carbon dioxide · CO₂', action:()=>demoMoleculeDirect('carbonDioxide')},
+      {icon:'⚪', name:'Hydrogen · H₂', action:()=>demoMoleculeDirect('hydrogen')},
+    ]},
+    {title:'Giant Ionic Structures', items:[
+      {icon:'🧂', name:'Sodium chloride', action:()=>demoLatticeDirect('Na','Cl')},
+      {icon:'⬜', name:'Magnesium oxide', action:()=>demoLatticeDirect('Mg','O')},
+    ]},
+    {title:'Giant Covalent Structures', items:[
+      {icon:'💎', name:'Diamond', action:()=>demoDiamondDirect()},
+      {icon:'⬛', name:'Graphite', action:()=>demoGraphiteDirect()},
+    ]},
+  ];
+  cats.forEach(cat=>{
+    const h=document.createElement('div'); h.className='gcat'; h.textContent=cat.title; g.appendChild(h);
+    const row=document.createElement('div'); row.className='gallery-row';
+    cat.items.forEach(it=>{
+      const c=document.createElement('div'); c.className='gcard';
+      c.innerHTML = `<div class="gicon">${it.icon}</div><b>${it.name}</b><span>Tap to explore</span>`;
+      c.onclick=it.action;
+      row.appendChild(c);
+    });
+    g.appendChild(row);
+  });
+}
+// one flat layer of the rock-salt lattice: ions alternate, each attracted to its in-plane neighbours
+function buildIonicLayer2D(spacing, cols, rows){
+  const nodes=[], edges=[];
+  for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) nodes.push({x:c*spacing, y:r*spacing, metal:(r+c)%2===0});
+  nodes.forEach((n,i)=>{
+    if(i%cols < cols-1) edges.push([n, nodes[i+1]]);
+    if(i+cols < nodes.length) edges.push([n, nodes[i+cols]]);
+  });
+  return {nodes, edges};
+}
+function demoLatticeDirect(metalSym,nmSym){
+  setTab('bond', {silent:true}); clearWorkspace();
+  state.latticeDemo = true;
+  document.getElementById('workspaceWrap').classList.add('split-view');
+  const metalEl = ELEMENTS[metalSym], nmEl = ELEMENTS[nmSym];
+  const q = valenceOf(metalEl); // electrons moved per ion pair (1:1 compounds only)
+  // after transfer the positive ion has lost its outer shell and the negative ion's outer shell is full
+  const spacing = (outerRadius(metalEl)-17) + outerRadius(nmEl) + 20;
+  const {nodes, edges} = buildIonicLayer2D(spacing, 4, 4);
+  const atomOf = new Map();
+  nodes.forEach(n=>{
+    const a = newAtom(n.metal? metalSym : nmSym, n.x, n.y);
+    a.hideName = true;
+    if(n.metal) a.ionicGiven = q;
+    else { a.ionicReceived = q; a.transferredElectrons = Array(q).fill(metalEl.hex); }
+    atomOf.set(n, a);
+  });
+  // order 0: these lines show attraction between ions, not extra electron transfers
+  edges.forEach(([n1,n2])=>{
+    const a=atomOf.get(n1), b=atomOf.get(n2);
+    a.bonds.push({otherId:b.id, order:0, kind:'ionic'});
+    b.bonds.push({otherId:a.id, order:0, kind:'ionic'});
+  });
+  const span = spacing*3, pad = outerRadius(nmEl) + 20;
+  stage.setAttribute('viewBox', `${-pad} ${-pad} ${span+2*pad} ${span+2*pad}`);
+  renderStage(); updateInspector();
+  const sup = n=> n>1? '⁰¹²³⁴⁵⁶⁷⁸⁹'[n] : '';
+  showFeedback(`Giant ionic structure: each ${metalEl.name.toLowerCase()} atom has transferred ${q} electron${q>1?'s':''} to a ${nmEl.name.toLowerCase()} atom, forming ${metalSym}${sup(q)}⁺ and ${nmSym}${sup(q)}⁻ ions. Every ion is attracted to all its oppositely charged neighbours (dashed lines), and this pattern repeats in all three directions.`, 'info');
+  openLattice('ionic', [], {[metalSym]:1, [nmSym]:1}, {split:true});
+}
+function demoDiamondDirect(){
+  setTab('bond', {silent:true}); clearWorkspace();
+  document.getElementById('workspaceWrap').classList.add('split-view');
+  const {nodes, edges} = buildDiamondNetwork2D(80, 78, 40, 3);
+  const atomOf = new Map();
+  nodes.forEach(n=>{ const a = newAtom('C', n.x, n.y); a.hideName = true; atomOf.set(n, a); });
+  edges.forEach(({a:n1, b:n2, style})=>{
+    const a=atomOf.get(n1), b=atomOf.get(n2);
+    a.covalentShared += 1; b.covalentShared += 1;
+    a.bonds.push({otherId:b.id, order:1, kind:'covalent', stick:style, from:a.id});
+    b.bonds.push({otherId:a.id, order:1, kind:'covalent', stick:style, from:a.id});
+  });
+  let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+  nodes.forEach(n=>{ minX=Math.min(minX,n.x); maxX=Math.max(maxX,n.x); minY=Math.min(minY,n.y); maxY=Math.max(maxY,n.y); });
+  const pad = 50;
+  stage.setAttribute('viewBox', `${minX-pad} ${minY-pad} ${maxX-minX+2*pad} ${maxY-minY+2*pad}`);
+  renderStage(); updateInspector();
+  const zb = document.getElementById('zoomBtn');
+  zb.classList.remove('hidden'); zb.textContent='🔍 Zoom Out — Full 3D Crystal';
+  zb.onclick = ()=> openLattice('diamond', [], {}, {split:true});
+  showFeedback("Giant covalent structure: each central carbon shares 4 electron pairs with 4 neighbouring carbons, and this pattern repeats through the whole crystal. Carbons at the edge still show unshared electrons — those bonds continue into the rest of the crystal.", 'info');
+  openLattice('diamond', [], {}, {split:true});
+}
+function demoGraphiteDirect(){
+  setTab('bond', {silent:true}); clearWorkspace();
+  document.getElementById('workspaceWrap').classList.add('split-view');
+  const {nodes, edges} = honeycomb(80, hexCentres(80, 4, 3));
+  const atomOf = new Map();
+  nodes.forEach(n=>{
+    const a = newAtom('C', n.x, n.y);
+    a.hideName = true;
+    a.delocalised = 1; // 4th outer electron leaves the shell and joins the layer's delocalised electrons
+    atomOf.set(n, a);
+  });
+  edges.forEach(([n1,n2])=>{
+    const a=atomOf.get(n1), b=atomOf.get(n2);
+    a.covalentShared += 1; b.covalentShared += 1;
+    a.bonds.push({otherId:b.id, order:1, kind:'covalent', stick:'line', from:a.id});
+    b.bonds.push({otherId:a.id, order:1, kind:'covalent', stick:'line', from:a.id});
+  });
+  const xs = nodes.map(n=>n.x), ys = nodes.map(n=>n.y), pad = 50;
+  const minX = Math.min(...xs), minY = Math.min(...ys);
+  stage.setAttribute('viewBox', `${minX-pad} ${minY-pad} ${Math.max(...xs)-minX+2*pad} ${Math.max(...ys)-minY+2*pad}`);
+  state.structureDemo = {
+    formula:'C', name:'Graphite', structure:'Giant covalent (layered)',
+    bonding:'Each carbon shares 3 electron pairs with 3 neighbours, forming flat hexagonal layers. Its 4th outer electron is delocalised — free to move along the layer.',
+    props:['Very high melting point — strong covalent bonds within each layer','Soft and slippery — only weak forces hold the layers together, so they slide','Conducts electricity — delocalised electrons move along the layers'],
+    exception:'Unlike diamond and most covalent substances, graphite conducts electricity.',
+    zoom:()=> openLattice('graphite', [], {}, {split:true}),
+  };
+  startDelocalisedElectrons([...atomOf.values()]);
+  renderStage(); updateInspector();
+  showFeedback("Top view of one graphite layer: each carbon shares 3 electron pairs with 3 neighbours, making flat hexagons. Its 4th outer electron is not in a bond — it is delocalised and drifts through the layer (moving glowing dots). Edge carbons still show an unshared electron because their bonds continue into the rest of the layer.", 'info');
+  openLattice('graphite', [], {}, {split:true});
+}
+function demoMoleculeDirect(key){
+  const mol = MOLECULES[key];
+  setTab('bond', {silent:true}); clearWorkspace();
+  document.getElementById('workspaceWrap').classList.add('split-view');
+  // fully bonded molecule, drawn along its real bond directions (screen y points down)
+  const atoms = mol.atoms.map(([sym])=> Object.assign(newAtom(sym, 0, 0), {hideName:true}));
+  mol.bonds.forEach(([i,j,order])=>{
+    const a = atoms[i], b = atoms[j], [, x1, y1] = mol.atoms[i], [, x2, y2] = mol.atoms[j];
+    const len = Math.hypot(x2-x1, y2-y1) || 1, d = covalentDistance(elOf(a), elOf(b), order);
+    b.x = a.x + (x2-x1)/len*d; b.y = a.y - (y2-y1)/len*d;
+    a.covalentShared += order; b.covalentShared += order;
+    a.bonds.push({otherId:b.id, order, kind:'covalent'});
+    b.bonds.push({otherId:a.id, order, kind:'covalent'});
+  });
+  const xs = atoms.map(a=>a.x), ys = atoms.map(a=>a.y);
+  const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
+  const size = Math.max(260, maxX-minX+170, maxY-minY+170);
+  stage.setAttribute('viewBox', `${(minX+maxX-size)/2} ${(minY+maxY-size)/2} ${size} ${size}`);
+  state.selectedCluster = atoms[0].id;
+  state.structureDemo = {zoomText:'🔍 Zoom Out — Many Molecules', zoom:()=> openLattice('molecular', [], {}, {split:true, molecule:key})};
+  renderStage(); updateInspector();
+  showFeedback(`${mol.name} (${formulaString(mol.formula)}): ${mol.about} Each molecule is separate — on the right you can see many of them moving independently.`, 'info');
+  openLattice('molecular', [], {}, {split:true, molecule:key});
+}
+
+/* ---------- 7b. BOND TAB — guided building flow ---------- */
+const BOND_GOALS = [
+  {Na:1,Cl:1}, {Mg:1,O:1}, {Mg:1,Cl:2}, {Na:2,O:1},
+  {H:2}, {Cl:2}, {H:2,O:1}, {O:2}, {N:2}, {C:1,H:4}, {C:1,O:2}
+];
+function startBondFlow(){
+  state.bondGoalIdx = 0;
+  showBondGoal();
+}
+function showBondGoal(){
+  const f = BOND_GOALS[state.bondGoalIdx % BOND_GOALS.length];
+  state.guidedGoal = f;
+  const known = KNOWN[fKey(f)];
+  document.getElementById('goalBanner').style.display='block';
+  document.getElementById('goalBtns').style.display='flex';
+  document.getElementById('goalTitle').textContent = `Build ${known? known.name.toLowerCase() : formulaString(f)} (${formulaString(f)})`;
+  document.getElementById('goalSub').textContent = 'Drag the correct atoms from the library and bring them together.';
+}
+document.getElementById('goalCheckBtn').onclick = ()=>{
+  const target = state.guidedGoal; if(!target) return;
+  const targetKey = fKey(target);
+  const clusters = allClusters().filter(c=>c.length>0);
+  const match = clusters.find(c=> clusterComplete(c) && fKey(clusterCounts(c))===targetKey );
+  if(match){
+    showFeedback('Correct! '+(KNOWN[targetKey]? KNOWN[targetKey].name+' built successfully.':'Structure built successfully.'), 'good');
+    bumpMastery('bonding');
+    state.bondGoalIdx++;
+    setTimeout(showBondGoal, 1200);
+  } else {
+    const needed = Object.entries(target).map(([s,n])=>`${n}× ${s}`).join(' + ');
+    showFeedback(`Not quite yet. This needs exactly ${needed}, fully bonded with no leftover charge.`, 'bad');
+  }
+};
+document.getElementById('goalNextBtn').onclick = ()=>{ state.bondGoalIdx++; showBondGoal(); };
+
+/* ---------- 8. CHALLENGES + MASTERY ---------- */
+const CHALLENGE_TYPES = [
+  'build','bondtype','electrons','ions','simpleorgiant','fromformula','explain','apply'
+];
+let challengeIdx = 0;
+let currentChallenge = null;
+
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+function genChallenge(type){
+  if(type==='build'){
+    const opts=[{m:'Na',n:'Cl',f:{Na:1,Cl:1}},{m:'Mg',n:'O',f:{Mg:1,O:1}}];
+    const o = pick(opts);
+    return {type, tag:'Challenge 1 · Build It', prompt:`Build ${KNOWN[fKey(o.f)].name.toLowerCase()} (${formulaString(o.f)}).`,
+      build:true, target:o.f, category:'apply'};
+  }
+  if(type==='bondtype'){
+    const pairs=[['Na','Cl','Ionic'],['H','H','Covalent'],['Mg','O','Ionic'],['O','O','Covalent'],['Na','Mg','No bond']];
+    const p = pick(pairs);
+    return {type, tag:'Challenge 2 · What Type of Bond?', prompt:`${ELEMENTS[p[0]].name} + ${ELEMENTS[p[1]].name} — what type of bonding will form?`,
+      options:['Ionic','Covalent','No bond'], correct:p[2], category:'bonding'};
+  }
+  if(type==='electrons'){
+    const pairs=[['Na','Cl','Electrons are transferred.'],['H','H','Electrons are shared.'],['Mg','Cl','Electrons are transferred.']];
+    const p = pick(pairs);
+    return {type, tag:"Challenge 3 · What Happens to the Electrons?", prompt:`When ${ELEMENTS[p[0]].name} bonds with ${ELEMENTS[p[1]].name}, what happens to the electrons?`,
+      options:['Electrons are transferred.','Electrons are shared.','Electrons disappear.','The nucleus is transferred.'], correct:p[2], category:'electrons'};
+  }
+  if(type==='ions'){
+    const opts=[{m:'Na',n:'Cl',ans:'Na⁺ and Cl⁻'},{m:'Mg',n:'O',ans:'Mg²⁺ and O²⁻'}];
+    const o = pick(opts);
+    const wrongs = ['Na⁻ and Cl⁺','Mg⁺ and O⁻','Both become neutral'];
+    return {type, tag:'Challenge 4 · Identify the Ions', prompt:`${ELEMENTS[o.m].name} reacts with ${ELEMENTS[o.n].name} to form an ionic compound. What are the charges of the resulting ions?`,
+      options: shuffleUnique([o.ans, ...wrongs]), correct:o.ans, category:'electrons'};
+  }
+  if(type==='simpleorgiant'){
+    const opts=[['Water (H₂O)','Simple molecular structure'],['Sodium chloride','Giant ionic structure'],['Diamond','Giant covalent structure'],['Methane (CH₄)','Simple molecular structure']];
+    const o = pick(opts);
+    return {type, tag:'Challenge 5 · Simple or Giant?', prompt:`${o[0]} — is this a simple molecular structure, giant ionic structure, or giant covalent structure?`,
+      options:['Simple molecular structure','Giant ionic structure','Giant covalent structure'], correct:o[1], category:'structures'};
+  }
+  if(type==='fromformula'){
+    return {type, tag:'Challenge 6 · Build From a Formula', prompt:`Build MgCl₂. Remember: one Mg atom needs to lose 2 electrons, but each Cl atom can only accept 1.`,
+      build:true, target:{Mg:1,Cl:2}, category:'apply'};
+  }
+  if(type==='explain'){
+    return {type, tag:'Challenge 7 · Explain the Structure', prompt:`Why is sodium chloride classified as a giant ionic structure rather than made of individual NaCl molecules?`,
+      options:['Because it consists of a repeating 3D lattice of alternating Na⁺ and Cl⁻ ions held by electrostatic attraction.','Because NaCl molecules are too small to see.','Because sodium and chlorine never actually bond.'],
+      correct:'Because it consists of a repeating 3D lattice of alternating Na⁺ and Cl⁻ ions held by electrostatic attraction.', category:'structures'};
+  }
+  if(type==='apply'){
+    const unfamiliar = [['Mg','Cl'],['Al','O'],['N','N']];
+    const p = pick(unfamiliar);
+    const ionicPair = ELEMENTS[p[0]].category!==ELEMENTS[p[1]].category;
+    return {type, tag:'Challenge 8 · Unfamiliar Application', prompt:`Predict: what type of bonding forms between ${ELEMENTS[p[0]].name} and ${ELEMENTS[p[1]].name}?`,
+      options:['Ionic','Covalent','No bond'], correct: ionicPair?'Ionic':'Covalent', category:'apply'};
+  }
+}
+function shuffleUnique(arr){ return [...new Set(arr)].sort(()=>Math.random()-0.5); }
+
+function startChallengeFlow(mixed){
+  challengeIdx = 0;
+  nextChallenge(mixed);
+}
+function nextChallenge(mixed){
+  const types = mixed ? CHALLENGE_TYPES : CHALLENGE_TYPES;
+  const type = mixed ? pick(types) : types[challengeIdx % types.length];
+  challengeIdx++;
+  currentChallenge = genChallenge(type);
+  renderChallenge();
+}
+function renderChallenge(){
+  const panel = document.getElementById('challengePanel');
+  panel.style.display='block';
+  document.getElementById('ctag').textContent = currentChallenge.tag;
+  document.getElementById('cq').textContent = currentChallenge.prompt;
+  const optWrap = document.getElementById('challengeOptions');
+  optWrap.innerHTML='';
+  document.getElementById('cprogress').textContent = `Bonding ${state.mastery.bonding}/3 · Structures ${state.mastery.structures}/3 · Electrons ${state.mastery.electrons}/3 · Application ${state.mastery.apply}/3`;
+  if(currentChallenge.build){
+    clearWorkspace();
+    document.getElementById('goalBanner').style.display='block';
+    document.getElementById('goalBtns').style.display='none';
+    document.getElementById('goalTitle').textContent = currentChallenge.prompt;
+    document.getElementById('goalSub').textContent = 'Drag the correct atoms from the library and bring them together.';
+    state.guidedGoal = currentChallenge.target;
+    optWrap.innerHTML = '<button class="optbtn" id="checkBuildBtn">Check my structure</button>';
+    document.getElementById('checkBuildBtn').onclick = checkGuidedBuild;
+  } else {
+    document.getElementById('goalBanner').style.display='none';
+    currentChallenge.options.forEach(opt=>{
+      const b=document.createElement('button'); b.className='optbtn'; b.textContent=opt;
+      b.onclick=()=>answerChallenge(opt,b);
+      optWrap.appendChild(b);
+    });
+  }
+}
+function answerChallenge(choice, btnEl){
+  const correct = choice===currentChallenge.correct;
+  [...document.getElementById('challengeOptions').children].forEach(b=>b.disabled=true);
+  if(correct){
+    btnEl.classList.add('correct');
+    showFeedback('Correct! '+explainWhy(currentChallenge), 'good');
+    bumpMastery(currentChallenge.category);
+  } else {
+    btnEl.classList.add('wrong');
+    showFeedback('Not quite. '+explainWhy(currentChallenge), 'bad');
+  }
+  setTimeout(()=> nextChallenge(state.tab==='master'), 1600);
+}
+function explainWhy(ch){
+  if(ch.type==='bondtype') return `Metal + nonmetal transfers electrons (ionic); nonmetal + nonmetal shares electrons (covalent); metal + metal forms no bond here.`;
+  if(ch.type==='electrons') return `In ionic bonding electrons move fully from one atom to another. In covalent bonding electrons are shared between atoms.`;
+  if(ch.type==='ions') return `Charge equals the number of electrons lost (+) or gained (−).`;
+  if(ch.type==='simpleorgiant') return `Ionic compounds and some covalent substances (diamond, graphite) form giant repeating structures, not small molecules.`;
+  if(ch.type==='explain') return `NaCl has no discrete molecules — every ion is attracted to all its oppositely-charged neighbours in a repeating lattice.`;
+  if(ch.type==='apply') return `Metal + nonmetal → ionic (transfer). Nonmetal + nonmetal → covalent (sharing).`;
+  return '';
+}
+function checkGuidedBuild(){
+  const clusters = allClusters().filter(c=>c.length>0);
+  const target = state.guidedGoal;
+  const targetKey = fKey(target);
+  const match = clusters.find(c=> clusterComplete(c) && fKey(clusterCounts(c))===targetKey );
+  if(match){
+    showFeedback('Correct structure built! '+ (KNOWN[targetKey]? KNOWN[targetKey].name+'.' : ''), 'good');
+    bumpMastery('apply'); bumpMastery('bonding');
+    document.getElementById('goalBanner').style.display='none';
+    setTimeout(()=> nextChallenge(state.tab==='master'), 1400);
+  } else {
+    const needed = Object.entries(target).map(([s,n])=>`${n}× ${s}`).join(' + ');
+    showFeedback(`Not quite yet. This structure needs exactly ${needed}, fully bonded (no leftover charge). Keep adjusting.`, 'bad');
+  }
+}
+function bumpMastery(cat){
+  const map = {bonding:'bonding', structures:'structures', electrons:'electrons', apply:'apply'};
+  const key = map[cat]; if(!key) return;
+  if(state.mastery[key] < 3) state.mastery[key]++;
+  if(state.mastery[key] >= 3 && !state.masteryDone[key]){
+    state.masteryDone[key] = true;
+  }
+  renderMasterbar();
+}
+function renderMasterbar(){
+  setMstat('mstat-bonding', state.masteryDone.bonding);
+  setMstat('mstat-structures', state.masteryDone.structures);
+  setMstat('mstat-electrons', state.masteryDone.electrons);
+  setMstat('mstat-apply', state.masteryDone.apply);
+}
+function setMstat(id, done){
+  const el = document.getElementById(id);
+  el.classList.toggle('done', done);
+  el.querySelector('.icon').textContent = done? '✓':'○';
+}
+
+/* ---------- 9. NAV / MODE / ATOM LAB / BOOT ---------- */
+function clearWorkspace(){
+  state.atoms.clear(); state.attemptedPairs.clear(); state.pendingBonds.clear(); state.selectedCluster=null;
+  state.severMode = false; state.latticeDemo = false; state.structureDemo = null; state.deloc = null;
+  document.getElementById('severBtn').classList.remove('active');
+  document.getElementById('stage').classList.remove('sever-mode');
+  closeLattice();
+  document.getElementById('workspaceTop').style.display='flex';
+  stage.removeAttribute('viewBox');
+  renderStage(); updateInspector();
+}
+function setTab(tab, opts){
+  opts = opts || {};
+  state.tab = tab;
+  document.querySelectorAll('.navbtn').forEach(b=> b.classList.toggle('active', b.dataset.tab===tab));
+  document.getElementById('structuresGallery').style.display = tab==='structures' ? 'block':'none';
+  document.getElementById('stage').style.display = tab==='structures' ? 'none':'block';
+  document.getElementById('challengePanel').style.display = (tab==='challenges'||tab==='master') ? 'block':'none';
+  document.getElementById('goalBanner').style.display='none';
+  document.getElementById('atomLab').style.display='none';
+  closeLattice();
+  document.getElementById('workspaceTop').style.display = tab==='structures' ? 'none':'flex';
+  state.guidedGoal = null;
+
+  if(tab==='structures'){ buildGallery(); }
+  if(tab==='challenges'){ clearWorkspace(); startChallengeFlow(false); }
+  if(tab==='master'){ clearWorkspace(); startChallengeFlow(true); }
+  if(tab==='explore'){ clearWorkspace(); }
+  if(tab==='bond'){ clearWorkspace(); if(!opts.silent) startBondFlow(); }
+}
+document.getElementById('navtabs').addEventListener('click', e=>{
+  const b = e.target.closest('.navbtn'); if(!b) return; setTab(b.dataset.tab);
+});
+
+document.getElementById('btnBeginner').onclick=()=>{ setAdvanced(false); };
+document.getElementById('btnAdvanced').onclick=()=>{ setAdvanced(true); };
+function setAdvanced(v){
+  state.advanced=v;
+  document.body.classList.toggle('advanced', v);
+  document.getElementById('btnBeginner').classList.toggle('active', !v);
+  document.getElementById('btnAdvanced').classList.toggle('active', v);
+  renderStage(); updateInspector(); updateAtomLab();
+}
+
+document.getElementById('clearBtn').onclick = clearWorkspace;
+document.getElementById('skipChallenge').onclick = ()=> nextChallenge(state.tab==='master');
+
+/* atom library drag-to-place */
+function buildAtomLibrary(){
+  const wrap = document.getElementById('atomCards');
+  wrap.innerHTML='';
+  ELORDER.forEach(sym=>{
+    const el = ELEMENTS[sym];
+    const card = document.createElement('div'); card.className='atom-card'; card.draggable=false;
+    card.innerHTML = `<div class="mini" style="background:${el.hex};color:${luma(el.hex)>150?'#0a0d14':'#fff'}">${sym}</div>
+      <div class="info"><b>${el.name}</b><span>${valenceOf(el)} valence e⁻</span></div>
+      <div class="cat ${el.category}">${el.category==='metal'?'M':'NM'}</div>`;
+    card.addEventListener('pointerdown', (e)=> startLibraryDrag(e, sym));
+    wrap.appendChild(card);
+  });
+}
+function startLibraryDrag(evt, sym){
+  evt.preventDefault();
+  const ghost = document.createElement('div');
+  ghost.style.cssText = `position:fixed; width:34px;height:34px;border-radius:50%; pointer-events:none; z-index:999;
+    background:${ELEMENTS[sym].hex}; left:${evt.clientX-17}px; top:${evt.clientY-17}px; box-shadow:0 0 14px rgba(0,0,0,.5);`;
+  document.body.appendChild(ghost);
+  function move(e){ ghost.style.left=(e.clientX-17)+'px'; ghost.style.top=(e.clientY-17)+'px'; }
+  function up(e){
+    window.removeEventListener('pointermove', move);
+    window.removeEventListener('pointerup', up);
+    ghost.remove();
+    const rect = stage.getBoundingClientRect();
+    if(e.clientX>rect.left && e.clientX<rect.right && e.clientY>rect.top && e.clientY<rect.bottom && state.tab!=='structures'){
+      const {x, y} = stagePoint(e);
+      const a = newAtom(sym, x, y);
+      renderStage(); updateInspector();
+      checkProximity([a.id]);
+    }
+  }
+  window.addEventListener('pointermove', move);
+  window.addEventListener('pointerup', up);
+}
+
+document.getElementById('severBtn').onclick = ()=>{
+  state.severMode = !state.severMode;
+  document.getElementById('severBtn').classList.toggle('active', state.severMode);
+  document.getElementById('stage').classList.toggle('sever-mode', state.severMode);
+  showFeedback(state.severMode? 'Sever mode on — click an atom to break all its bonds.' : 'Sever mode off.', 'info');
+};
+
+/* atom explorer (Level 1 individual-atom sandbox) */
+document.getElementById('advToggleAtomLab').onclick = ()=>{
+  const lab = document.getElementById('atomLab');
+  lab.style.display = lab.style.display==='none' ? 'block':'none';
+  updateAtomLab();
+};
+['slShells','slValence'].forEach(id=> document.getElementById(id).addEventListener('input', updateAtomLab));
+
+// shells + outer electrons pin down a real element in periods 1–3 (index = outer electrons − 1)
+const LAB_PERIODS = [
+  ['H','He'],
+  ['Li','Be','B','C','N','O','F','Ne'],
+  ['Na','Mg','Al','Si','P','S','Cl','Ar'],
+];
+// explorer-only elements (not in the atom library); attract = Pauling electronegativity, null for noble gases
+const LAB_EXTRA = {
+  He:{name:'Helium', z:2, category:'noble', attract:null, hex:'#ffc4ec'},
+  Li:{name:'Lithium', z:3, category:'metal', attract:0.98, hex:'#e08cff'},
+  Be:{name:'Beryllium', z:4, category:'metal', attract:1.57, hex:'#c9f27a'},
+  B: {name:'Boron', z:5, category:'nonmetal', attract:2.04, hex:'#ffb09a'},
+  Ne:{name:'Neon', z:10, category:'noble', attract:null, hex:'#ff9b6b'},
+  Si:{name:'Silicon', z:14, category:'nonmetal', attract:1.90, hex:'#d8b98a'},
+  P: {name:'Phosphorus', z:15, category:'nonmetal', attract:2.19, hex:'#ff9d3b'},
+  S: {name:'Sulfur', z:16, category:'nonmetal', attract:2.58, hex:'#ffe24a'},
+  Ar:{name:'Argon', z:18, category:'noble', attract:null, hex:'#9fe7ff'},
+};
+const NOBLE_BY_CONFIG = {'2':'helium', '2,8':'neon', '2,8,8':'argon'};
+
+function labElement(){
+  const shells = +document.getElementById('slShells').value;
+  const slV = document.getElementById('slValence');
+  slV.max = shells===1 ? 2 : 8; // the first shell holds at most 2 electrons
+  if(+slV.value > +slV.max) slV.value = slV.max;
+  const v = +slV.value;
+  const sym = LAB_PERIODS[shells-1][v-1];
+  const config = shells===1 ? [v] : shells===2 ? [2,v] : [2,8,v];
+  return Object.assign({sym, inLibrary: !!ELEMENTS[sym]}, ELEMENTS[sym] || LAB_EXTRA[sym], {shells: config});
+}
+function labTendency(el){
+  const v = valenceOf(el);
+  if(el.category==='noble') return {kind:'stable', n:0};
+  if(el.category==='metal') return {kind:'lose', n:v};
+  if(v<=4) return {kind:'share', n:v}; // H, B, C, Si
+  return {kind:'gain', n:8-v};
+}
+function ionLabel(sym, q){
+  const mag = Math.abs(q);
+  return sym + (mag>1 ? '⁰¹²³⁴⁵⁶⁷⁸⁹'[mag] : '') + (q>0 ? '⁺' : '⁻');
+}
+
+function updateAtomLab(){
+  const el = labElement();
+  const v = valenceOf(el), tend = labTendency(el);
+  document.getElementById('lv').textContent = el.shells.length;
+  document.getElementById('lve').textContent = v;
+  document.getElementById('labShellHint').textContent = el.shells.length===1 ? 'The first shell can hold only 2 electrons.' : '';
+
+  const catLabel = {metal:'Metal', nonmetal:'Non-metal', noble:'Noble gas'}[el.category];
+  document.getElementById('labMatch').innerHTML =
+    `<span class="dot" style="background:${el.hex}"></span><b>${el.name}</b><span>(${el.sym})</span><span class="cat ${el.category}">${catLabel}</span>`
+    + (state.advanced ? `<span class="note">Atomic number ${el.z} · electron configuration ${el.shells.join(',')}</span>` : '')
+    + (el.inLibrary ? '' : `<span class="note">Not in the atom library — explore only.</span>`);
+
+  const lat = document.getElementById('lat');
+  if(el.attract===null){
+    lat.textContent = 'not needed — outer shell full';
+    document.getElementById('labAttractFill').style.width = '0%';
+  } else {
+    lat.textContent = (el.attract<1.8 ? 'weak' : el.attract<2.5 ? 'medium' : 'strong') + (state.advanced ? ` · electronegativity ${el.attract.toFixed(2)}` : '');
+    document.getElementById('labAttractFill').style.width = (el.attract/4*100) + '%';
+  }
+
+  const s = n=> n===1 ? '' : 's';
+  let verdict, adv = '';
+  if(tend.kind==='stable'){
+    verdict = `${el.name} already has a <b>full outer shell</b> (${v} electrons). It is stable, so it does not need to lose, gain or share electrons — it does not bond.`;
+  } else if(tend.kind==='lose'){
+    const ion = ionLabel(el.sym, tend.n), cfg = el.shells.slice(0,-1).join(',');
+    verdict = `Weak attraction + only ${v} outer electron${s(v)} → ${el.name} <b>LOSES ${v} electron${s(v)}</b> easily. The shell underneath is already full, so it becomes a positive ion: <b>${ion}</b>.`;
+    adv = `${ion} has electron configuration ${cfg} — the same as ${NOBLE_BY_CONFIG[cfg]}.`;
+  } else if(tend.kind==='gain'){
+    const ion = ionLabel(el.sym, -tend.n), cfg = [...el.shells.slice(0,-1), 8].join(',');
+    verdict = `Strong attraction + ${v} outer electrons → ${el.name} needs only ${tend.n} more to fill its outer shell of 8. With a metal it <b>GAINS ${tend.n} electron${s(tend.n)}</b> and becomes a negative ion: <b>${ion}</b>. With another non-metal it shares electrons instead.`;
+    adv = `${ion} has electron configuration ${cfg} — the same as ${NOBLE_BY_CONFIG[cfg]}.`;
+  } else if(el.sym==='H'){
+    verdict = `Hydrogen has 1 electron, and its only shell holds 2. As a non-metal it <b>SHARES</b> its electron with another atom, forming 1 covalent bond.`;
+  } else if(v===4){
+    verdict = `${el.name} has 4 outer electrons — losing or gaining 4 would take too much energy. Instead it <b>SHARES</b> all 4, forming 4 covalent bonds.`;
+  } else {
+    verdict = `${el.name} has ${v} outer electrons, but as a non-metal it holds on to them too strongly to lose them. It <b>SHARES</b> them instead, forming ${v} covalent bonds.`;
+  }
+  if(state.advanced && adv) verdict += ` <span class="advInfo">${adv}</span>`;
+  document.getElementById('labVerdict').innerHTML = verdict;
+
+  const addBtn = document.getElementById('labAddBtn');
+  addBtn.disabled = !el.inLibrary;
+  addBtn.textContent = el.inLibrary ? `+ Add ${el.name} to workspace` : 'Not in the atom library';
+
+  renderLabPreview(el, tend);
+}
+
+/* live atom preview: shells + electrons, nucleus glow = attraction, looping lose/gain/share animation */
+const LAB_CYCLE = 3.6; // seconds per loop: 0.5 s pause, 1.5 s change, then hold the result
+let labAnimToken = 0;
+function renderLabPreview(el, tend){
+  const svg = document.getElementById('labPreview');
+  svg.innerHTML = '';
+  const token = ++labAnimToken;
+  const nShells = el.shells.length, v = valenceOf(el);
+  const R = 20 + (nShells-1)*17, nr = 15 + (nShells-1)*1.5;
+  const polar = (r, ang)=> [r*Math.cos(ang), r*Math.sin(ang)];
+  const movers = []; // {node, from, to, fade:'in'|'out'|null}
+
+  // share: ghost partner atoms slide in (drawn first so they sit behind the atom)
+  const ghosts = [];
+  if(tend.kind==='share'){
+    const gR = 15;
+    for(let k=0;k<tend.n;k++){
+      const dir = (2*Math.PI/tend.n)*k;
+      const node = svg.appendChild(svgEl('circle', {r:gR, class:'labGhost'}));
+      ghosts.push({node, from:polar(R+gR+40, dir), to:polar(R+gR-6, dir)});
+    }
+  }
+  // inner (full) shells spin like the workspace atoms
+  el.shells.slice(0,-1).forEach((count, i)=>{
+    const r = 20 + i*17;
+    svg.appendChild(svgEl('circle', {class:'shell-outline', r}));
+    const ring = svgEl('g', {class:'shellring'});
+    ring.style.animation = `${i%2? 'spinRev':'spin'} ${(3.5+i*2.2).toFixed(1)}s linear infinite`;
+    for(let e=0;e<count;e++){
+      const [x,y] = polar(r, (2*Math.PI/count)*e + i*0.4);
+      ring.appendChild(svgEl('circle', {cx:x, cy:y, r:3.2, class:'electron core'}));
+    }
+    svg.appendChild(ring);
+  });
+  // outer shell
+  const outerShell = svg.appendChild(svgEl('circle', {class: tend.kind==='stable' ? 'labFullShell' : 'shell-outline', r:R}));
+  const addElectron = (x, y, extraClass)=> svg.appendChild(svgEl('circle', {cx:x, cy:y, r:4.2, class:'electron valence'+(extraClass||'')}));
+  if(tend.kind==='gain'){
+    // 8 slots: own electrons first, the gap is filled by incoming electrons
+    for(let i=0;i<8;i++){
+      const ang = (2*Math.PI/8)*i - Math.PI/2;
+      if(i<v){ addElectron(...polar(R, ang)); continue; }
+      movers.push({node:addElectron(0, 0, ' incoming'), from:polar(R+48, ang), to:polar(R, ang), fade:'in'});
+    }
+  } else if(tend.kind==='share'){
+    // one own electron per partner; the partner's electron arrives beside it to make a shared pair
+    const d = 3.2/R;
+    for(let k=0;k<tend.n;k++){
+      const dir = (2*Math.PI/tend.n)*k;
+      addElectron(...polar(R, dir-d));
+      movers.push({node:addElectron(0, 0, ' incoming'), from:polar(R+40, dir+d), to:polar(R, dir+d), fade:'in'});
+    }
+  } else {
+    for(let i=0;i<v;i++){
+      const ang = (2*Math.PI/v)*i - Math.PI/2;
+      const node = addElectron(...polar(R, ang));
+      if(tend.kind==='lose') movers.push({node, from:polar(R, ang), to:polar(R+48, ang), fade:'out'});
+    }
+  }
+  // nucleus: glow grows with electron attraction
+  const nucleus = svg.appendChild(svgEl('circle', {r:nr, fill:el.hex, stroke:'rgba(0,0,0,.35)', 'stroke-width':1.4}));
+  if(el.attract!==null) nucleus.style.filter = `drop-shadow(0 0 ${(2 + el.attract*3).toFixed(1)}px ${el.hex})`;
+  const label = svg.appendChild(svgEl('text', {class:'nucleus-label', y:0.5, fill: luma(el.hex)>150?'#0a0d14':'#ffffff', 'font-size':nr*0.95}));
+  label.textContent = el.sym;
+  // charge badge appears once the ion has formed
+  let badge = null;
+  if(tend.kind==='lose' || tend.kind==='gain'){
+    const q = tend.kind==='lose' ? tend.n : -tend.n, bx = nr*0.72, by = -nr*0.72;
+    badge = svg.appendChild(svgEl('g', {}));
+    badge.appendChild(svgEl('circle', {cx:bx, cy:by, r:9, fill: q>0?'var(--pos)':'var(--neg)', class:'chargebadge-bg'}));
+    const bt = badge.appendChild(svgEl('text', {class:'chargebadge-txt', x:bx, y:by+0.5, fill:'#fff'}));
+    bt.textContent = (Math.abs(q)>1 ? Math.abs(q) : '') + (q>0 ? '+' : '−');
+  }
+
+  const clamp01 = x=> Math.max(0, Math.min(1, x));
+  const ease = x=> x<0.5 ? 2*x*x : 1 - Math.pow(-2*x+2, 2)/2;
+  const lerp = (a, b, p)=> [a[0]+(b[0]-a[0])*p, a[1]+(b[1]-a[1])*p];
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const lab = document.getElementById('atomLab');
+  const start = performance.now();
+  (function frame(now){
+    if(token!==labAnimToken) return; // preview was redrawn
+    const t = reduceMotion ? LAB_CYCLE : ((now-start)/1000) % LAB_CYCLE;
+    const p = ease(clamp01((t-0.5)/1.5));
+    movers.forEach(m=>{
+      const [x,y] = lerp(m.from, m.to, p);
+      m.node.setAttribute('cx', x); m.node.setAttribute('cy', y);
+      if(m.fade) m.node.style.opacity = m.fade==='in' ? clamp01(p*3) : 1-p;
+    });
+    ghosts.forEach(g=>{
+      const [x,y] = lerp(g.from, g.to, p);
+      g.node.setAttribute('cx', x); g.node.setAttribute('cy', y);
+      g.node.style.opacity = clamp01(p*2);
+    });
+    if(tend.kind==='lose') outerShell.style.opacity = 1-p;
+    if(tend.kind==='stable') outerShell.style.opacity = 0.55 + 0.45*Math.sin(t*2*Math.PI/1.8);
+    if(badge) badge.style.opacity = clamp01((p-0.7)/0.3);
+    if(!reduceMotion && lab.style.display!=='none') requestAnimationFrame(frame);
+  })(start);
+}
+
+/* drop the explored atom into free space in the visible part of the workspace */
+document.getElementById('labAddBtn').onclick = ()=>{
+  const el = labElement();
+  if(!el.inLibrary || state.tab==='structures') return;
+  const rect = stage.getBoundingClientRect(), lab = document.getElementById('atomLab').getBoundingClientRect();
+  const r = outerRadius(el), cx = rect.left + rect.width/2, cy = rect.top + rect.height/2;
+  let spot = null;
+  // sunflower spiral out from the stage centre: first spot that is on the stage, not hidden under the
+  // explorer panel, and clear of every other atom (otherwise it would bond straight away)
+  for(let i=0; i<400 && !spot; i++){
+    const px = cx + Math.cos(i*2.4)*22*Math.sqrt(i), py = cy + Math.sin(i*2.4)*22*Math.sqrt(i);
+    if(px < rect.left+r || px > rect.right-r || py < rect.top+r || py > rect.bottom-r) continue;
+    if(px+r > lab.left-10 && px-r < lab.right+10 && py+r > lab.top-10 && py-r < lab.bottom+10) continue;
+    const pt = stagePoint({clientX:px, clientY:py});
+    if([...state.atoms.values()].every(a=> Math.hypot(a.x-pt.x, a.y-pt.y) > outerRadius(elOf(a)) + r + BOND_THRESHOLD)) spot = pt;
+  }
+  // no free spot beside the panel: drop it just below the panel instead
+  spot = spot || stagePoint({clientX:cx, clientY:Math.min(rect.bottom-r, lab.bottom+r+10)});
+  const a = newAtom(el.sym, spot.x, spot.y);
+  renderStage(); updateInspector();
+  checkProximity([a.id]);
+  showFeedback(`${el.name} added — drag it close to another atom to see what happens to its electrons.`, 'info');
+};
+
+/* boot */
+buildAtomLibrary();
+renderStage();
+updateInspector();
+renderMasterbar();
+setTab('explore');
+window.addEventListener('resize', ()=>{ if(three) resizeThree(); });
+</script>
+</body>
+</html>
