@@ -61,6 +61,14 @@ const PLAN = {
   'natural-selection-simulator':  { clicks: 6, settle: 6000 },
   'solar-system-builder':         { clicks: 5, settle: 6000 },
   'ray-diagram-simulator':        { clicks: 2, settle: 4000 },
+  // Opens on an empty workspace; open the sodium chloride lattice from Structures.
+  'how-atoms-bond':               { clicks: 0, settle: 5000,
+    then: ['[data-tab="structures"]', '.gcard:has-text("Sodium chloride")'] },
+  // Opens on a 6-step tour; "Skip tutorial" closes the whole thing.
+  'moments-levers':               { clicks: 1, settle: 3000, dismiss: '.tourbox button:has-text("Skip tutorial")' },
+  // Both pendulums start identical, so the bobs sit on top of each other. The
+  // "Different length" preset splits them apart and is one click for a visitor too.
+  'pendulum-energy':              { clicks: 0, settle: 3500, then: ['button:has-text("Different length")'] },
   'ecoverse-ant-colony':          { clicks: 0, preWait: 9000, settle: 9000,
     prep: `document.querySelector('#intro')?.remove();` },
   'ecoverse-hydrothermal-vent':   { clicks: 0, preWait: 9000, settle: 9000,
