@@ -163,7 +163,13 @@ button{font-family:inherit; cursor:pointer;}
 .chargebadge-txt{font-size:10px; font-weight:800; text-anchor:middle; dominant-baseline:central; pointer-events:none;}
 .atom-group{cursor:grab;}
 .atom-group:active{cursor:grabbing;}
+/* dashed ionic links are only drawn inside the giant-lattice demo, where every ion has several
+   neighbours — between an isolated pair they would imply a localised "molecule" bond */
 .bond-ionic{stroke:var(--ionic); stroke-width:2; stroke-dasharray:3 4; opacity:.75;}
+.ion-bracket{fill:none; stroke:rgba(233,237,247,.8); stroke-width:2.2; stroke-linejoin:miter;}
+.ion-charge{font-size:15px; font-weight:800; text-anchor:middle; dominant-baseline:central; pointer-events:none;}
+.haloLayer,.attractLayer{pointer-events:none;}
+.attract-spoke{stroke:var(--ionic); stroke-width:1.4; stroke-dasharray:2 6; opacity:.45;}
 .sharedpair{fill:#eafcff; filter:drop-shadow(0 0 4px var(--covalent));}
 .pairlens{fill:none; stroke:#ff8fd6; stroke-width:1.3; stroke-dasharray:2 2; opacity:.9;}
 .bond-stick{fill:rgba(255,143,214,.38); stroke:none;}
@@ -285,6 +291,7 @@ body.advanced .advInfo{display:block;}
         </div>
       </div>
       <div id="wsActions">
+        <button class="iconbtn" id="attractBtn" style="display:none" title="Show the electrostatic attraction between every ion and every oppositely charged ion">⇢ Show attractions</button>
         <button class="iconbtn" id="severBtn" title="Click an atom to break all its bonds (or click any single bond to break just that one)">✂ Sever Bonds</button>
         <button class="iconbtn" id="advToggleAtomLab">Atom Explorer</button>
       </div>
@@ -453,6 +460,7 @@ const state = {
   attemptedPairs: new Set(),
   pendingBonds: new Set(),
   severMode: false,
+  showAttractions: false, // "Show attractions" spokes — only offered once 3+ ions are on the stage
   mastery:{bonding:0, structures:0, electrons:0, apply:0},
   masteryDone:{bonding:false, structures:false, electrons:false, apply:false},
 };
@@ -516,6 +524,12 @@ function luma(hex){
   return (0.299*r+0.587*g+0.114*b);
 }
 function outerRadius(el){ return 20 + (el.shells.length-1)*17; }
+/* radius of the outermost shell actually drawn — a cation that lost its outer shell draws one fewer */
+function drawnRadius(atom){
+  const el = elOf(atom);
+  const visible = ringCountOf(atom)>0 ? el.shells.length : Math.max(1, el.shells.length-1);
+  return 20 + (visible-1)*17;
+}
 function nucleusRadius(el){ return 15 + (el.shells.length-1)*1.5; }
 function ringCountOf(atom){
   const el = elOf(atom);
@@ -550,6 +564,9 @@ function drawAtom(atom){
   const el = elOf(atom);
   const g = svgEl('g', {class:'atom-group', 'data-id':atom.id, transform:`translate(${atom.x},${atom.y})`});
   const hasCovalent = atom.bonds.some(b=>b.kind==='covalent');
+  const charge = chargeOf(atom);
+  // ions are bracketed with the charge outside, as in a dot-and-cross diagram
+  const bracketed = charge!==0 && !state.latticeDemo;
   const outerIdx = el.shells.length-1;
   const outerCount = ringCountOf(atom);
   let visibleShells = outerCount>0 ? el.shells.length : Math.max(1, el.shells.length-1);
@@ -572,6 +589,10 @@ function drawAtom(atom){
       const ex = r*Math.cos(ang), ey = r*Math.sin(ang);
       const dot = svgEl('circle', {cx:ex, cy:ey, r:isOuter?4.2:3.2, class:'electron '+(isOuter?'valence':'core')});
       const transferIdx = idx - (angles.length - transferred.length);
+      if(isOuter && transferIdx<0 && atom.ownElectronHex){
+        dot.style.fill = atom.ownElectronHex;
+        dot.style.filter = `drop-shadow(0 0 4px ${atom.ownElectronHex})`;
+      }
       if(transferIdx>=0){
         const srcHex = transferred[transferIdx];
         dot.style.fill = srcHex;
@@ -591,19 +612,33 @@ function drawAtom(atom){
   txt.textContent = el.sym;
   g.appendChild(txt);
   // name label
+  const maxR = 20 + (visibleShells-1)*17;
   if(!atom.hideName){
-    const nm = svgEl('text', {class:'atomname-label', y: -(20+(visibleShells-1)*17+12)});
+    const nm = svgEl('text', {class:'atomname-label', y: -(maxR + (bracketed? 24 : 12))});
     nm.textContent = state.advanced? `${el.name} (Z=${el.z})` : el.name;
     g.appendChild(nm);
   }
-  // charge badge
-  const ch = chargeOf(atom);
+  // charge: brackets round the whole ion with the charge outside, as in a dot-and-cross diagram.
+  // The lattice demo keeps the compact badge — 16 bracketed ions in a grid would be unreadable.
+  const ch = charge;
   if(ch!==0){
-    const bx = nr*0.72, by = -nr*0.72;
-    g.appendChild(svgEl('circle', {cx:bx, cy:by, r:9, fill: ch>0?'var(--pos)':'var(--neg)', class:'chargebadge-bg'}));
-    const bt = svgEl('text', {class:'chargebadge-txt', x:bx, y:by+0.5, fill:'#fff'});
-    bt.textContent = (Math.abs(ch)>1?Math.abs(ch):'') + (ch>0?'+':'−');
-    g.appendChild(bt);
+    const label = (Math.abs(ch)>1?Math.abs(ch):'') + (ch>0?'+':'−');
+    if(bracketed){
+      const halfH = maxR + 10, halfW = maxR + 9, arm = 8;
+      g.appendChild(svgEl('path', {class:'ion-bracket',
+        d:`M${-halfW+arm},${-halfH}L${-halfW},${-halfH}L${-halfW},${halfH}L${-halfW+arm},${halfH}`}));
+      g.appendChild(svgEl('path', {class:'ion-bracket',
+        d:`M${halfW-arm},${-halfH}L${halfW},${-halfH}L${halfW},${halfH}L${halfW-arm},${halfH}`}));
+      const bt = svgEl('text', {class:'ion-charge', x:halfW+11, y:-halfH+8, fill: ch>0?'var(--pos)':'var(--neg)'});
+      bt.textContent = label;
+      g.appendChild(bt);
+    } else {
+      const bx = nr*0.72, by = -nr*0.72;
+      g.appendChild(svgEl('circle', {cx:bx, cy:by, r:9, fill: ch>0?'var(--pos)':'var(--neg)', class:'chargebadge-bg'}));
+      const bt = svgEl('text', {class:'chargebadge-txt', x:bx, y:by+0.5, fill:'#fff'});
+      bt.textContent = label;
+      g.appendChild(bt);
+    }
   }
   // advanced tooltip
   const title = svgEl('title', {});
@@ -617,8 +652,39 @@ function drawAtom(atom){
 function bondPath(a,b){
   return `M${a.x},${a.y} L${b.x},${b.y}`;
 }
+/* ionic attraction is not a line between a pair: the halo shows each ion pulling in every direction */
+function haloDefs(){
+  const defs = svgEl('defs',{});
+  [['haloPos','var(--pos)'],['haloNeg','var(--neg)']].forEach(([id,col])=>{
+    const gr = svgEl('radialGradient',{id});
+    gr.appendChild(svgEl('stop',{offset:'0%','stop-color':col,'stop-opacity':'0'}));
+    gr.appendChild(svgEl('stop',{offset:'62%','stop-color':col,'stop-opacity':'0.13'}));
+    gr.appendChild(svgEl('stop',{offset:'100%','stop-color':col,'stop-opacity':'0'}));
+    defs.appendChild(gr);
+  });
+  return defs;
+}
+function ionsOnStage(){
+  return [...state.atoms.values()].filter(a=>chargeOf(a)!==0);
+}
+/* with only one cation and one anion the spokes would draw a single line — the very thing we removed */
+function spokesAvailable(ions){
+  return ions.length>=3 && ions.some(a=>chargeOf(a)>0) && ions.some(a=>chargeOf(a)<0);
+}
+function updateAttractBtn(){
+  const btn = document.getElementById('attractBtn');
+  if(!btn) return;
+  const ok = !state.latticeDemo && spokesAvailable(ionsOnStage());
+  btn.style.display = ok? '' : 'none';
+  if(!ok) state.showAttractions = false;
+  btn.classList.toggle('active', state.showAttractions);
+  btn.textContent = state.showAttractions? '⇢ Hide attractions' : '⇢ Show attractions';
+}
 function renderStage(){
   stage.innerHTML='';
+  stage.appendChild(haloDefs());
+  // the dashed ionic link belongs to the lattice demo only (see .bond-ionic)
+  const showIonicLines = !!state.latticeDemo;
   // bonds first (under atoms)
   const drawn = new Set();
   const pairs = [];
@@ -628,9 +694,9 @@ function renderStage(){
       if(drawn.has(key)) continue; drawn.add(key);
       const b = getAtom(bd.otherId);
       if(!b) continue;
-      pairs.push([a,b]);
+      if(bd.kind!=='ionic' || showIonicLines) pairs.push([a,b]);
       if(bd.kind==='ionic'){
-        stage.appendChild(svgEl('path',{d:bondPath(a,b), class:'bond-ionic', fill:'none'}));
+        if(showIonicLines) stage.appendChild(svgEl('path',{d:bondPath(a,b), class:'bond-ionic', fill:'none'}));
       } else {
         // covalent: shells overlap (drawn via atom radii/positions) — shared pair(s) sit in the lens
         const dx=b.x-a.x, dy=b.y-a.y; const len=Math.hypot(dx,dy)||1;
@@ -653,7 +719,26 @@ function renderStage(){
       }
     }
   }
+  if(!state.latticeDemo){
+    const ions = ionsOnStage();
+    // attraction spokes: every ion to every oppositely charged ion, not just the one it swapped with
+    if(state.showAttractions && spokesAvailable(ions)){
+      const layer = svgEl('g',{class:'attractLayer'});
+      ions.forEach(a=> ions.forEach(b=>{
+        if(a.id>=b.id || chargeOf(a)*chargeOf(b)>=0) return;
+        layer.appendChild(svgEl('path',{d:bondPath(a,b), class:'attract-spoke', fill:'none'}));
+      }));
+      stage.appendChild(layer);
+    }
+    if(ions.length){
+      const halos = svgEl('g',{class:'haloLayer'});
+      ions.forEach(a=> halos.appendChild(svgEl('circle',{
+        cx:a.x, cy:a.y, r:drawnRadius(a)+46, fill:`url(#${chargeOf(a)>0?'haloPos':'haloNeg'})`})));
+      stage.appendChild(halos);
+    }
+  }
   for(const a of state.atoms.values()) stage.appendChild(drawAtom(a));
+  updateAttractBtn();
   // click targets sit above atoms but stop short of each nucleus, so atoms stay draggable
   pairs.forEach(([a,b])=>{
     const dx=b.x-a.x, dy=b.y-a.y, len=Math.hypot(dx,dy)||1, ux=dx/len, uy=dy/len;
@@ -781,6 +866,7 @@ function tryBond(a,b){
       let msg = `Electron transfer: ${elOf(metal).name} → ${elOf(nonmetal).name}. ${elOf(metal).sym} becomes ${chargeOf(metal)>1?chargeOf(metal):''}+ , ${elOf(nonmetal).sym} becomes ${Math.abs(chargeOf(nonmetal))>1?Math.abs(chargeOf(nonmetal)):''}−.`;
       if(metalLeft>0) msg += ` ${elOf(metal).sym} still needs to lose ${metalLeft} more electron${metalLeft>1?'s':''} — try adding another ${elOf(nonmetal).sym} atom.`;
       else if(nmLeft>0) msg += ` ${elOf(nonmetal).sym} still needs ${nmLeft} more electron${nmLeft>1?'s':''} — this compound needs more ${elOf(metal).sym}.`;
+      if(metalLeft<=0 && nmLeft<=0) msg += ` No line joins them: the ions attract each other in every direction, not just across this pair.`;
       showFeedback(msg, 'good');
       onBondFormed();
       updateInspector();
@@ -856,8 +942,9 @@ function covalentDistance(elA, elB, order){
   return Math.max(minSafeDist, rSum - (16 + (order-1)*12));
 }
 function bondLength(a, b, bd){
+  // ions sit well apart: each one carries brackets and a charge label, and nothing joins them
   return bd.kind==='ionic'
-    ? outerRadius(elOf(a)) + outerRadius(elOf(b)) + 14
+    ? outerRadius(elOf(a)) + outerRadius(elOf(b)) + (state.latticeDemo? 14 : 50)
     : covalentDistance(elOf(a), elOf(b), bd.order);
 }
 function layoutCluster(root){
@@ -1623,7 +1710,12 @@ function demoLatticeDirect(metalSym,nmSym){
     const a = newAtom(n.metal? metalSym : nmSym, n.x, n.y);
     a.hideName = true;
     if(n.metal) a.ionicGiven = q;
-    else { a.ionicReceived = q; a.transferredElectrons = Array(q).fill(metalEl.hex); }
+    else {
+      a.ionicReceived = q; a.transferredElectrons = Array(q).fill(metalEl.hex);
+      // magnesium's donated electrons are orange, too close to the default valence yellow to tell apart —
+      // give oxygen's own outer electrons its own nucleus colour instead
+      if(nmSym==='O') a.ownElectronHex = nmEl.hex;
+    }
     atomOf.set(n, a);
   });
   // order 0: these lines show attraction between ions, not extra electron transfers
@@ -1636,7 +1728,7 @@ function demoLatticeDirect(metalSym,nmSym){
   stage.setAttribute('viewBox', `${-pad} ${-pad} ${span+2*pad} ${span+2*pad}`);
   renderStage(); updateInspector();
   const sup = n=> n>1? '⁰¹²³⁴⁵⁶⁷⁸⁹'[n] : '';
-  showFeedback(`Giant ionic structure: each ${metalEl.name.toLowerCase()} atom has transferred ${q} electron${q>1?'s':''} to a ${nmEl.name.toLowerCase()} atom, forming ${metalSym}${sup(q)}⁺ and ${nmSym}${sup(q)}⁻ ions. Every ion is attracted to all its oppositely charged neighbours (dashed lines), and this pattern repeats in all three directions.`, 'info');
+  showFeedback(`Giant ionic structure: each ${metalEl.name.toLowerCase()} atom has transferred ${q} electron${q>1?'s':''} to a ${nmEl.name.toLowerCase()} atom, forming ${metalSym}${sup(q)}⁺ and ${nmSym}${sup(q)}⁻ ions. Every ion is attracted to all its oppositely charged neighbours — the dashed lines show those attractions, not bonds to one partner — and this pattern repeats in all three directions.`, 'info');
   openLattice('ionic', [], {[metalSym]:1, [nmSym]:1}, {split:true});
 }
 function demoDiamondDirect(){
@@ -1913,6 +2005,7 @@ function setMstat(id, done){
 function clearWorkspace(){
   state.atoms.clear(); state.attemptedPairs.clear(); state.pendingBonds.clear(); state.selectedCluster=null;
   state.severMode = false; state.latticeDemo = false; state.structureDemo = null; state.deloc = null;
+  state.showAttractions = false;
   document.getElementById('severBtn').classList.remove('active');
   document.getElementById('stage').classList.remove('sever-mode');
   closeLattice();
@@ -1998,6 +2091,11 @@ document.getElementById('severBtn').onclick = ()=>{
   document.getElementById('severBtn').classList.toggle('active', state.severMode);
   document.getElementById('stage').classList.toggle('sever-mode', state.severMode);
   showFeedback(state.severMode? 'Sever mode on — click an atom to break all its bonds.' : 'Sever mode off.', 'info');
+};
+document.getElementById('attractBtn').onclick = ()=>{
+  state.showAttractions = !state.showAttractions;
+  renderStage();
+  if(state.showAttractions) showFeedback('Every ion is attracted to every oppositely charged ion around it — the attraction acts in all directions, so there is no single "bond" joining one pair.', 'info');
 };
 
 /* atom explorer (Level 1 individual-atom sandbox) */
