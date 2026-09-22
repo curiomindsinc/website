@@ -15,7 +15,7 @@ function readSims() {
   return eval(m[1]);
 }
 
-const files = ['index.html', 'about.html', 'robots.txt', 'sitemap.xml'];
+const files = ['index.html', 'about.html', 'robots.txt', 'sitemap.xml', '_redirects'];
 const dirs = ['assets'];
 for (const s of readSims()) {
   if (s.href && !/^https?:/.test(s.href)) files.push(s.href);
