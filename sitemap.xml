@@ -2,50 +2,50 @@
 <!-- Cloudflare Pages serves these without the .html extension (/foo.html 308s to /foo),
      so every URL below is listed in its extension-less canonical form. -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://curiomindsinc.pages.dev/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
-  <url><loc>https://curiomindsinc.pages.dev/about</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/</loc><lastmod>2026-09-22</lastmod><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/about</loc><lastmod>2026-07-31</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
 
   <!-- Physics -->
-  <url><loc>https://curiomindsinc.pages.dev/Physics/light-reflection-simulation</loc><priority>0.8</priority></url>
-  <url><loc>https://curiomindsinc.pages.dev/Physics/ray_diagram_simulator</loc><priority>0.8</priority></url>
-  <url><loc>https://curiomindsinc.pages.dev/Physics/brownian_motion</loc><priority>0.8</priority></url>
-  <url><loc>https://curiomindsinc.pages.dev/Physics/heat-conduction-simulator</loc><priority>0.8</priority></url>
-  <url><loc>https://curiomindsinc.pages.dev/Physics/catapult_simulator</loc><priority>0.8</priority></url>
-  <url><loc>https://curiomindsinc.pages.dev/Physics/fma-standalone</loc><priority>0.8</priority></url>
-  <url><loc>https://curiomindsinc.pages.dev/Physics/refraction-standalone</loc><priority>0.8</priority></url>
-  <url><loc>https://curiomindsinc.pages.dev/Physics/conservationenergy-standalone</loc><priority>0.8</priority></url>
-  <url><loc>https://curiomindsinc.pages.dev/Physics/moments-standalone</loc><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Physics/light-reflection-simulation</loc><lastmod>2026-08-19</lastmod><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Physics/ray_diagram_simulator</loc><lastmod>2026-07-02</lastmod><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Physics/brownian_motion</loc><lastmod>2026-08-19</lastmod><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Physics/heat-conduction-simulator</loc><lastmod>2026-08-19</lastmod><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Physics/catapult_simulator</loc><lastmod>2026-08-19</lastmod><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Physics/fma-standalone</loc><lastmod>2026-09-22</lastmod><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Physics/refraction-standalone</loc><lastmod>2026-09-22</lastmod><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Physics/conservationenergy-standalone</loc><lastmod>2026-09-22</lastmod><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Physics/moments-standalone</loc><lastmod>2026-09-22</lastmod><priority>0.8</priority></url>
 
   <!-- Chemistry -->
-  <url><loc>https://curiomindsinc.pages.dev/Chemistry/buildformula</loc><priority>0.8</priority></url>
-  <url><loc>https://curiomindsinc.pages.dev/Chemistry/chem-balancer-v2</loc><priority>0.8</priority></url>
-  <url><loc>https://curiomindsinc.pages.dev/Chemistry/particle_simulator</loc><priority>0.8</priority></url>
-  <url><loc>https://curiomindsinc.pages.dev/Chemistry/bonding</loc><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Chemistry/buildformula</loc><lastmod>2026-07-02</lastmod><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Chemistry/chem-balancer-v2</loc><lastmod>2026-08-19</lastmod><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Chemistry/particle_simulator</loc><lastmod>2026-08-19</lastmod><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Chemistry/bonding</loc><lastmod>2026-09-21</lastmod><priority>0.8</priority></url>
 
   <!-- Biology -->
-  <url><loc>https://curiomindsinc.pages.dev/Biology/monster_genetics_lab_v4</loc><priority>0.8</priority></url>
-  <url><loc>https://curiomindsinc.pages.dev/Biology/maltase-simulation</loc><priority>0.8</priority></url>
-  <url><loc>https://curiomindsinc.pages.dev/Biology/bioflow_final</loc><priority>0.8</priority></url>
-  <url><loc>https://curiomindsinc.pages.dev/Biology/osmosis-simulation</loc><priority>0.8</priority></url>
-  <url><loc>https://curiomindsinc.pages.dev/Biology/savanna-standalone</loc><priority>0.8</priority></url>
-  <url><loc>https://curiomindsinc.pages.dev/Biology/chekjawa-standalone</loc><priority>0.8</priority></url>
-  <url><loc>https://curiomindsinc.pages.dev/Biology/hydrothermalvent-standalone</loc><priority>0.8</priority></url>
-  <url><loc>https://curiomindsinc.pages.dev/Biology/antcolony-standalone</loc><priority>0.8</priority></url>
-  <url><loc>https://curiomindsinc.pages.dev/Biology/ecology-standalone</loc><priority>0.8</priority></url>
-  <url><loc>https://curiomindsinc.pages.dev/Biology/heart_detective_v5</loc><priority>0.8</priority></url>
-  <url><loc>https://curiomindsinc.pages.dev/Biology/naturalselection-standalone</loc><priority>0.8</priority></url>
-  <url><loc>https://curiomindsinc.pages.dev/Biology/bacteria-standalone</loc><priority>0.8</priority></url>
-  <url><loc>https://curiomindsinc.pages.dev/Biology/central_dogma-standalone</loc><priority>0.8</priority></url>
-  <url><loc>https://curiomindsinc.pages.dev/Biology/mitosis_cell_division_final</loc><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Biology/monster_genetics_lab_v4</loc><lastmod>2026-08-19</lastmod><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Biology/maltase-simulation</loc><lastmod>2026-09-07</lastmod><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Biology/bioflow_final</loc><lastmod>2026-08-19</lastmod><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Biology/osmosis-simulation</loc><lastmod>2026-08-19</lastmod><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Biology/savanna-standalone</loc><lastmod>2026-09-22</lastmod><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Biology/chekjawa-standalone</loc><lastmod>2026-09-22</lastmod><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Biology/hydrothermalvent-standalone</loc><lastmod>2026-09-22</lastmod><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Biology/antcolony-standalone</loc><lastmod>2026-09-22</lastmod><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Biology/ecology-standalone</loc><lastmod>2026-09-22</lastmod><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Biology/heart_detective_v5</loc><lastmod>2026-08-19</lastmod><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Biology/naturalselection-standalone</loc><lastmod>2026-09-22</lastmod><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Biology/bacteria-standalone</loc><lastmod>2026-09-22</lastmod><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Biology/central_dogma-standalone</loc><lastmod>2026-09-22</lastmod><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Biology/mitosis_cell_division_final</loc><lastmod>2026-09-16</lastmod><priority>0.8</priority></url>
 
   <!-- Earth Science -->
-  <url><loc>https://curiomindsinc.pages.dev/Earth%20Science/tectonics-standalone</loc><priority>0.8</priority></url>
-  <url><loc>https://curiomindsinc.pages.dev/Earth%20Science/watercycle-standalone</loc><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Earth%20Science/tectonics-standalone</loc><lastmod>2026-09-22</lastmod><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Earth%20Science/watercycle-standalone</loc><lastmod>2026-09-22</lastmod><priority>0.8</priority></url>
 
   <!-- Astronomy -->
-  <url><loc>https://curiomindsinc.pages.dev/Astronomy/solar-system-simulator</loc><priority>0.8</priority></url>
-  <url><loc>https://curiomindsinc.pages.dev/Astronomy/wayfinder/wayfinder_v9</loc><priority>0.8</priority></url>
-  <url><loc>https://curiomindsinc.pages.dev/Astronomy/moon-standalone</loc><priority>0.8</priority></url>
-  <url><loc>https://curiomindsinc.pages.dev/Astronomy/season-standalone</loc><priority>0.8</priority></url>
-  <url><loc>https://curiomindsinc.pages.dev/Astronomy/daynight-standalone</loc><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Astronomy/solar-system-simulator</loc><lastmod>2026-07-02</lastmod><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Astronomy/wayfinder/wayfinder_v9</loc><lastmod>2026-09-16</lastmod><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Astronomy/moon-standalone</loc><lastmod>2026-09-22</lastmod><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Astronomy/season-standalone</loc><lastmod>2026-09-22</lastmod><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Astronomy/daynight-standalone</loc><lastmod>2026-09-22</lastmod><priority>0.8</priority></url>
 </urlset>
