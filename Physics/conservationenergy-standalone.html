@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pendulum Lab</title>
+<style>
+  :root{
+    --bg:#eef3f9;
+    --panel:#ffffff;
+    --ink:#16202e;
+    --ink-soft:#5b6b80;
+    --line:#dde5ef;
+    --a:#0d9488;
+    --b:#9333ea;
+    --ke:#f59e0b;
+    --pe:#3b82f6;
+    --accent:#2563eb;
+    --shadow:0 1px 2px rgba(16,32,56,.05), 0 6px 18px rgba(16,32,56,.06);
+    --r:12px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;height:100%}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font:15px/1.4 ui-rounded,"Segoe UI",system-ui,-apple-system,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    overflow:hidden;
+  }
+
+  /* ===== one-screen shell ===== */
+  .app{
+    height:100dvh;
+    display:grid;
+    grid-template-rows:auto minmax(0,1fr);
+    gap:8px;
+    padding:10px 12px 12px;
+  }
+  header{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+  h1{font-size:19px;margin:0;letter-spacing:-.02em}
+  .sub{color:var(--ink-soft);font-size:13px;margin:0}
+
+  /* ===== credit ===== */
+  #credit{
+    margin-left:auto;text-align:right;font-size:11.5px;line-height:1.35;white-space:nowrap;
+  }
+  #credit .credit-line{color:var(--ink-soft)}
+  #credit .credit-line b{color:var(--ink);font-weight:600}
+  #credit .credit-links{margin-top:1px;color:var(--ink-soft)}
+  #credit .credit-links a{color:var(--a);text-decoration:none}
+  #credit .credit-links a:hover{text-decoration:underline}
+
+  main{
+    display:grid;
+    grid-template-columns:284px minmax(0,1fr) 300px;
+    gap:10px;
+    min-height:0;
+  }
+  .col{display:grid;gap:10px;min-height:0;min-width:0}
+  .col.left{grid-template-rows:minmax(0,1fr) auto;overflow:hidden}
+  .col.mid{grid-template-rows:minmax(0,1.5fr) auto minmax(0,1fr)}
+  .col.right{grid-template-rows:minmax(0,1fr) auto}
+
+  .card{
+    background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
+    box-shadow:var(--shadow);padding:10px 12px;min-height:0;min-width:0;
+    display:flex;flex-direction:column;
+  }
+  .card > h2{
+    font-size:11px;margin:0 0 8px;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--ink-soft);font-weight:700;flex:none;
+  }
+  .scroll{overflow:auto;min-height:0;flex:1;margin:-2px;padding:2px}
+  .scroll::-webkit-scrollbar{width:8px}
+  .scroll::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:8px}
+
+  /* ===== pendulum controls ===== */
+  .pen{border-radius:10px;padding:8px 10px 10px;background:#f8fbfe;border:2px solid transparent}
+  .pen.A{border-color:#a7ded8}
+  .pen.B{border-color:#ddbdf6}
+  .pen + .pen{margin-top:8px}
+  .penhead{display:flex;align-items:center;gap:7px;margin-bottom:2px}
+  .dot{width:11px;height:11px;border-radius:50%;flex:none}
+  .dot.A{background:var(--a)} .dot.B{background:var(--b)}
+  .penhead b{font-size:14px}
+  .penhead .spacer{flex:1}
+
+  label.row{display:block;margin-top:6px}
+  .lbl{display:flex;justify-content:space-between;font-size:12.5px;color:var(--ink-soft);margin-bottom:1px}
+  .lbl b{color:var(--ink);font-variant-numeric:tabular-nums}
+  input[type=range]{width:100%;accent-color:var(--accent);height:18px;margin:0;display:block}
+  .pen.A input[type=range]{accent-color:var(--a)}
+  .pen.B input[type=range]{accent-color:var(--b)}
+
+  .switch{display:inline-flex;align-items:center;gap:6px;cursor:pointer;user-select:none;font-size:12.5px}
+  .switch input{width:15px;height:15px;accent-color:var(--accent);cursor:pointer;margin:0}
+
+  .btn{
+    font:inherit;font-size:13px;font-weight:600;cursor:pointer;
+    border:1px solid var(--line);background:#fff;color:var(--ink);
+    border-radius:9px;padding:6px 11px;transition:.12s;white-space:nowrap;
+  }
+  .btn:hover{background:#eff4fa}
+  .btn:active{transform:translateY(1px)}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn.primary:hover{filter:brightness(1.08)}
+  .btn.small{padding:4px 8px;font-size:12px;border-radius:8px}
+  .btn.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btnrow{display:flex;gap:6px;flex-wrap:wrap}
+
+  .airbox{display:flex;align-items:center;gap:10px;margin-top:8px}
+  .airbox .sl{flex:1}
+
+  /* ===== stage ===== */
+  .stage{padding:8px}
+  canvas{width:100%;height:100%;display:block;border-radius:10px;
+    background:linear-gradient(#ffffff,#eef5fd)}
+  .canvasbox{flex:1;min-height:0;position:relative}
+  .stagebar{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:8px;flex:none}
+  .speeds{display:flex;gap:5px;margin-left:auto}
+
+  /* ===== energy (right rail, full height) ===== */
+  .energy{display:flex;gap:16px;align-items:stretch;justify-content:center;flex:1;min-height:0}
+  .barcol{text-align:center;flex:1;max-width:124px;display:flex;flex-direction:column;min-height:0}
+  .bar{
+    position:relative;flex:1;min-height:90px;border-radius:10px;background:#eef2f8;
+    border:1px solid var(--line);overflow:hidden;
+  }
+  /* faint quarter gridlines so students can read "half the energy" */
+  .bar::before{
+    content:"";position:absolute;inset:0;pointer-events:none;z-index:2;
+    background:repeating-linear-gradient(to top,
+      transparent 0 calc(25% - 1px), rgba(100,116,139,.17) calc(25% - 1px) 25%);
+  }
+  .fill{position:absolute;left:0;right:0}
+  .fill.pe{background:var(--pe);bottom:0}
+  .fill.ke{background:var(--ke)}
+  .e0{position:absolute;left:-2px;right:-2px;border-top:2px dashed #475569;pointer-events:none;z-index:3}
+  .barcap{font-weight:700;margin-top:7px;font-size:14px;flex:none}
+  .barnum{font-size:12px;color:var(--ink-soft);font-variant-numeric:tabular-nums;flex:none}
+  .legend{display:flex;flex-direction:column;gap:4px;margin-top:10px;font-size:12px;
+    color:var(--ink-soft);flex:none}
+  .key{display:inline-flex;align-items:center;gap:6px}
+  .swatch{width:11px;height:11px;border-radius:3px;display:inline-block;flex:none}
+  .swatch.dash{width:14px;height:0;border-top:2px dashed #475569;border-radius:0}
+
+  /* ===== stopwatch (compact) ===== */
+  .swline{
+    display:grid;grid-template-columns:18px 1fr 1fr;align-items:baseline;gap:6px;
+    padding:4px 0;border-bottom:1px solid var(--line);font-size:12px;color:var(--ink-soft);
+  }
+  .swline:last-of-type{border-bottom:0}
+  .swline .v{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+  .swline.A > b{color:var(--a)} .swline.B > b{color:var(--b)}
+  .swline.A .v.meas{color:var(--a)} .swline.B .v.meas{color:var(--b)}
+  .swhead{display:grid;grid-template-columns:18px 1fr 1fr;gap:6px;font-size:10px;
+    text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);font-weight:700}
+  .formula{font-size:11.5px;color:var(--ink-soft);margin:7px 0 0}
+  .formula code{background:#eef2f8;padding:1px 5px;border-radius:5px}
+
+  /* ===== hint ===== */
+  .hint{
+    background:#fffbeb;border:1px solid #fcd96b;border-radius:10px;
+    padding:9px 11px;font-size:13px;line-height:1.45;
+  }
+  .hint b{color:#92400e}
+
+  /* ===== table ===== */
+  .tblhead{display:flex;align-items:center;gap:6px;flex-wrap:wrap;flex:none;margin-bottom:6px}
+  .tblhead h2{margin:0}
+  .tblhead .spacer{flex:1}
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  thead th{position:sticky;top:0;background:#fff;z-index:1}
+  th,td{padding:4px 5px;text-align:right;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+  th:first-child,td:first-child{text-align:left}
+  th{font-size:10px;text-transform:uppercase;letter-spacing:.03em;color:var(--ink-soft);font-weight:700}
+  tbody tr:hover{background:#f6fafd}
+  .tagA{color:var(--a);font-weight:700} .tagB{color:var(--b);font-weight:700}
+  .empty{color:var(--ink-soft);font-size:12px;padding:8px 2px}
+
+  /* ===== narrow / short fallbacks: let it scroll rather than crush ===== */
+  @media (max-width:1180px){
+    body{overflow:auto}
+    .app{height:auto;min-height:100dvh}
+    main{grid-template-columns:284px minmax(0,1fr)}
+    .col.mid{grid-template-rows:auto auto auto}
+    .col.right{
+      grid-column:1 / -1;
+      grid-template-rows:auto;grid-template-columns:minmax(0,1fr) 260px;
+    }
+    .col.right .card:first-child{height:230px}
+    .legend{flex-direction:row;gap:14px;justify-content:center;flex-wrap:wrap}
+    .canvasbox{height:50vh}
+    .col.mid .scroll{max-height:220px}
+  }
+  @media (max-width:820px){
+    main{grid-template-columns:1fr}
+    .col.right{grid-template-columns:1fr}
+    .canvasbox{height:46vh}
+    .col.left{overflow:visible}
+    #credit{margin-left:0;text-align:left;white-space:normal}
+  }
+  @media (max-height:640px) and (min-width:1181px){
+    .formula{display:none}
+    .legend{font-size:11px}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+<header>
+  <h1>Pendulum Lab</h1>
+  <p class="sub">Change length, mass, and pull-back angle. Watch where the energy goes.</p>
+
+  <!-- credit -->
+  <div id="credit">
+    <div class="credit-line">Created by <b>Mr Lau Chin Hang</b></div>
+    <div class="credit-links">🏫 <a href="https://www.instagram.com/curiominds.inc/" target="_blank" rel="noopener noreferrer">@curiominds.inc</a> · ▶ <a href="https://www.youtube.com/@Curiominds.inc88" target="_blank" rel="noopener noreferrer">YouTube</a> · 🌐 <a href="https://curiomindsinc.pages.dev/" target="_blank" rel="noopener noreferrer">Website</a></div>
+  </div>
+</header>
+
+<main>
+
+  <!-- ============ LEFT: CONTROLS ============ -->
+  <div class="col left">
+    <div class="card">
+      <h2>Controls</h2>
+      <div class="scroll">
+
+        <div class="pen A">
+          <div class="penhead"><span class="dot A"></span><b>Pendulum A</b></div>
+          <label class="row">
+            <span class="lbl">String length <b><span id="A-L">1.00</span> m</b></span>
+            <input type="range" id="A-L-in" min="0.20" max="2.00" step="0.01" value="1.00">
+          </label>
+          <label class="row">
+            <span class="lbl">Mass of bob <b><span id="A-m">1.0</span> kg</b></span>
+            <input type="range" id="A-m-in" min="0.5" max="5.0" step="0.1" value="1.0">
+          </label>
+          <label class="row">
+            <span class="lbl">Pull-back angle <b><span id="A-a">30</span>&deg;</b></span>
+            <input type="range" id="A-a-in" min="5" max="80" step="1" value="30">
+          </label>
+        </div>
+
+        <div class="pen B">
+          <div class="penhead">
+            <span class="dot B"></span><b>Pendulum B</b>
+            <span class="spacer"></span>
+            <label class="switch"><input type="checkbox" id="B-on" checked> show</label>
+          </div>
+          <label class="row">
+            <span class="lbl">String length <b><span id="B-L">1.00</span> m</b></span>
+            <input type="range" id="B-L-in" min="0.20" max="2.00" step="0.01" value="1.00">
+          </label>
+          <label class="row">
+            <span class="lbl">Mass of bob <b><span id="B-m">3.0</span> kg</b></span>
+            <input type="range" id="B-m-in" min="0.5" max="5.0" step="0.1" value="3.0">
+          </label>
+          <label class="row">
+            <span class="lbl">Pull-back angle <b><span id="B-a">30</span>&deg;</b></span>
+            <input type="range" id="B-a-in" min="5" max="80" step="1" value="30">
+          </label>
+        </div>
+
+        <div class="pen" style="border-color:var(--line);margin-top:8px">
+          <div class="penhead">
+            <b>Air resistance</b><span class="spacer"></span>
+            <label class="switch"><input type="checkbox" id="air"> on</label>
+          </div>
+          <label class="row">
+            <span class="lbl">How thick the air is <b><span id="air-b">0.15</span></b></span>
+            <input type="range" id="air-in" min="0.02" max="0.60" step="0.01" value="0.15">
+          </label>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="card" style="flex:none">
+      <h2>Try this</h2>
+      <div class="btnrow">
+        <button class="btn small" data-preset="mass">Same L, different mass</button>
+        <button class="btn small" data-preset="length">Different length</button>
+        <button class="btn small" data-preset="amp">Different pull-back</button>
+        <button class="btn small" data-preset="air">Air demo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ MIDDLE: STAGE + HINT + TABLE ============ -->
+  <div class="col mid">
+    <div class="card stage">
+      <div class="canvasbox"><canvas id="cv"></canvas></div>
+      <div class="stagebar">
+        <button class="btn primary" id="play">Pause</button>
+        <button class="btn" id="reset">Restart swing</button>
+        <div class="speeds">
+          <button class="btn small" data-speed="0.25">0.25&times;</button>
+          <button class="btn small" data-speed="0.5">0.5&times;</button>
+          <button class="btn small on" data-speed="1">1&times;</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="hint" id="hint"></div>
+
+    <div class="card">
+      <div class="tblhead">
+        <h2>Data table</h2>
+        <span class="spacer"></span>
+        <button class="btn small primary" id="rec">Record</button>
+        <button class="btn small" id="copy">Copy</button>
+        <button class="btn small" id="csv">CSV</button>
+        <button class="btn small" id="clear">Clear</button>
+      </div>
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr><th>#</th><th>P</th><th>L (m)</th><th>m (kg)</th><th>angle</th><th>air</th><th>T meas</th><th>T pred</th></tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+        <div class="empty" id="tempty">Let them swing a few times, then press <b>Record</b>.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ RIGHT: ENERGY (full height) + STOPWATCH ============ -->
+  <div class="col right">
+    <div class="card">
+      <h2>Energy</h2>
+      <div class="energy">
+        <div class="barcol">
+          <div class="bar" id="barA">
+            <div class="fill pe" id="A-pe"></div>
+            <div class="fill ke" id="A-ke"></div>
+            <div class="e0" id="A-e0"></div>
+          </div>
+          <div class="barcap" style="color:var(--a)">A</div>
+          <div class="barnum" id="A-etxt">&mdash;</div>
+        </div>
+        <div class="barcol" id="barcolB">
+          <div class="bar" id="barB">
+            <div class="fill pe" id="B-pe"></div>
+            <div class="fill ke" id="B-ke"></div>
+            <div class="e0" id="B-e0"></div>
+          </div>
+          <div class="barcap" style="color:var(--b)">B</div>
+          <div class="barnum" id="B-etxt">&mdash;</div>
+        </div>
+      </div>
+      <div class="legend">
+        <span class="key"><i class="swatch" style="background:var(--ke)"></i> moving energy (KE)</span>
+        <span class="key"><i class="swatch" style="background:var(--pe)"></i> height energy (PE)</span>
+        <span class="key"><i class="swatch dash"></i> energy at the start</span>
+      </div>
+    </div>
+
+    <div class="card" style="flex:none">
+      <h2>Stopwatch</h2>
+      <div class="swhead"><span></span><span>measured</span><span>predicted</span></div>
+      <div class="swline A"><b>A</b><span class="v meas" id="A-T">&mdash;</span><span class="v" id="A-Tp">2.01 s</span></div>
+      <div class="swline B"><b>B</b><span class="v meas" id="B-T">&mdash;</span><span class="v" id="B-Tp">2.01 s</span></div>
+      <p class="formula"><code>T = 2&pi;&radic;(L &divide; g)</code>, g = 9.8 m/s&sup2;. Notice what is <em>missing</em> from it.</p>
+    </div>
+  </div>
+
+</main>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+const G = 9.8;
+
+/* ---------------- state ---------------- */
+function makePendulum(L, m, ampDeg){
+  return {
+    L, m, amp: ampDeg * Math.PI/180,
+    th: ampDeg * Math.PI/180,
+    om: 0, t: 0, E0: 0,
+    lastCross: null, periods: [], swings: 0, trail: []
+  };
+}
+
+const P = { A: makePendulum(1.00, 1.0, 30), B: makePendulum(1.00, 3.0, 30) };
+let showB = true, airOn = false, airB = 0.15, running = true, speed = 1;
+
+function energyOf(p){
+  const pe = p.m * G * p.L * (1 - Math.cos(p.th));
+  const v  = p.L * p.om;
+  return {pe, ke: 0.5*p.m*v*v, tot: pe + 0.5*p.m*v*v};
+}
+
+function restart(p){
+  p.th = p.amp; p.om = 0; p.t = 0;
+  p.lastCross = null; p.periods = []; p.swings = 0; p.trail = [];
+  p.E0 = p.m * G * p.L * (1 - Math.cos(p.amp));
+}
+restart(P.A); restart(P.B);
+
+/* ---------------- physics ----------------
+   theta'' = -(g/L) sin(theta) - (b/m) theta'
+   Linear air drag F = -b*v on the bob gives torque -b*L^2*theta'; the moment
+   of inertia is m*L^2, so mass cancels out of the gravity term but NOT the drag term.
+------------------------------------------- */
+function accel(p, th, om){
+  const b = airOn ? airB : 0;
+  return -(G / p.L) * Math.sin(th) - (b / p.m) * om;
+}
+
+function step(p, dt){
+  const k1th = p.om,               k1om = accel(p, p.th, p.om);
+  const k2th = p.om + 0.5*dt*k1om, k2om = accel(p, p.th + 0.5*dt*k1th, p.om + 0.5*dt*k1om);
+  const k3th = p.om + 0.5*dt*k2om, k3om = accel(p, p.th + 0.5*dt*k2th, p.om + 0.5*dt*k2om);
+  const k4th = p.om + dt*k3om,     k4om = accel(p, p.th + dt*k3th,     p.om + dt*k3om);
+
+  const prevTh = p.th;
+  p.th += (dt/6) * (k1th + 2*k2th + 2*k3th + k4th);
+  p.om += (dt/6) * (k1om + 2*k2om + 2*k3om + k4om);
+  p.t  += dt;
+
+  if (prevTh < 0 && p.th >= 0 && Math.abs(p.om) > 1e-3){
+    const f  = -prevTh / (p.th - prevTh);
+    const tc = p.t - dt + f*dt;
+    if (p.lastCross !== null){
+      const T = tc - p.lastCross;
+      if (T > 0.05){
+        p.periods.push(T);
+        if (p.periods.length > 8) p.periods.shift();
+        p.swings++;
+      }
+    }
+    p.lastCross = tc;
+  }
+}
+
+function measuredT(p){
+  if (!p.periods.length) return null;
+  const n = Math.min(5, p.periods.length);
+  let s = 0;
+  for (let i = p.periods.length - n; i < p.periods.length; i++) s += p.periods[i];
+  return s / n;
+}
+function predictedT(p){ return 2 * Math.PI * Math.sqrt(p.L / G); }
+
+/* ---------------- canvas ---------------- */
+const cv  = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+const box = cv.parentElement;
+let W = 0, H = 0, PIVOT_Y = 34;
+
+function fitCanvas(){
+  const dpr  = window.devicePixelRatio || 1;
+  const rect = box.getBoundingClientRect();
+  W = Math.max(200, rect.width);
+  H = Math.max(200, rect.height);
+  cv.width  = Math.round(W * dpr);
+  cv.height = Math.round(H * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  PIVOT_Y = Math.max(24, Math.min(44, H * 0.08));
+}
+if (window.ResizeObserver) new ResizeObserver(fitCanvas).observe(box);
+window.addEventListener('resize', fitCanvas);
+
+// 2.00 m of string must always fit in the remaining height
+function pxPerMeter(){ return (H - PIVOT_Y - 18) / 2.0; }
+function bobRadius(m){ return 8 + 12 * Math.cbrt(m / 5); }
+
+function drawPendulum(p, color, alpha){
+  const s  = pxPerMeter();
+  const ox = W/2, oy = PIVOT_Y;
+  const x  = ox + Math.sin(p.th) * p.L * s;
+  const y  = oy + Math.cos(p.th) * p.L * s;
+
+  ctx.save();
+
+  // swept arc
+  ctx.beginPath();
+  ctx.strokeStyle = color;
+  ctx.globalAlpha = alpha * 0.16;
+  ctx.lineWidth = 2;
+  ctx.setLineDash([5,6]);
+  const a0 = Math.abs(p.amp);
+  ctx.arc(ox, oy, p.L*s, Math.PI/2 - a0, Math.PI/2 + a0);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // trail
+  if (p.trail.length > 1){
+    ctx.beginPath();
+    for (let i = 0; i < p.trail.length; i++){
+      const pt = p.trail[i];
+      i ? ctx.lineTo(pt[0], pt[1]) : ctx.moveTo(pt[0], pt[1]);
+    }
+    ctx.strokeStyle = color;
+    ctx.globalAlpha = alpha * 0.3;
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+  }
+
+  ctx.globalAlpha = alpha;
+
+  // string
+  ctx.beginPath();
+  ctx.moveTo(ox, oy); ctx.lineTo(x, y);
+  ctx.strokeStyle = '#64748b';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // bob
+  const r = bobRadius(p.m);
+  const grd = ctx.createRadialGradient(x - r*0.35, y - r*0.4, r*0.15, x, y, r);
+  grd.addColorStop(0, '#ffffff');
+  grd.addColorStop(0.25, color);
+  grd.addColorStop(1, color);
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI*2);
+  ctx.fillStyle = grd; ctx.fill();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = 'rgba(0,0,0,.18)';
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function draw(){
+  ctx.clearRect(0, 0, W, H);
+
+  // ceiling + pivot
+  ctx.fillStyle = '#cbd5e1';
+  ctx.fillRect(W/2 - 80, PIVOT_Y - 11, 160, 7);
+  ctx.beginPath();
+  ctx.arc(W/2, PIVOT_Y, 4.5, 0, Math.PI*2);
+  ctx.fillStyle = '#475569'; ctx.fill();
+
+  // plumb line
+  const s = pxPerMeter();
+  ctx.save();
+  ctx.setLineDash([3,7]);
+  ctx.strokeStyle = '#cbd5e1';
+  ctx.beginPath();
+  ctx.moveTo(W/2, PIVOT_Y);
+  ctx.lineTo(W/2, PIVOT_Y + 2.0*s + 8);
+  ctx.stroke();
+  ctx.restore();
+
+  if (showB) drawPendulum(P.B, '#9333ea', 0.55);
+  drawPendulum(P.A, '#0d9488', 1);
+
+  ctx.font = '700 12px ui-rounded, Segoe UI, system-ui, sans-serif';
+  ctx.fillStyle = '#0d9488';
+  ctx.fillText('A', W/2 - 76, PIVOT_Y - 17);
+  if (showB){ ctx.fillStyle = '#9333ea'; ctx.fillText('B', W/2 - 60, PIVOT_Y - 17); }
+}
+
+function pushTrail(p){
+  const s = pxPerMeter();
+  p.trail.push([ W/2 + Math.sin(p.th)*p.L*s, PIVOT_Y + Math.cos(p.th)*p.L*s ]);
+  if (p.trail.length > 50) p.trail.shift();
+}
+
+/* ---------------- DOM ---------------- */
+const $ = id => document.getElementById(id);
+const el = {
+  AL:$('A-L'), Am:$('A-m'), Aa:$('A-a'), BL:$('B-L'), Bm:$('B-m'), Ba:$('B-a'),
+  ALin:$('A-L-in'), Amin:$('A-m-in'), Aain:$('A-a-in'),
+  BLin:$('B-L-in'), Bmin:$('B-m-in'), Bain:$('B-a-in'),
+  Bon:$('B-on'), air:$('air'), airin:$('air-in'), airb:$('air-b'),
+  play:$('play'), reset:$('reset'),
+  Ape:$('A-pe'), Ake:$('A-ke'), Ae0:$('A-e0'), Aetxt:$('A-etxt'),
+  Bpe:$('B-pe'), Bke:$('B-ke'), Be0:$('B-e0'), Betxt:$('B-etxt'),
+  barcolB:$('barcolB'),
+  AT:$('A-T'), ATp:$('A-Tp'), BT:$('B-T'), BTp:$('B-Tp'),
+  hint:$('hint'), tbody:$('tbody'), tempty:$('tempty')
+};
+
+function bindPendulum(key){
+  const p = P[key];
+  el[key+'Lin'].addEventListener('input', e => { p.L = +e.target.value; restart(p); syncLabels(); });
+  el[key+'ain'].addEventListener('input', e => { p.amp = (+e.target.value)*Math.PI/180; restart(p); syncLabels(); });
+  el[key+'min'].addEventListener('input', e => {
+    // mass changes live on purpose: students watch the period NOT change
+    p.m = +e.target.value;
+    p.E0 = p.m * G * p.L * (1 - Math.cos(p.amp));
+    syncLabels();
+  });
+}
+bindPendulum('A'); bindPendulum('B');
+
+el.Bon.addEventListener('change', () => {
+  showB = el.Bon.checked;
+  el.barcolB.style.display = showB ? '' : 'none';
+  document.querySelectorAll('.swline.B').forEach(n => n.style.display = showB ? '' : 'none');
+});
+el.air.addEventListener('change', () => { airOn = el.air.checked; restart(P.A); restart(P.B); });
+el.airin.addEventListener('input', () => {
+  airB = +el.airin.value;
+  el.airb.textContent = airB.toFixed(2);
+  restart(P.A); restart(P.B);
+});
+el.play.addEventListener('click', () => {
+  running = !running;
+  el.play.textContent = running ? 'Pause' : 'Play';
+});
+el.reset.addEventListener('click', () => { restart(P.A); restart(P.B); });
+
+document.querySelectorAll('[data-speed]').forEach(b => {
+  b.addEventListener('click', () => {
+    speed = +b.dataset.speed;
+    document.querySelectorAll('[data-speed]').forEach(x => x.classList.toggle('on', x === b));
+  });
+});
+
+const PRESETS = {
+  mass:   {A:[1.00,1.0,30], B:[1.00,5.0,30], air:false},
+  length: {A:[0.50,2.0,30], B:[1.60,2.0,30], air:false},
+  amp:    {A:[1.00,2.0,10], B:[1.00,2.0,60], air:false},
+  air:    {A:[1.00,2.0,45], B:[1.00,2.0,45], air:true}
+};
+document.querySelectorAll('[data-preset]').forEach(b => {
+  b.addEventListener('click', () => {
+    const pr = PRESETS[b.dataset.preset];
+    applySet('A', pr.A); applySet('B', pr.B);
+    el.air.checked = airOn = pr.air;
+    if (!showB){ el.Bon.checked = true; el.Bon.dispatchEvent(new Event('change')); }
+    restart(P.A); restart(P.B); syncLabels();
+  });
+});
+function applySet(key, arr){
+  const p = P[key];
+  p.L = arr[0]; p.m = arr[1]; p.amp = arr[2]*Math.PI/180;
+  el[key+'Lin'].value = p.L; el[key+'min'].value = p.m; el[key+'ain'].value = arr[2];
+}
+
+function syncLabels(){
+  el.AL.textContent = P.A.L.toFixed(2);
+  el.Am.textContent = P.A.m.toFixed(1);
+  el.Aa.textContent = Math.round(P.A.amp*180/Math.PI);
+  el.BL.textContent = P.B.L.toFixed(2);
+  el.Bm.textContent = P.B.m.toFixed(1);
+  el.Ba.textContent = Math.round(P.B.amp*180/Math.PI);
+  el.ATp.textContent = predictedT(P.A).toFixed(2) + ' s';
+  el.BTp.textContent = predictedT(P.B).toFixed(2) + ' s';
+  el.airb.textContent = airB.toFixed(2);
+}
+
+/* ---------------- energy bars ---------------- */
+function updateBars(){
+  const scale = Math.max(P.A.E0, showB ? P.B.E0 : 0, 0.01) * 1.05;
+  paint('A', P.A, scale);
+  if (showB) paint('B', P.B, scale);
+}
+function paint(key, p, scale){
+  const e = energyOf(p);
+  const pePct = Math.min(100, e.pe/scale*100);
+  const kePct = Math.min(100 - pePct, e.ke/scale*100);
+  el[key+'pe'].style.height = pePct + '%';
+  el[key+'ke'].style.bottom = pePct + '%';
+  el[key+'ke'].style.height = kePct + '%';
+  el[key+'e0'].style.bottom = Math.min(100, p.E0/scale*100) + '%';
+  el[key+'etxt'].textContent = e.tot.toFixed(2) + ' / ' + p.E0.toFixed(2) + ' J';
+}
+
+function updateStats(){
+  const ta = measuredT(P.A), tb = measuredT(P.B);
+  el.AT.textContent = ta ? ta.toFixed(2) + ' s' : '—';
+  el.BT.textContent = tb ? tb.toFixed(2) + ' s' : '—';
+}
+
+/* ---------------- hint ---------------- */
+function updateHint(){
+  const A = P.A, B = P.B;
+  const sameL = Math.abs(A.L - B.L) < 0.02;
+  const sameM = Math.abs(A.m - B.m) < 0.05;
+  const sameA = Math.abs(A.amp - B.amp) < 0.02;
+  let msg;
+
+  if (airOn){
+    const lost = Math.max(0, A.E0 - energyOf(A).tot);
+    msg = '<b>Air resistance ON.</b> A has already lost <b>' + lost.toFixed(2) +
+          ' J</b> as heat in the air, so its total bar keeps dropping below the dashed line. ' +
+          'The swing shrinks &mdash; but the <b>period barely changes</b>.';
+  } else if (showB && sameL && !sameM){
+    msg = 'Same length, different mass &mdash; they stay <b>perfectly in step</b>. Mass is not in ' +
+          '<b>T = 2&pi;&radic;(L/g)</b>: a heavy bob has more energy but also more inertia, and they cancel.';
+  } else if (showB && !sameL){
+    msg = 'Different lengths. The <b>longer</b> string (' + (A.L > B.L ? 'A' : 'B') +
+          ') swings <b>slower</b>. Period follows the <b>square root</b> of length &mdash; 4&times; longer is only 2&times; slower.';
+  } else if (showB && sameL && sameM && !sameA){
+    msg = 'Different pull-back angles. The big swing goes farther but also moves faster, so the periods are ' +
+          '<b>nearly identical</b>. (At 80&deg; it is measurably slower &mdash; check the stopwatch.)';
+  } else {
+    msg = 'No air resistance: the total bar <b>never changes height</b>. All blue at the top (<b>height energy</b>), ' +
+          'all orange at the bottom (<b>moving energy</b>) &mdash; just trading back and forth.';
+  }
+  if (el.hint.dataset.msg !== msg){ el.hint.dataset.msg = msg; el.hint.innerHTML = msg; }
+}
+
+/* ---------------- data table ---------------- */
+const rows = [];
+function addRow(key, p){
+  const T = measuredT(p);
+  rows.push({
+    n: rows.length + 1, which: key,
+    L: p.L.toFixed(2), m: p.m.toFixed(1),
+    a: Math.round(p.amp*180/Math.PI), air: airOn ? 'on' : 'off',
+    T: T ? T.toFixed(2) : '', Tp: predictedT(p).toFixed(2)
+  });
+}
+function renderTable(){
+  el.tempty.style.display = rows.length ? 'none' : '';
+  el.tbody.innerHTML = rows.map(r =>
+    '<tr><td>' + r.n + '</td><td class="tag' + r.which + '">' + r.which + '</td><td>' +
+    r.L + '</td><td>' + r.m + '</td><td>' + r.a + '</td><td>' + r.air + '</td><td>' +
+    (r.T || '—') + '</td><td>' + r.Tp + '</td></tr>'
+  ).join('');
+}
+$('rec').addEventListener('click', () => {
+  addRow('A', P.A);
+  if (showB) addRow('B', P.B);
+  renderTable();
+});
+$('clear').addEventListener('click', () => { rows.length = 0; renderTable(); });
+
+function toCSV(){
+  const lines = ['#,pendulum,length_m,mass_kg,angle_deg,air,measured_T_s,predicted_T_s'];
+  rows.forEach(r => lines.push([r.n, r.which, r.L, r.m, r.a, r.air, r.T, r.Tp].join(',')));
+  return lines.join('\n');
+}
+$('copy').addEventListener('click', async () => {
+  const btn = $('copy');
+  try { await navigator.clipboard.writeText(toCSV()); btn.textContent = 'Copied'; }
+  catch(e){ btn.textContent = 'Failed'; }
+  setTimeout(() => btn.textContent = 'Copy', 1400);
+});
+$('csv').addEventListener('click', () => {
+  const blob = new Blob([toCSV()], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'pendulum-data.csv';
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+});
+
+/* ---------------- loop ---------------- */
+const PHYS_DT = 0.0005;          // fixed 0.5 ms physics step
+let acc = 0, last = performance.now(), tick = 0;
+
+function frame(now){
+  let dtReal = (now - last)/1000;
+  last = now;
+  if (dtReal > 0.1) dtReal = 0.1;   // hidden tab: do not fast-forward
+
+  if (running){
+    acc += dtReal * speed;
+    let guard = 0;
+    while (acc >= PHYS_DT && guard < 20000){
+      step(P.A, PHYS_DT);
+      step(P.B, PHYS_DT);
+      acc -= PHYS_DT; guard++;
+    }
+    pushTrail(P.A);
+    if (showB) pushTrail(P.B);
+  }
+
+  draw();
+  updateBars();
+  if ((tick++ % 15) === 0){ updateStats(); updateHint(); }
+  requestAnimationFrame(frame);
+}
+
+fitCanvas(); syncLabels(); renderTable(); updateHint();
+requestAnimationFrame(frame);
+
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Refraction Lab</title>
+<style>
+  :root{
+    --bg:#0b1020;
+    --panel:#141a2e;
+    --panel2:#1b2340;
+    --line:#2a3358;
+    --text:#e8ecf8;
+    --muted:#95a0c4;
+    --accent:#ffd34d;
+    --accent2:#5ad1ff;
+    --good:#6ee7a8;
+    --bad:#ff6b8a;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font:14px/1.45 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+  }
+  header{
+    padding:10px 16px;
+    border-bottom:1px solid var(--line);
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+    flex:0 0 auto;
+  }
+  header h1{font-size:16px;margin:0;letter-spacing:.3px}
+  header .sub{color:var(--muted);font-size:12px}
+  main{flex:1 1 auto;display:flex;min-height:0}
+  #stage{flex:1 1 auto;position:relative;min-width:0}
+  canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:none}
+  aside{
+    flex:0 0 330px;
+    background:var(--panel);
+    border-left:1px solid var(--line);
+    overflow-y:auto;
+    padding:14px;
+  }
+  .card{
+    background:var(--panel2);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:12px;
+    margin-bottom:12px;
+  }
+  .card h2{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.9px;
+    color:var(--muted);
+    margin:0 0 10px;
+    font-weight:600;
+  }
+  label.row{display:block;margin-bottom:10px}
+  label.row:last-child{margin-bottom:0}
+  .lab{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}
+  .lab span:last-child{color:var(--accent2);font-variant-numeric:tabular-nums;font-weight:600}
+  input[type=range]{width:100%;accent-color:var(--accent2);margin:0}
+  select{
+    width:100%;
+    background:#0e1428;
+    color:var(--text);
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:6px 8px;
+    font:inherit;
+  }
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+  td{padding:3px 0}
+  td:first-child{color:var(--muted)}
+  td:last-child{text-align:right;font-weight:600}
+  .big{
+    text-align:center;
+    padding:8px 0 4px;
+    border-top:1px dashed var(--line);
+    margin-top:8px;
+  }
+  .big .val{font-size:26px;font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums}
+  .big .cap{font-size:11px;color:var(--muted);letter-spacing:.5px}
+  .check{font-size:11px;margin-top:4px}
+  .ok{color:var(--good)}
+  .warn{color:var(--bad)}
+  .badge{
+    display:none;
+    margin-top:8px;
+    padding:6px 8px;
+    border-radius:6px;
+    background:rgba(255,107,138,.14);
+    border:1px solid rgba(255,107,138,.45);
+    color:var(--bad);
+    font-size:12px;
+    font-weight:600;
+    text-align:center;
+  }
+  .badge.on{display:block}
+  .toggles{display:flex;flex-wrap:wrap;gap:6px 14px}
+  .toggles label{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted);cursor:pointer}
+  .toggles input{accent-color:var(--accent2)}
+  button{
+    width:100%;
+    background:#0e1428;
+    color:var(--text);
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:7px;
+    font:inherit;
+    cursor:pointer;
+  }
+  button:hover{border-color:var(--accent2);color:var(--accent2)}
+  .hint{color:var(--muted);font-size:11.5px;margin-top:8px;line-height:1.5}
+  /* --------------------------- credit --------------------------- */
+  #credit{
+    position:absolute; bottom:16px; left:50%; transform:translateX(-50%);
+    padding:9px 20px;
+    text-align:center;
+    font-size:12px;
+    z-index:10;
+    white-space:nowrap;
+    pointer-events:none;
+    background:rgba(20,26,46,.55);
+    border:1px solid rgba(120,150,220,.22);
+    border-radius:14px;
+    backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
+    box-shadow:0 4px 24px rgba(0,0,0,.45);
+  }
+  #credit .credit-line{color:var(--muted)}
+  #credit .credit-line b{color:var(--text)}
+  #credit .credit-links{margin-top:3px;color:var(--muted)}
+  #credit .credit-links a{color:var(--accent2);text-decoration:none;pointer-events:auto}
+  #credit .credit-links a:hover{text-decoration:underline}
+
+  @media (max-width:820px){
+    main{flex-direction:column}
+    aside{flex:0 0 auto;border-left:none;border-top:1px solid var(--line);max-height:48%}
+    #stage{flex:1 1 52%}
+    #credit{bottom:8px;padding:7px 14px;font-size:11px}
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Refraction Lab</h1>
+  <span class="sub">Drag the torch to aim &middot; arrow keys nudge &middot; Snell: n&#8321;&#8201;sin&#8201;i = n&#8322;&#8201;sin&#8201;r</span>
+</header>
+
+<main>
+  <div id="stage">
+    <canvas id="cv"></canvas>
+
+    <!-- bottom-centre credit -->
+    <div id="credit">
+      <div class="credit-line">Created by <b>Mr Lau Chin Hang</b></div>
+      <div class="credit-links">&#127979; <a href="https://www.instagram.com/curiominds.inc/" target="_blank" rel="noopener noreferrer">@curiominds.inc</a> &middot; &#9654; <a href="https://www.youtube.com/@Curiominds.inc88" target="_blank" rel="noopener noreferrer">YouTube</a> &middot; &#127760; <a href="https://curiomindsinc.pages.dev/" target="_blank" rel="noopener noreferrer">Website</a></div>
+    </div>
+  </div>
+
+  <aside>
+    <div class="card">
+      <h2>Beam</h2>
+      <label class="row">
+        <div class="lab"><span>Angle of incidence <i>i</i></span><span id="angLab">40.0&deg;</span></div>
+        <input type="range" id="ang" min="-89" max="89" step="0.1" value="-40">
+      </label>
+    </div>
+
+    <div class="card">
+      <h2>Media</h2>
+      <div class="grid2">
+        <div>
+          <label class="row">
+            <div class="lab"><span>Outside</span></div>
+            <select id="mat1"></select>
+          </label>
+          <label class="row">
+            <div class="lab"><span>n&#8321;</span><span id="n1Lab">1.000</span></div>
+            <input type="range" id="n1" min="1" max="2.6" step="0.001" value="1">
+          </label>
+        </div>
+        <div>
+          <label class="row">
+            <div class="lab"><span>Block</span></div>
+            <select id="mat2"></select>
+          </label>
+          <label class="row">
+            <div class="lab"><span>n&#8322;</span><span id="n2Lab">1.500</span></div>
+            <input type="range" id="n2" min="1" max="2.6" step="0.001" value="1.5">
+          </label>
+        </div>
+      </div>
+      <label class="row" style="margin-top:4px">
+        <div class="lab"><span>Block thickness</span><span id="thkLab">150 px</span></div>
+        <input type="range" id="thk" min="40" max="300" step="1" value="150">
+      </label>
+    </div>
+
+    <div class="card">
+      <h2>Measurements &mdash; entry face</h2>
+      <table>
+        <tr><td>angle of incidence <i>i</i></td><td id="mI">&mdash;</td></tr>
+        <tr><td>angle of refraction <i>r</i></td><td id="mR">&mdash;</td></tr>
+        <tr><td>sin&#8201;<i>i</i></td><td id="mSI">&mdash;</td></tr>
+        <tr><td>sin&#8201;<i>r</i></td><td id="mSR">&mdash;</td></tr>
+      </table>
+      <div class="big">
+        <div class="val" id="mRatio">&mdash;</div>
+        <div class="cap">sin&#8201;<i>i</i> &divide; sin&#8201;<i>r</i></div>
+        <div class="check" id="mCheck">&nbsp;</div>
+      </div>
+      <div class="badge" id="tirBadge">TOTAL INTERNAL REFLECTION</div>
+    </div>
+
+    <div class="card">
+      <h2>Also</h2>
+      <table>
+        <tr><td>critical angle (block &rarr; outside)</td><td id="mCrit">&mdash;</td></tr>
+        <tr><td>exit angle</td><td id="mExit">&mdash;</td></tr>
+        <tr><td>lateral shift</td><td id="mShift">&mdash;</td></tr>
+        <tr><td>reflected at entry</td><td id="mFres">&mdash;</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>Display</h2>
+      <div class="toggles">
+        <label><input type="checkbox" id="tNorm" checked> normals</label>
+        <label><input type="checkbox" id="tArc" checked> angle arcs</label>
+        <label><input type="checkbox" id="tRefl" checked> reflected rays</label>
+        <label><input type="checkbox" id="tLbl" checked> labels</label>
+        <label><input type="checkbox" id="tGrid"> grid</label>
+      </div>
+      <div style="margin-top:10px"><button id="reset">Reset</button></div>
+      <div class="hint">Drag the torch to change <i>i</i>. Drag the small dot on the top face to move where the beam enters. Reflected rays are dimmed by the Fresnel coefficient.</div>
+    </div>
+  </aside>
+</main>
+
+<script>
+(function(){
+"use strict";
+
+// ---------------------------------------------------------------- materials
+const MATERIALS = [
+  {name:"Vacuum",        n:1.000},
+  {name:"Air",           n:1.0003},
+  {name:"Ice",           n:1.310},
+  {name:"Water",         n:1.333},
+  {name:"Ethanol",       n:1.361},
+  {name:"Glycerine",     n:1.473},
+  {name:"Crown glass",   n:1.520},
+  {name:"Flint glass",   n:1.620},
+  {name:"Sapphire",      n:1.770},
+  {name:"Zircon",        n:1.920},
+  {name:"Diamond",       n:2.417},
+  {name:"Custom",        n:null}
+];
+
+// ---------------------------------------------------------------- state
+const state = {
+  theta: -40 * Math.PI/180,   // signed angle of the incident ray from the entry normal
+  n1: 1.0003,
+  n2: 1.52,
+  thickness: 150,
+  entryFrac: 0.5,             // where the beam meets the top face, 0..1 across the block
+  show:{normals:true, arcs:true, reflected:true, labels:true, grid:false}
+};
+
+const $ = id => document.getElementById(id);
+const cv = $("cv"), ctx = cv.getContext("2d");
+let W = 0, H = 0;
+
+// ---------------------------------------------------------------- vec helpers
+const v   = (x,y) => ({x,y});
+const add = (a,b) => v(a.x+b.x, a.y+b.y);
+const sub = (a,b) => v(a.x-b.x, a.y-b.y);
+const mul = (a,s) => v(a.x*s, a.y*s);
+const dot = (a,b) => a.x*b.x + a.y*b.y;
+const len = a => Math.hypot(a.x, a.y);
+const norm= a => { const l = len(a) || 1; return v(a.x/l, a.y/l); };
+
+// ---------------------------------------------------------------- geometry
+function block(){
+  const w = Math.min(W*0.62, 520);
+  const h = state.thickness;
+  const cx = W*0.5, cy = H*0.56;
+  return {x0:cx-w/2, y0:cy-h/2, x1:cx+w/2, y1:cy+h/2};
+}
+function entryPoint(){
+  const B = block();
+  return v(B.x0 + (B.x1-B.x0)*state.entryFrac, B.y0);
+}
+function incidentDir(){
+  // top-face normal points up, so a downward ray is (sin t, cos t)
+  return v(Math.sin(state.theta), Math.cos(state.theta));
+}
+function lampDist(){ return Math.min(W,H)*0.40; }
+function lampPos(){ return sub(entryPoint(), mul(incidentDir(), lampDist())); }
+
+function inBlock(p){
+  const B = block();
+  return p.x >= B.x0 && p.x <= B.x1 && p.y >= B.y0 && p.y <= B.y1;
+}
+
+// nearest intersection of ray(o,d) with the boundary of an axis-aligned rect
+function hitRect(o, d, R){
+  const TMIN = 0.02, PAD = 1e-6;
+  let best = null;
+  const consider = (t, p, n) => { if (t > TMIN && (!best || t < best.t)) best = {t, p, n}; };
+
+  if (Math.abs(d.x) > 1e-12){
+    for (const [x, nx] of [[R.x0,-1],[R.x1,1]]){
+      const t = (x - o.x)/d.x, y = o.y + d.y*t;
+      if (y >= R.y0-PAD && y <= R.y1+PAD) consider(t, v(x,y), v(nx,0));
+    }
+  }
+  if (Math.abs(d.y) > 1e-12){
+    for (const [y, ny] of [[R.y0,-1],[R.y1,1]]){
+      const t = (y - o.y)/d.y, x = o.x + d.x*t;
+      if (x >= R.x0-PAD && x <= R.x1+PAD) consider(t, v(x,y), v(0,ny));
+    }
+  }
+  return best;
+}
+
+// ---------------------------------------------------------------- optics
+// Unpolarised Fresnel reflectance at an interface.
+function fresnel(n1, n2, cosI, cosT){
+  const rs = (n1*cosI - n2*cosT) / (n1*cosI + n2*cosT);
+  const rp = (n1*cosT - n2*cosI) / (n1*cosT + n2*cosI);
+  return (rs*rs + rp*rp) / 2;
+}
+
+// Full trace. Every bend comes from Snell's law in vector form, so the drawn
+// geometry and the numbers in the panel can never disagree.
+function trace(){
+  const segs = [];      // {a,b,alpha}
+  const events = [];    // interface crossings along the primary path
+  const viewport = {x0:-40, y0:-40, x1:W+40, y1:H+40};
+  const B = block();
+
+  function walk(o, d, intensity, depth, primary){
+    if (intensity < 0.012 || depth > 12) return;
+    const hit = hitRect(o, d, B);
+
+    if (!hit){
+      const out = hitRect(o, d, viewport);
+      const end = out ? out.p : add(o, mul(d, 4000));
+      segs.push({a:o, b:end, alpha:intensity});
+      return;
+    }
+    segs.push({a:o, b:hit.p, alpha:intensity});
+
+    // which medium did this segment travel through?
+    const mid = mul(add(o, hit.p), 0.5);
+    const inside = inBlock(mid);
+    const nFrom = inside ? state.n2 : state.n1;
+    const nTo   = inside ? state.n1 : state.n2;
+
+    // orient the surface normal against the incoming ray
+    let N = hit.n;
+    if (dot(N, d) > 0) N = mul(N, -1);
+
+    const cosI = -dot(N, d);
+    const sinI = Math.sqrt(Math.max(0, 1 - cosI*cosI));
+    const eta  = nFrom / nTo;
+    const sin2T = eta*eta * (1 - cosI*cosI);
+    const tir = sin2T > 1;
+
+    const reflDir = norm(add(d, mul(N, 2*cosI)));
+    const off = 0.01;
+
+    if (tir){
+      if (primary) events.push({p:hit.p, N, nFrom, nTo, i:Math.asin(Math.min(1,sinI)), r:null, tir:true, R:1, inside});
+      walk(add(hit.p, mul(reflDir, off)), reflDir, intensity, depth+1, primary);
+      return;
+    }
+
+    const cosT = Math.sqrt(1 - sin2T);
+    const refrDir = norm(add(mul(d, eta), mul(N, eta*cosI - cosT)));
+    const R = fresnel(nFrom, nTo, cosI, cosT);
+
+    if (primary){
+      events.push({
+        p:hit.p, N, nFrom, nTo,
+        i:Math.acos(Math.min(1,cosI)),
+        r:Math.acos(Math.min(1,cosT)),
+        tir:false, R, inside, refrDir, reflDir, inDir:d
+      });
+    }
+    walk(add(hit.p, mul(refrDir, off)), refrDir, intensity*(1-R), depth+1, primary);
+    if (state.show.reflected)
+      walk(add(hit.p, mul(reflDir, off)), reflDir, intensity*R, depth+1, false);
+  }
+
+  const E = entryPoint(), d0 = incidentDir();
+  // Start outside the block. Nudging past the top face here would skip the
+  // entry interface entirely and the beam would only bend on the way out.
+  walk(lampPos(), d0, 1, 0, true);
+  return {segs, events, d0, E};
+}
+
+// ---------------------------------------------------------------- drawing
+function clear(){
+  const g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0, "#0c1226");
+  g.addColorStop(1, "#080d1c");
+  ctx.fillStyle = g;
+  ctx.fillRect(0,0,W,H);
+
+  if (state.show.grid){
+    ctx.strokeStyle = "rgba(120,140,200,.09)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let x=0; x<W; x+=40){ ctx.moveTo(x+.5,0); ctx.lineTo(x+.5,H); }
+    for (let y=0; y<H; y+=40){ ctx.moveTo(0,y+.5); ctx.lineTo(W,y+.5); }
+    ctx.stroke();
+  }
+}
+
+function drawBlock(){
+  const B = block();
+  const w = B.x1-B.x0, h = B.y1-B.y0;
+  const dense = Math.min(1, Math.max(0, (state.n2 - 1) / 1.6));
+
+  ctx.save();
+  ctx.fillStyle = `rgba(90,160,255,${0.06 + dense*0.20})`;
+  ctx.strokeStyle = `rgba(150,200,255,${0.30 + dense*0.45})`;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.rect(B.x0, B.y0, w, h);
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+
+  if (state.show.labels){
+    ctx.font = "600 13px ui-sans-serif,system-ui,sans-serif";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+    ctx.fillStyle = "rgba(200,220,255,.75)";
+    ctx.fillText(`${matName(state.n2)}   n₂ = ${state.n2.toFixed(3)}`, B.x0+10, B.y0+8);
+    ctx.fillStyle = "rgba(160,175,215,.7)";
+    ctx.fillText(`${matName(state.n1)}   n₁ = ${state.n1.toFixed(3)}`, 14, 12);
+  }
+}
+
+function drawSegs(segs){
+  ctx.save();
+  ctx.lineCap = "round";
+  // soft glow pass, then a crisp core
+  for (const pass of [{w:7, a:0.16}, {w:2, a:1}]){
+    for (const s of segs){
+      if (s.alpha < 0.012) continue;
+      ctx.strokeStyle = `rgba(255,216,92,${Math.min(1, s.alpha)*pass.a})`;
+      ctx.lineWidth = pass.w;
+      ctx.beginPath();
+      ctx.moveTo(s.a.x, s.a.y);
+      ctx.lineTo(s.b.x, s.b.y);
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+
+function drawNormal(P, N){
+  const L = 74;
+  ctx.save();
+  ctx.setLineDash([5,5]);
+  ctx.strokeStyle = "rgba(160,200,255,.55)";
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.moveTo(P.x - N.x*L, P.y - N.y*L);
+  ctx.lineTo(P.x + N.x*L, P.y + N.y*L);
+  ctx.stroke();
+  ctx.restore();
+}
+
+// arc swept from unit vector a to unit vector b, taking the short way round
+function drawArc(P, a, b, radius, colour, text){
+  let a0 = Math.atan2(a.y, a.x), a1 = Math.atan2(b.y, b.x);
+  let delta = a1 - a0;
+  while (delta >  Math.PI) delta -= 2*Math.PI;
+  while (delta < -Math.PI) delta += 2*Math.PI;
+  if (Math.abs(delta) < 0.012) return;
+
+  ctx.save();
+  ctx.strokeStyle = colour;
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  ctx.arc(P.x, P.y, radius, a0, a0+delta, delta < 0);
+  ctx.stroke();
+
+  if (text){
+    const m = a0 + delta/2;
+    ctx.fillStyle = colour;
+    ctx.font = "600 13px ui-sans-serif,system-ui,sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(text, P.x + Math.cos(m)*(radius+14), P.y + Math.sin(m)*(radius+14));
+  }
+  ctx.restore();
+}
+
+function drawTorch(){
+  const P = lampPos(), d = incidentDir();
+
+  ctx.save();
+  ctx.translate(P.x, P.y);
+  ctx.rotate(Math.atan2(d.y, d.x));   // local +x now points along the beam
+
+  // light spilling out of the lens
+  const cone = ctx.createLinearGradient(0,0,60,0);
+  cone.addColorStop(0, "rgba(255,216,92,.42)");
+  cone.addColorStop(1, "rgba(255,216,92,0)");
+  ctx.fillStyle = cone;
+  ctx.beginPath();
+  ctx.moveTo(0,-13); ctx.lineTo(60,-27); ctx.lineTo(60,27); ctx.lineTo(0,13);
+  ctx.closePath(); ctx.fill();
+
+  const halo = ctx.createRadialGradient(0,0,0, 0,0,24);
+  halo.addColorStop(0, "rgba(255,216,92,.55)");
+  halo.addColorStop(1, "rgba(255,216,92,0)");
+  ctx.fillStyle = halo;
+  ctx.beginPath(); ctx.arc(0,0,24,0,7); ctx.fill();
+
+  ctx.strokeStyle = "rgba(8,12,26,.8)";
+  ctx.lineWidth = 1.4;
+  ctx.lineJoin = "round";
+
+  const metal = ctx.createLinearGradient(0,-17,0,17);
+  metal.addColorStop(0,   "#b3bedc");
+  metal.addColorStop(0.42,"#7986a8");
+  metal.addColorStop(1,   "#39415c");
+
+  // end cap
+  ctx.fillStyle = "#454d6b";
+  ctx.beginPath(); ctx.rect(-74,-8,8,16); ctx.fill(); ctx.stroke();
+
+  // barrel
+  ctx.fillStyle = metal;
+  ctx.beginPath(); ctx.rect(-67,-11,47,22); ctx.fill(); ctx.stroke();
+
+  // grip knurling
+  ctx.strokeStyle = "rgba(8,12,26,.35)";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (let x=-60; x<=-46; x+=6){ ctx.moveTo(x,-10); ctx.lineTo(x,10); }
+  ctx.stroke();
+
+  // switch
+  ctx.fillStyle = "#2b3149";
+  ctx.beginPath(); ctx.rect(-44,-15,13,5); ctx.fill();
+
+  // reflector head
+  ctx.strokeStyle = "rgba(8,12,26,.8)";
+  ctx.lineWidth = 1.4;
+  ctx.fillStyle = metal;
+  ctx.beginPath();
+  ctx.moveTo(-20,-12); ctx.lineTo(-2,-17); ctx.lineTo(-2,17); ctx.lineTo(-20,12);
+  ctx.closePath(); ctx.fill(); ctx.stroke();
+
+  // lens
+  const lens = ctx.createLinearGradient(0,-16,0,16);
+  lens.addColorStop(0,  "#fff4c4");
+  lens.addColorStop(0.5,"#ffd34d");
+  lens.addColorStop(1,  "#e0a21c");
+  ctx.fillStyle = lens;
+  ctx.beginPath(); ctx.ellipse(-2,0,4,16.5,0,0,7); ctx.fill(); ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawHandles(){
+  const E = entryPoint();
+
+  drawTorch();
+
+  // entry-point handle
+  ctx.save();
+  ctx.fillStyle = "#5ad1ff";
+  ctx.beginPath(); ctx.arc(E.x, E.y, 5, 0, 7); ctx.fill();
+  ctx.strokeStyle = "rgba(0,0,0,.5)";
+  ctx.lineWidth = 1.2;
+  ctx.stroke();
+  ctx.restore();
+}
+
+function render(){
+  const {segs, events, d0, E} = trace();
+
+  clear();
+  drawBlock();
+
+  const entry = events[0] || null;
+  if (state.show.normals && entry) drawNormal(entry.p, entry.N);
+  const exitEv = events.find(e => e.inside && !e.tir);
+  if (state.show.normals && exitEv) drawNormal(exitEv.p, exitEv.N);
+
+  drawSegs(segs);
+
+  if (state.show.arcs && entry){
+    const back = mul(entry.inDir ? entry.inDir : d0, -1);           // toward the lamp
+    drawArc(entry.p, entry.N, back, 46, "rgba(255,211,77,.9)",
+            state.show.labels ? `i = ${deg(entry.i).toFixed(1)}°` : "");
+    if (!entry.tir && entry.refrDir)
+      drawArc(entry.p, mul(entry.N,-1), entry.refrDir, 46, "rgba(90,209,255,.95)",
+              state.show.labels ? `r = ${deg(entry.r).toFixed(1)}°` : "");
+    if (exitEv && exitEv !== entry && !exitEv.tir && exitEv.refrDir)
+      drawArc(exitEv.p, mul(exitEv.N,-1), exitEv.refrDir, 40, "rgba(90,209,255,.75)",
+              state.show.labels ? `${deg(exitEv.r).toFixed(1)}°` : "");
+  }
+
+  drawHandles();
+  updatePanel(events, d0, E);
+}
+
+// ---------------------------------------------------------------- readouts
+const deg = rad => rad * 180/Math.PI;
+
+function matName(n){
+  let best = "Custom", diff = 0.004;
+  for (const m of MATERIALS){
+    if (m.n == null) continue;
+    const d = Math.abs(m.n - n);
+    if (d < diff){ diff = d; best = m.name; }
+  }
+  return best;
+}
+
+function updatePanel(events, d0, E){
+  const entry = events[0];
+  const set = (id, txt) => { $(id).textContent = txt; };
+
+  if (!entry){
+    ["mI","mR","mSI","mSR","mExit","mShift","mFres"].forEach(id => set(id,"—"));
+    set("mRatio","—");
+    $("mCheck").textContent = "";
+    $("tirBadge").classList.remove("on");
+    return;
+  }
+
+  const i = entry.i;
+  const si = Math.sin(i);
+  set("mI", deg(i).toFixed(2) + "°");
+  set("mSI", si.toFixed(4));
+
+  $("tirBadge").classList.toggle("on", !!entry.tir);
+
+  if (entry.tir){
+    set("mR", "none — TIR");
+    set("mSR", "—");
+    set("mRatio", "—");
+    $("mCheck").textContent = "no refracted ray: sin r would exceed 1";
+    $("mCheck").className = "check warn";
+  } else {
+    const r = entry.r, sr = Math.sin(r);
+    set("mR", deg(r).toFixed(2) + "°");
+    set("mSR", sr.toFixed(4));
+    const expect = entry.nTo / entry.nFrom;
+    if (sr < 1e-5){
+      set("mRatio", expect.toFixed(4));
+      $("mCheck").textContent = "normal incidence: ratio is the limit n₂/n₁";
+      $("mCheck").className = "check";
+    } else {
+      const ratio = si / sr;
+      set("mRatio", ratio.toFixed(4));
+      $("mCheck").innerHTML = `n₂/n₁ = ${expect.toFixed(4)} &nbsp;<span class="ok">✓ matches</span>`;
+      $("mCheck").className = "check";
+    }
+  }
+
+  // critical angle for block -> outside
+  if (state.n2 > state.n1){
+    set("mCrit", deg(Math.asin(state.n1/state.n2)).toFixed(2) + "°");
+  } else {
+    set("mCrit", "none (n₂ ≤ n₁)");
+  }
+
+  // first crossing that leaves the block
+  const ex = events.find(e => e.inside);
+  if (ex && !ex.tir){
+    set("mExit", deg(ex.r).toFixed(2) + "°");
+    // perpendicular distance of the exit point from the original incident line
+    const w = sub(ex.p, E);
+    const shift = Math.abs(w.x*d0.y - w.y*d0.x);
+    set("mShift", shift.toFixed(1) + " px");
+  } else {
+    set("mExit", ex ? "trapped (TIR)" : "—");
+    set("mShift", "—");
+  }
+
+  set("mFres", (entry.R*100).toFixed(1) + "%");
+}
+
+// ---------------------------------------------------------------- controls
+function buildSelect(sel, current){
+  sel.innerHTML = "";
+  for (const m of MATERIALS){
+    const o = document.createElement("option");
+    o.value = m.n == null ? "" : String(m.n);
+    o.textContent = m.n == null ? "Custom…" : `${m.name} (${m.n.toFixed(3)})`;
+    sel.appendChild(o);
+  }
+  syncSelect(sel, current);
+}
+function syncSelect(sel, n){
+  const name = matName(n);
+  const m = MATERIALS.find(x => x.name === name);
+  sel.value = (m && m.n != null) ? String(m.n) : "";
+}
+
+function syncUI(){
+  $("ang").value  = deg(state.theta).toFixed(1);
+  $("angLab").textContent = Math.abs(deg(state.theta)).toFixed(1) + "°";
+  $("n1").value   = state.n1;
+  $("n2").value   = state.n2;
+  $("n1Lab").textContent = state.n1.toFixed(3);
+  $("n2Lab").textContent = state.n2.toFixed(3);
+  $("thk").value  = state.thickness;
+  $("thkLab").textContent = state.thickness + " px";
+  syncSelect($("mat1"), state.n1);
+  syncSelect($("mat2"), state.n2);
+}
+
+function bind(){
+  buildSelect($("mat1"), state.n1);
+  buildSelect($("mat2"), state.n2);
+
+  $("ang").addEventListener("input", e => {
+    state.theta = parseFloat(e.target.value) * Math.PI/180;
+    syncUI(); render();
+  });
+  $("n1").addEventListener("input", e => { state.n1 = parseFloat(e.target.value); syncUI(); render(); });
+  $("n2").addEventListener("input", e => { state.n2 = parseFloat(e.target.value); syncUI(); render(); });
+  $("thk").addEventListener("input", e => { state.thickness = parseFloat(e.target.value); syncUI(); render(); });
+
+  $("mat1").addEventListener("change", e => { if (e.target.value){ state.n1 = parseFloat(e.target.value); syncUI(); render(); } });
+  $("mat2").addEventListener("change", e => { if (e.target.value){ state.n2 = parseFloat(e.target.value); syncUI(); render(); } });
+
+  const toggles = {tNorm:"normals", tArc:"arcs", tRefl:"reflected", tLbl:"labels", tGrid:"grid"};
+  for (const [id, key] of Object.entries(toggles)){
+    $(id).addEventListener("change", e => { state.show[key] = e.target.checked; render(); });
+  }
+
+  $("reset").addEventListener("click", () => {
+    state.theta = -40*Math.PI/180;
+    state.n1 = 1.0003; state.n2 = 1.52;
+    state.thickness = 150; state.entryFrac = 0.5;
+    syncUI(); render();
+  });
+
+  window.addEventListener("keydown", e => {
+    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+    if (/^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement.tagName)) return;
+    const step = (e.shiftKey ? 0.1 : 1) * (e.key === "ArrowRight" ? 1 : -1);
+    setTheta(deg(state.theta) + step);
+    e.preventDefault();
+  });
+}
+
+function setTheta(degrees){
+  const lim = 89;
+  state.theta = Math.max(-lim, Math.min(lim, degrees)) * Math.PI/180;
+  syncUI(); render();
+}
+
+// ---------------------------------------------------------------- pointer
+let drag = null;
+
+function cvPos(e){
+  const r = cv.getBoundingClientRect();
+  return v(e.clientX - r.left, e.clientY - r.top);
+}
+
+cv.addEventListener("pointerdown", e => {
+  const p = cvPos(e);
+  const L = lampPos(), E = entryPoint();
+  if (len(sub(p, E)) < 14)      drag = "entry";
+  else if (len(sub(p, L)) < 26) drag = "lamp";
+  else                          drag = "lamp";   // clicking anywhere above aims the beam
+  cv.setPointerCapture(e.pointerId);
+  onDrag(p);
+});
+cv.addEventListener("pointermove", e => { if (drag) onDrag(cvPos(e)); });
+cv.addEventListener("pointerup",   () => { drag = null; });
+cv.addEventListener("pointercancel",() => { drag = null; });
+
+function onDrag(p){
+  const B = block();
+  if (drag === "entry"){
+    const inset = 12;
+    const x = Math.max(B.x0+inset, Math.min(B.x1-inset, p.x));
+    state.entryFrac = (x - B.x0) / (B.x1 - B.x0);
+    render();
+    return;
+  }
+  // aim: the lamp sits on the far side, so the ray direction is entry -> away from cursor
+  const E = entryPoint();
+  const w = sub(p, E);
+  if (w.y > -6) w.y = -6;              // keep the lamp above the top face
+  const d = norm(mul(w, -1));          // travel direction, downward
+  setTheta(deg(Math.atan2(d.x, d.y)));
+}
+
+// ---------------------------------------------------------------- resize
+function resize(){
+  const stage = $("stage");
+  const dpr = window.devicePixelRatio || 1;
+  W = stage.clientWidth;
+  H = stage.clientHeight;
+  cv.width  = Math.round(W*dpr);
+  cv.height = Math.round(H*dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  render();
+}
+window.addEventListener("resize", resize);
+
+bind();
+syncUI();
+resize();
+})();
+</script>
+</body>
+</html>

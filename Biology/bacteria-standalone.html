@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>PETRI-86 :: Bacteria Evolution Simulator</title>
+<style>
+  :root{
+    --bg:#0c0f0a;
+    --panel:#141a10;
+    --panel-edge:#2c3a1f;
+    --ink:#c8e6a0;
+    --ink-dim:#6f8a52;
+    --amber:#e8c15a;
+    --red:#e05a4e;
+    --cream:#e8dcc8;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;padding:0;min-height:100%;
+    background:radial-gradient(ellipse at center, #1a2013 0%, #050704 100%);
+    font-family:'Courier New', 'Consolas', monospace;
+    color:var(--ink);
+    overflow-x:hidden;
+    overflow-y:auto;
+    -webkit-font-smoothing:none;
+  }
+  #app{
+    display:flex;
+    width:100%;min-height:100vh;
+    padding:14px;
+    gap:14px;
+  }
+  .crt{
+    position:relative;
+    background:var(--panel);
+    border:3px solid var(--panel-edge);
+    border-radius:6px;
+    box-shadow: inset 0 0 40px rgba(0,0,0,0.6), 0 0 24px rgba(0,0,0,0.5);
+  }
+  #dishWrap{
+    flex:1 1 auto;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-width:0;
+  }
+  #dishFrame{
+    position:relative;
+    padding:10px;
+    max-width:100%;
+  }
+  #dishCanvas{
+    display:block;
+    max-width:100%;
+    height:auto;
+    touch-action:none;
+    image-rendering:pixelated;
+    image-rendering:crisp-edges;
+    background:#1c2414;
+    cursor:crosshair;
+    border-radius:4px;
+  }
+  #scanlines{
+    position:absolute; inset:10px;
+    pointer-events:none;
+    background:repeating-linear-gradient(
+      to bottom,
+      rgba(0,0,0,0.18) 0px,
+      rgba(0,0,0,0.18) 1px,
+      rgba(0,0,0,0) 2px,
+      rgba(0,0,0,0) 3px
+    );
+    mix-blend-mode:overlay;
+    border-radius:4px;
+  }
+  #vignette{
+    position:absolute; inset:10px;
+    pointer-events:none;
+    box-shadow: inset 0 0 60px 20px rgba(0,0,0,0.55);
+    border-radius:4px;
+  }
+  #sidebar{
+    width:340px;
+    flex:0 0 340px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    overflow:hidden;
+  }
+  .panel{
+    padding:10px 12px;
+  }
+  h1{
+    font-size:15px;
+    letter-spacing:2px;
+    margin:0 0 2px 0;
+    color:var(--amber);
+    text-shadow:0 0 6px rgba(232,193,90,0.5);
+  }
+  .sub{
+    font-size:10px;
+    color:var(--ink-dim);
+    margin-bottom:8px;
+    letter-spacing:1px;
+  }
+  .row{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:8px;
+    margin:6px 0;
+  }
+  .label{
+    font-size:10px;
+    color:var(--ink-dim);
+    letter-spacing:1px;
+    min-width:66px;
+  }
+  button{
+    font-family:inherit;
+    background:#1c2414;
+    color:var(--ink);
+    border:1px solid var(--panel-edge);
+    padding:6px 9px;
+    font-size:11px;
+    letter-spacing:0.5px;
+    cursor:pointer;
+    border-radius:3px;
+    transition:all .1s;
+  }
+  button:hover{ border-color:var(--ink); }
+  button.active{
+    background:var(--ink);
+    color:#0c0f0a;
+    box-shadow:0 0 8px rgba(200,230,160,0.6);
+  }
+  button.wide{ flex:1; }
+  .toolbtn{
+    display:flex; align-items:center; gap:6px;
+    flex:1 1 auto;
+    min-width:108px;
+    white-space:nowrap;
+  }
+  select{
+    font-family:inherit;
+    background:#1c2414;
+    color:var(--ink);
+    border:1px solid var(--panel-edge);
+    padding:6px 9px;
+    font-size:11px;
+    letter-spacing:0.5px;
+    cursor:pointer;
+    border-radius:3px;
+    flex:1;
+  }
+  select:hover{ border-color:var(--ink); }
+  #creditsLinks{ flex-direction:column; align-items:flex-start; gap:6px; }
+  #creditsLinks a{
+    color:var(--amber);
+    font-size:10.5px;
+    letter-spacing:0.5px;
+    text-decoration:none;
+  }
+  #creditsLinks a:hover{ text-decoration:underline; }
+  #creditsName{ font-size:11px; color:var(--cream); margin-bottom:6px; }
+  .swatch{
+    width:10px;height:10px;border-radius:2px;
+    display:inline-block;
+    border:1px solid rgba(0,0,0,0.4);
+  }
+  input[type=range]{
+    flex:1;
+    accent-color: var(--amber);
+    height:14px;
+  }
+  #timeDisplay{
+    font-size:20px;
+    color:var(--amber);
+    letter-spacing:1px;
+    text-shadow:0 0 6px rgba(232,193,90,0.4);
+  }
+  #speedReadout{
+    font-size:11px; color:var(--ink); min-width:56px; text-align:right;
+  }
+  .statline{
+    display:flex; justify-content:space-between;
+    font-size:11px;
+    padding:2px 0;
+    border-bottom:1px dashed rgba(111,138,82,0.25);
+  }
+  .statline span:last-child{ color:var(--cream); }
+  #strainList, #logList{
+    flex:1;
+    overflow-y:auto;
+    font-size:10.5px;
+    padding-right:4px;
+  }
+  #strainList::-webkit-scrollbar, #logList::-webkit-scrollbar{ width:6px; }
+  #strainList::-webkit-scrollbar-thumb, #logList::-webkit-scrollbar-thumb{
+    background:var(--panel-edge); border-radius:3px;
+  }
+  .strainRow{
+    display:flex; align-items:center; gap:6px;
+    padding:3px 0;
+    border-bottom:1px solid rgba(111,138,82,0.15);
+  }
+  .strainRow .resist{ color:var(--ink-dim); font-size:9.5px; flex:1; }
+  .strainRow .cnt{ color:var(--cream); }
+  .logEntry{
+    color:var(--ink-dim);
+    padding:2px 0;
+    border-bottom:1px dotted rgba(111,138,82,0.15);
+    line-height:1.35;
+  }
+  .logEntry.mut{ color:var(--amber); }
+  .flexcol{ display:flex; flex-direction:column; flex:1; min-height:0; }
+  hr{ border:none; border-top:1px solid var(--panel-edge); margin:8px 0; }
+  .hint{ font-size:9.5px; color:var(--ink-dim); line-height:1.4; }
+
+  @media (max-width: 900px){
+    #app{
+      flex-direction:column;
+      padding:8px;
+      gap:8px;
+    }
+    #dishWrap{ flex:0 0 auto; }
+    #sidebar{
+      width:100%;
+      flex:1 1 auto;
+      overflow:visible;
+    }
+    #strainList, #logList{ max-height:150px; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div id="dishWrap">
+    <div id="dishFrame" class="crt">
+      <canvas id="dishCanvas"></canvas>
+      <div id="scanlines"></div>
+      <div id="vignette"></div>
+    </div>
+  </div>
+
+  <div id="sidebar">
+
+    <div class="panel crt">
+      <h1>PETRI-86</h1>
+      <div class="sub">BACTERIA EVOLUTION SIMULATOR</div>
+      <div id="timeDisplay">DAY 0 &nbsp;00:00</div>
+      <div class="row">
+        <button id="playBtn" class="wide">⏸ PAUSE</button>
+        <button id="resetBtn" class="wide">⟲ RESET</button>
+      </div>
+      <div class="row">
+        <span class="label">DISH</span>
+        <select id="dishSelect">
+          <option value="circle">◐ PETRI DISH</option>
+          <option value="rect">▭ RECT PLATE</option>
+          <option value="mega">⛢ MEGA-PLATE</option>
+        </select>
+      </div>
+      <div class="row">
+        <span class="label">SPEED</span>
+        <input type="range" id="speedSlider" min="0" max="1000" value="300">
+        <span id="speedReadout">1x</span>
+      </div>
+      <div class="hint" id="dishHint">Circular petri dish. Changing this resets the sim.</div>
+    </div>
+
+    <div class="panel crt">
+      <div class="sub">TOOLS — click / drag on dish</div>
+      <div class="row">
+        <button id="tool-bacteria" class="toolbtn active"><span class="swatch" style="background:#e8dcc8"></span>ADD COLONY</button>
+        <button id="tool-eraser" class="toolbtn">⌫ ERASE</button>
+      </div>
+      <div class="row" id="antibioticButtons"></div>
+      <div class="row">
+        <button id="clearAntibioticsBtn" class="wide">CLEAR ALL ANTIBIOTICS</button>
+      </div>
+      <div class="hint">Antibiotics are permanent once placed (use ERASE or CLEAR to remove). Bacteria avoid zones they aren't resistant to — but mutation can grant resistance.</div>
+    </div>
+
+    <div class="panel crt">
+      <div class="statline"><span>POPULATION</span><span id="statPop">0</span></div>
+      <div class="statline"><span>STRAINS</span><span id="statStrains">1</span></div>
+      <div class="statline"><span>TOTAL DIVISIONS</span><span id="statDivs">0</span></div>
+      <div class="statline"><span>MUTATION EVENTS</span><span id="statMuts">0</span></div>
+    </div>
+
+    <div class="panel crt flexcol" style="flex:1.1;">
+      <div class="sub">STRAINS</div>
+      <div id="strainList"></div>
+    </div>
+
+    <div class="panel crt flexcol" style="flex:1;">
+      <div class="sub">EVENT LOG</div>
+      <div id="logList"></div>
+    </div>
+
+    <div class="panel crt">
+      <div class="sub">CREATED BY</div>
+      <div id="creditsName">Mr Lau Chin Hang</div>
+      <div class="row" id="creditsLinks">
+        <a href="https://www.instagram.com/curiominds.inc/" target="_blank" rel="noopener noreferrer">Instagram @curiominds.inc</a>
+        <a href="https://curiomindsinc.pages.dev/" target="_blank" rel="noopener noreferrer">Visit my website</a>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ============================= CONFIG ============================= */
+
+const CELL_PX = 5;          // pixel size of one grid cell (chunky retro pixels)
+const COLS = 150;
+const ROWS = 110;
+
+// Real bacterial doubling time under good conditions (E. coli ~20 min)
+const BASE_DIVISION_MIN = 20;
+const DIVISION_JITTER = 0.35; // +/- fraction randomness on timer reset
+
+// Baseline stationary-phase turnover death (illustrative, not antibiotic-related).
+// Without this, a confluent colony has no empty cells left to divide into and
+// growth/mutation stalls completely once the dish fills up.
+const NATURAL_DEATH_PER_HOUR = 0.004; // ~ mean lifespan of a few weeks sim-time
+
+// Cap on division cycles a single cell can run within one rendered frame. Death
+// probability is computed once over the frame's full elapsed sim-time, so at high
+// speed multipliers a frame can span many division intervals -- without this loop,
+// division stayed capped at 1/frame while death scaled with the whole interval,
+// making colonies shrink instead of grow as speed increased. Capped for perf.
+const MAX_DIVISIONS_PER_TICK = 20;
+
+// Freshly-mutated cells (and their still-young immediate lineage) get a brief
+// survival + growth edge so a lone beneficial mutation isn't wiped out by pure
+// genetic drift before it can establish a foothold -- exempt from natural
+// turnover death and divide faster while grace lasts. Antibiotic death is
+// untouched: actual resistance is what protects against a specific drug, not
+// this grace window.
+const MUTANT_GRACE_MINUTES = 240;   // ~4 sim-hours of protection after emerging
+const MUTANT_GRACE_DIV_BOOST = 0.4; // divides in 40% of normal time while graced
+
+// DEMO-PACED mutation probabilities, deliberately inflated ~1,000-10,000x above
+// realistic literature values (which were order 1e-7 to 1e-9 and, even at max
+// speed, never surfaced a resistance event within a live-presentation window --
+// the bottleneck is real JS compute throughput per frame, not sim-time, since
+// the speed slider makes sim-time effectively unlimited). Tuned so a full
+// triple-resistant "superbug" lineage emerges in roughly ~3 real-time minutes
+// at max (1,000,000x) speed, while keeping TET easiest / STREP hardest so the
+// stacking progression (single -> double -> triple resistance) still reads as
+// a staged reveal instead of all firing at once. NOT biologically accurate.
+const ANTIBIOTICS = [
+  { id:0, name:"PENICILLIN",    tint:"#5a7fe0", mutRate:5e-5,  killPerHour:0.55, desc:"cell-wall synthesis inhibitor" },
+  { id:1, name:"STREPTOMYCIN",  tint:"#e05ac9", mutRate:1e-5,  killPerHour:0.85, desc:"30S ribosome inhibitor" },
+  { id:2, name:"TETRACYCLINE",  tint:"#e0b25a", mutRate:2e-4,  killPerHour:0.35, desc:"protein synthesis inhibitor" },
+];
+
+// Retro strain palette (distinct hues, quantized, NES/CGA-ish)
+const STRAIN_PALETTE = [
+  "#e05a4e","#4ecb71","#4ea9e0","#e0d24e","#c04ee0",
+  "#e08a4e","#4ee0c9","#e04e94","#8ae04e","#e0e0e0",
+  "#ff6b35","#35d6ff","#c9ff35","#ff35c4","#7135ff"
+];
+const WILDTYPE_COLOR = "#e8dcc8";
+const DEAD_FLASH_COLOR = "#ffffff";
+const EMPTY_BG = "#1c2414";
+
+/* ============================= STATE ============================= */
+
+let dishShape = "circle"; // "circle" | "rect"
+let running = true;
+let speedMultiplier = 1; // multiplied against real seconds -> sim minutes
+
+// grid data (typed arrays), index = r*COLS+c
+let N = COLS*ROWS;
+let stateGrid   = new Int16Array(N).fill(-1);   // -1 empty, 0 wildtype, >0 strain id
+let timerGrid   = new Float32Array(N).fill(0);  // sim-minutes remaining till division attempt
+let antibioticGrid = new Int8Array(N).fill(-1); // -1 none, else antibiotic index
+let mutantGrace = new Float32Array(N).fill(0);  // sim-minutes of drift-protection remaining
+let dishMask    = new Uint8Array(N);            // 1 = inside dish
+let deathFlash  = new Map(); // idx -> frames remaining
+
+let aliveList = []; // active indices, for iteration
+let aliveSet  = new Set();
+
+let strains = []; // {id, resistSet:Set<number>, color, count, key}
+let strainByKey = new Map();
+
+let simMinutes = 0; // total elapsed simulated minutes
+let totalDivisions = 0;
+let totalMutations = 0;
+
+let currentTool = "bacteria"; // "bacteria" | "eraser" | antibiotic index (number)
+const BRUSH_RADIUS = 3;
+
+let mouseDown = false;
+let logEntries = [];
+
+/* ============================= DOM ============================= */
+
+const canvas = document.getElementById("dishCanvas");
+const ctx = canvas.getContext("2d", { alpha:false });
+ctx.imageSmoothingEnabled = false;
+
+canvas.width = COLS*CELL_PX;
+canvas.height = ROWS*CELL_PX;
+
+const timeDisplay = document.getElementById("timeDisplay");
+const playBtn = document.getElementById("playBtn");
+const resetBtn = document.getElementById("resetBtn");
+const dishSelect = document.getElementById("dishSelect");
+const dishHintEl = document.getElementById("dishHint");
+const speedSlider = document.getElementById("speedSlider");
+const speedReadout = document.getElementById("speedReadout");
+const antibioticButtonsEl = document.getElementById("antibioticButtons");
+const clearAntibioticsBtn = document.getElementById("clearAntibioticsBtn");
+const toolBacteriaBtn = document.getElementById("tool-bacteria");
+const toolEraserBtn = document.getElementById("tool-eraser");
+const statPop = document.getElementById("statPop");
+const statStrains = document.getElementById("statStrains");
+const statDivs = document.getElementById("statDivs");
+const statMuts = document.getElementById("statMuts");
+const strainListEl = document.getElementById("strainList");
+const logListEl = document.getElementById("logList");
+
+/* ============================= INIT ============================= */
+
+function idx(r,c){ return r*COLS+c; }
+
+function buildDishMask(){
+  dishMask.fill(0);
+  if(dishShape === "circle"){
+    const cr = ROWS/2, cc = COLS/2;
+    const rad = Math.min(ROWS,COLS)/2 - 1;
+    for(let r=0;r<ROWS;r++){
+      for(let c=0;c<COLS;c++){
+        const dr=r-cr+0.5, dc=c-cc+0.5;
+        if(dr*dr+dc*dc <= rad*rad) dishMask[idx(r,c)] = 1;
+      }
+    }
+  } else {
+    const margin = 2;
+    for(let r=0;r<ROWS;r++){
+      for(let c=0;c<COLS;c++){
+        if(r>=margin && r<ROWS-margin && c>=margin && c<COLS-margin) dishMask[idx(r,c)] = 1;
+      }
+    }
+  }
+}
+
+function resetSim(clearShape){
+  stateGrid.fill(-1);
+  timerGrid.fill(0);
+  antibioticGrid.fill(-1);
+  mutantGrace.fill(0);
+  deathFlash.clear();
+  aliveList = [];
+  aliveSet.clear();
+  strains = [ makeStrainEntry(0, new Set(), WILDTYPE_COLOR) ];
+  strainByKey.clear();
+  strainByKey.set("", 0);
+  simMinutes = 0;
+  totalDivisions = 0;
+  totalMutations = 0;
+  logEntries = [];
+  buildDishMask();
+  renderStrainList();
+  renderLog();
+  updateStats();
+  updateTimeDisplay();
+  draw();
+}
+
+function makeStrainEntry(id, resistSet, color){
+  return { id, resistSet, color, count:0, key:[...resistSet].sort((a,b)=>a-b).join(",") };
+}
+
+/* ============================= ANTIBIOTIC UI ============================= */
+
+function buildAntibioticButtons(){
+  antibioticButtonsEl.innerHTML = "";
+  ANTIBIOTICS.forEach(ab=>{
+    const b = document.createElement("button");
+    b.className = "toolbtn";
+    b.innerHTML = `<span class="swatch" style="background:${ab.tint}"></span>${ab.name}`;
+    b.title = ab.desc;
+    b.addEventListener("click", ()=> setTool(ab.id));
+    b.dataset.antibiotic = ab.id;
+    antibioticButtonsEl.appendChild(b);
+  });
+}
+
+function setTool(tool){
+  currentTool = tool;
+  toolBacteriaBtn.classList.toggle("active", tool==="bacteria");
+  toolEraserBtn.classList.toggle("active", tool==="eraser");
+  Array.from(antibioticButtonsEl.children).forEach(btn=>{
+    btn.classList.toggle("active", tool === Number(btn.dataset.antibiotic));
+  });
+}
+
+toolBacteriaBtn.addEventListener("click", ()=> setTool("bacteria"));
+toolEraserBtn.addEventListener("click", ()=> setTool("eraser"));
+clearAntibioticsBtn.addEventListener("click", ()=>{
+  antibioticGrid.fill(-1);
+  log("All antibiotic zones cleared.", false);
+  draw();
+});
+
+/* ============================= STRAIN / MUTATION LOGIC ============================= */
+
+function colorForStrain(resistArr){
+  // deterministic hash -> palette index, biased by resistance count for visual escalation
+  let h = 0;
+  for(const r of resistArr) h = (h*31 + (r+7)) >>> 0;
+  h = (h + resistArr.length*97) >>> 0;
+  return STRAIN_PALETTE[h % STRAIN_PALETTE.length];
+}
+
+function getOrCreateStrain(resistSet){
+  const key = [...resistSet].sort((a,b)=>a-b).join(",");
+  if(strainByKey.has(key)) return strainByKey.get(key);
+  const id = strains.length;
+  const color = colorForStrain([...resistSet]);
+  const entry = makeStrainEntry(id, resistSet, color);
+  strains.push(entry);
+  strainByKey.set(key, id);
+  const names = [...resistSet].map(i=>ANTIBIOTICS[i].name).join(" + ") || "none";
+  log(`NEW STRAIN #${id} emerged — resistant to: ${names}`, true);
+  totalMutations++;
+  return id;
+}
+
+/* ============================= SIM STEP ============================= */
+
+// Reused scratch buffer for neighbor lookups -- called once per division cycle,
+// which at high speed can be tens of thousands of times per frame. Writing into
+// a shared typed array instead of allocating+pushing a fresh array each call
+// avoids heavy GC churn that was a major contributor to lag at max speed.
+const nbrScratch = new Int32Array(8);
+function neighborsOf(r,c){
+  let n = 0;
+  for(let dr=-1;dr<=1;dr++){
+    for(let dc=-1;dc<=1;dc++){
+      if(dr===0 && dc===0) continue;
+      const nr=r+dr, nc=c+dc;
+      if(nr<0||nr>=ROWS||nc<0||nc>=COLS) continue;
+      const ni = idx(nr,nc);
+      if(!dishMask[ni]) continue;
+      nbrScratch[n++] = ni;
+    }
+  }
+  return n; // count of valid entries now sitting in nbrScratch[0..n)
+}
+
+function removeAlive(i){
+  aliveSet.delete(i);
+}
+
+// Death flashes are only useful when individual death events are perceivable.
+// At very high speed multipliers, hundreds/thousands of cells die every single
+// rendered frame regardless -- flashing all of them white every frame just
+// reads as persistent noise rather than a discrete death cue, so skip the
+// flash above this threshold and let the grid redraw cleanly instead.
+const FLASH_MAX_SPEED = 2000;
+
+function killCell(i){
+  stateGrid[i] = -1;
+  timerGrid[i] = 0;
+  mutantGrace[i] = 0;
+  removeAlive(i);
+  if(speedMultiplier <= FLASH_MAX_SPEED) deathFlash.set(i, 2);
+}
+
+function divisionInterval(cellIdx){
+  const boost = mutantGrace[cellIdx] > 0 ? MUTANT_GRACE_DIV_BOOST : 1;
+  return BASE_DIVISION_MIN * boost * (1 + (Math.random()*2-1)*DIVISION_JITTER);
+}
+
+function step(dtSimMinutes){
+  if(dtSimMinutes <= 0) return;
+  simMinutes += dtSimMinutes;
+
+  // Iterate a snapshot since aliveSet mutates during loop
+  const list = Array.from(aliveSet);
+  for(const i of list){
+    if(stateGrid[i] < 0) continue; // may have died earlier this tick
+
+    // Process elapsed time in chunks bounded by the cell's own division timer,
+    // interleaving death rolls with division events at realistic (~20min)
+    // granularity. A single death roll spanning the WHOLE frame's dt (as before)
+    // gets more and more likely to fire the higher the speed multiplier goes,
+    // gating out every division that frame would otherwise have earned --
+    // chunking keeps death probability and division count both scaled correctly
+    // regardless of how much sim-time one rendered frame covers.
+    let remaining = dtSimMinutes;
+    let cycles = 0;
+
+    while(remaining > 0 && stateGrid[i] >= 0){
+      const chunk = Math.min(remaining, Math.max(timerGrid[i], 0.0001));
+      const chunkHours = chunk/60;
+
+      if(mutantGrace[i] > 0) mutantGrace[i] = Math.max(0, mutantGrace[i]-chunk);
+
+      const abIdx = antibioticGrid[i];
+      const sId = stateGrid[i];
+      const strain = strains[sId];
+
+      // Death check: sitting on antibiotic it is not resistant to. Grace does
+      // NOT protect against this -- only actual resistance does.
+      if(abIdx >= 0 && !strain.resistSet.has(abIdx)){
+        const ab = ANTIBIOTICS[abIdx];
+        const pDeath = 1 - Math.pow(1-ab.killPerHour, chunkHours);
+        if(Math.random() < pDeath){
+          strain.count--;
+          killCell(i);
+          break;
+        }
+      }
+
+      // Natural (stationary-phase) turnover death — opens space in a confluent
+      // lawn so new strains can still spread even after the dish fills up.
+      // Freshly-mutated / still-young cells are exempt while grace lasts.
+      if(mutantGrace[i] <= 0 && Math.random() < 1 - Math.pow(1-NATURAL_DEATH_PER_HOUR, chunkHours)){
+        strain.count--;
+        killCell(i);
+        break;
+      }
+
+      timerGrid[i] -= chunk;
+      remaining -= chunk;
+      if(timerGrid[i] > 0.0001) continue; // chunk was capped by remaining dt, no division yet
+
+      cycles++;
+      totalDivisions++;
+
+      const curSId = stateGrid[i];
+      const curStrain = strains[curSId];
+      const parentGrace = mutantGrace[i];
+
+      // DNA copy happens regardless of where (or whether) the offspring finds
+      // room to spread -> roll mutation BEFORE picking a target, so a lucky
+      // mutant can actually colonize a neighboring antibiotic cell it just
+      // became resistant to.
+      let offspringResist = curStrain.resistSet;
+      for(const ab of ANTIBIOTICS){
+        if(offspringResist.has(ab.id)) continue;
+        if(Math.random() < ab.mutRate){
+          const newSet = new Set(offspringResist);
+          newSet.add(ab.id);
+          offspringResist = newSet;
+        }
+      }
+      const mutated = offspringResist !== curStrain.resistSet;
+      let newStrainId = curSId;
+      if(mutated) newStrainId = getOrCreateStrain(offspringResist);
+
+      const r = Math.floor(i/COLS), c = i%COLS;
+      const nCount = neighborsOf(r,c); // fills nbrScratch[0..nCount)
+      // shuffle-pick a free colonizable neighbor, using the OFFSPRING's
+      // (possibly mutated) resistance to decide what counts as lethal
+      let target = -1;
+      for(let k=nCount-1;k>0;k--){
+        const j = Math.floor(Math.random()*(k+1));
+        const tmp = nbrScratch[k]; nbrScratch[k] = nbrScratch[j]; nbrScratch[j] = tmp;
+      }
+      for(let ki=0; ki<nCount; ki++){
+        const ni = nbrScratch[ki];
+        if(stateGrid[ni] !== -1) continue; // occupied
+        const nAb = antibioticGrid[ni];
+        if(nAb >= 0 && !offspringResist.has(nAb)) continue; // avoid lethal zone
+        target = ni;
+        break;
+      }
+      // No empty neighbor (confluent lawn) -> replicate in place. Real division
+      // still occurs (DNA copy = mutation opportunity) even without room to spread.
+      const inPlace = target === -1;
+      if(inPlace) target = i;
+
+      // Priority edge: a brand-new mutant gets full grace; an offspring cell
+      // colonized by a still-graced (young, not-yet-established) parent
+      // inherits the remainder, so a founding cluster stays protected while
+      // it grows instead of just the single originating cell.
+      if(mutated){
+        mutantGrace[target] = MUTANT_GRACE_MINUTES;
+      } else if(target !== i && parentGrace > 0){
+        mutantGrace[target] = parentGrace;
+      }
+
+      if(inPlace){
+        if(mutated){
+          curStrain.count--;
+          strains[newStrainId].count++;
+          stateGrid[target] = newStrainId;
+        }
+      } else {
+        stateGrid[target] = newStrainId;
+        strains[newStrainId].count++;
+        aliveSet.add(target);
+        timerGrid[target] = divisionInterval(target);
+      }
+
+      // reset the parent's own timer -- it keeps living/dividing on its own clock
+      timerGrid[i] = divisionInterval(i);
+
+      if(cycles >= MAX_DIVISIONS_PER_TICK) break;
+    }
+  }
+}
+
+/* ============================= DRAW ============================= */
+
+function draw(){
+  ctx.fillStyle = "#050704";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  for(let r=0;r<ROWS;r++){
+    for(let c=0;c<COLS;c++){
+      const i = idx(r,c);
+      if(!dishMask[i]) continue;
+      let color;
+      const flash = deathFlash.get(i);
+      if(flash){
+        color = DEAD_FLASH_COLOR;
+      } else if(stateGrid[i] === -1){
+        const ab = antibioticGrid[i];
+        color = ab >= 0 ? shade(ANTIBIOTICS[ab].tint, EMPTY_BG) : EMPTY_BG;
+      } else {
+        color = strains[stateGrid[i]].color;
+      }
+      ctx.fillStyle = color;
+      ctx.fillRect(c*CELL_PX, r*CELL_PX, CELL_PX-1, CELL_PX-1);
+    }
+  }
+
+  // decay death flashes
+  for(const [i,f] of deathFlash){
+    if(f<=1) deathFlash.delete(i); else deathFlash.set(i,f-1);
+  }
+}
+
+// blend an antibiotic tint faintly into empty background so zones read visually
+function shade(tint, base){
+  const t = hexToRgb(tint), b = hexToRgb(base);
+  const mix = (x,y)=> Math.round(x*0.35 + y*0.65);
+  return `rgb(${mix(t.r,b.r)},${mix(t.g,b.g)},${mix(t.b,b.b)})`;
+}
+function hexToRgb(hex){
+  const v = parseInt(hex.slice(1),16);
+  return { r:(v>>16)&255, g:(v>>8)&255, b:v&255 };
+}
+
+/* ============================= UI HANDLERS ============================= */
+
+function applyBrush(clientX, clientY){
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width/rect.width, scaleY = canvas.height/rect.height;
+  const x = (clientX-rect.left)*scaleX, y=(clientY-rect.top)*scaleY;
+  const cc = Math.floor(x/CELL_PX), cr = Math.floor(y/CELL_PX);
+
+  for(let dr=-BRUSH_RADIUS;dr<=BRUSH_RADIUS;dr++){
+    for(let dc=-BRUSH_RADIUS;dc<=BRUSH_RADIUS;dc++){
+      if(dr*dr+dc*dc > BRUSH_RADIUS*BRUSH_RADIUS) continue;
+      const r=cr+dr, c=cc+dc;
+      if(r<0||r>=ROWS||c<0||c>=COLS) continue;
+      const i = idx(r,c);
+      if(!dishMask[i]) continue;
+
+      if(currentTool === "bacteria"){
+        if(stateGrid[i] === -1){
+          stateGrid[i] = 0;
+          timerGrid[i] = BASE_DIVISION_MIN * (1 + Math.random()*DIVISION_JITTER);
+          strains[0].count++;
+          aliveSet.add(i);
+        }
+      } else if(currentTool === "eraser"){
+        antibioticGrid[i] = -1;
+      } else if(typeof currentTool === "number"){
+        antibioticGrid[i] = currentTool;
+      }
+    }
+  }
+  draw();
+}
+
+canvas.addEventListener("mousedown", e=>{ mouseDown = true; applyBrush(e.clientX, e.clientY); });
+window.addEventListener("mouseup", ()=> mouseDown = false);
+canvas.addEventListener("mousemove", e=>{ if(mouseDown) applyBrush(e.clientX, e.clientY); });
+canvas.addEventListener("mouseleave", ()=> {});
+
+// Touch support so the brush tools work on phones/tablets, not just mouse.
+canvas.addEventListener("touchstart", e=>{
+  mouseDown = true;
+  const t = e.touches[0];
+  applyBrush(t.clientX, t.clientY);
+  e.preventDefault();
+}, { passive:false });
+canvas.addEventListener("touchmove", e=>{
+  if(mouseDown){
+    const t = e.touches[0];
+    applyBrush(t.clientX, t.clientY);
+  }
+  e.preventDefault();
+}, { passive:false });
+canvas.addEventListener("touchend", ()=> mouseDown = false);
+canvas.addEventListener("touchcancel", ()=> mouseDown = false);
+
+playBtn.addEventListener("click", ()=>{
+  running = !running;
+  playBtn.textContent = running ? "⏸ PAUSE" : "▶ PLAY";
+});
+
+resetBtn.addEventListener("click", ()=>{
+  if(confirm("Reset the dish? This clears all bacteria, strains and antibiotics.")){
+    resetSim(false);
+  }
+});
+
+const DISH_HINTS = {
+  circle: "Circular petri dish. Changing this resets the sim.",
+  rect: "Rectangular plate, full-area growth. Changing this resets the sim.",
+  mega: "Runway → TETRACYCLINE → PENICILLIN → STREPTOMYCIN → mixed gauntlet, left to right."
+};
+
+dishSelect.addEventListener("change", ()=>{
+  const v = dishSelect.value;
+  if(v === "mega"){
+    buildMegaPlate();
+  } else {
+    dishShape = v;
+    resetSim(true);
+  }
+  dishHintEl.textContent = DISH_HINTS[v];
+});
+
+// Replicates the Kishony Lab "mega-plate" experiment (bacteria race across a
+// giant dish, evolving resistance to advance) using DIFFERENT ANTIBIOTIC TYPES
+// as the escalating variable instead of a dose/concentration gradient of one
+// drug, since this sim's resistance model is binary-per-antibiotic rather than
+// MIC-based. Bands run easiest-to-evolve-resistance -> hardest, left to right,
+// ending in a mixed gauntlet (antibioticGrid only holds one drug per cell, so a
+// literal simultaneous 3-drug zone isn't representable -- a per-cell random mix
+// is the closest honest approximation and still demands broad resistance to
+// reliably advance).
+function buildMegaPlate(){
+  dishShape = "rect";
+  resetSim(true);
+
+  const margin = 2; // must match buildDishMask()'s rect margin
+  const left = margin, right = COLS-margin-1;
+  const width = right-left+1;
+  const fracs = [0, 0.12, 0.34, 0.56, 0.78, 1];
+  const bounds = fracs.map(f=> left + Math.round(f*width));
+  const BAND_ORDER = [2,0,1]; // TETRACYCLINE, PENICILLIN, STREPTOMYCIN -- easiest to hardest mutRate
+
+  for(let r=0;r<ROWS;r++){
+    for(let c=left;c<=right;c++){
+      const i = idx(r,c);
+      if(!dishMask[i]) continue;
+      if(c < bounds[1]){
+        // clear runway, no antibiotic
+      } else if(c < bounds[2]){
+        antibioticGrid[i] = BAND_ORDER[0];
+      } else if(c < bounds[3]){
+        antibioticGrid[i] = BAND_ORDER[1];
+      } else if(c < bounds[4]){
+        antibioticGrid[i] = BAND_ORDER[2];
+      } else {
+        antibioticGrid[i] = BAND_ORDER[Math.floor(Math.random()*BAND_ORDER.length)];
+      }
+    }
+  }
+
+  // Auto-seed a starter colony in the runway band (explicit one-off action tied
+  // to this preset button -- normal RESET stays manual-seed-only).
+  const seedCol = left + Math.round((bounds[1]-left)*0.4);
+  const seedRow = Math.floor(ROWS/2);
+  for(let dr=-BRUSH_RADIUS;dr<=BRUSH_RADIUS;dr++){
+    for(let dc=-BRUSH_RADIUS;dc<=BRUSH_RADIUS;dc++){
+      if(dr*dr+dc*dc > BRUSH_RADIUS*BRUSH_RADIUS) continue;
+      const r = seedRow+dr, c = seedCol+dc;
+      if(r<0||r>=ROWS||c<0||c>=COLS) continue;
+      const i = idx(r,c);
+      if(!dishMask[i]) continue;
+      if(stateGrid[i] === -1){
+        stateGrid[i] = 0;
+        timerGrid[i] = BASE_DIVISION_MIN * (1 + Math.random()*DIVISION_JITTER);
+        strains[0].count++;
+        aliveSet.add(i);
+      }
+    }
+  }
+
+  log("MEGA-PLATE loaded: runway → TETRACYCLINE → PENICILLIN → STREPTOMYCIN → mixed gauntlet.", false);
+  renderStrainList();
+  updateStats();
+  draw();
+}
+
+// speed slider: log scale from 1x to 1,000,000x
+speedSlider.addEventListener("input", ()=>{
+  const t = Number(speedSlider.value)/1000; // 0..1
+  speedMultiplier = Math.pow(10, t*6); // 10^0 .. 10^6
+  speedReadout.textContent = formatSpeed(speedMultiplier);
+});
+function formatSpeed(m){
+  if(m < 10) return m.toFixed(1)+"x";
+  if(m >= 1000) return (m/1000).toFixed(m>=100000?0:1)+"k x";
+  return Math.round(m)+"x";
+}
+// init readout
+speedMultiplier = Math.pow(10, (Number(speedSlider.value)/1000)*6);
+speedReadout.textContent = formatSpeed(speedMultiplier);
+
+/* ============================= LOGGING / STATS ============================= */
+
+function log(msg, isMutation){
+  const dayHour = formatSimTime();
+  logEntries.unshift({ msg, isMutation, t:dayHour });
+  if(logEntries.length > 80) logEntries.length = 80;
+  renderLog();
+}
+
+function renderLog(){
+  logListEl.innerHTML = logEntries.map(e=>
+    `<div class="logEntry${e.isMutation?' mut':''}">[${e.t}] ${escapeHtml(e.msg)}</div>`
+  ).join("");
+}
+
+function renderStrainList(){
+  strainListEl.innerHTML = strains.map(s=>{
+    const names = [...s.resistSet].map(i=>ANTIBIOTICS[i].name).join(", ") || "wild type";
+    return `<div class="strainRow">
+      <span class="swatch" style="background:${s.color}"></span>
+      <span class="resist">#${s.id} — ${names}</span>
+      <span class="cnt">${s.count}</span>
+    </div>`;
+  }).join("");
+}
+
+function updateStats(){
+  const pop = aliveSet.size;
+  statPop.textContent = pop.toLocaleString();
+  statStrains.textContent = strains.filter(s=>s.count>0).length;
+  statDivs.textContent = totalDivisions.toLocaleString();
+  statMuts.textContent = totalMutations.toLocaleString();
+}
+
+function formatSimTime(){
+  const totalMin = Math.floor(simMinutes);
+  const day = Math.floor(totalMin/1440);
+  const hh = Math.floor((totalMin%1440)/60);
+  const mm = totalMin%60;
+  return `D${day} ${String(hh).padStart(2,"0")}:${String(mm).padStart(2,"0")}`;
+}
+function updateTimeDisplay(){
+  const totalMin = Math.floor(simMinutes);
+  const day = Math.floor(totalMin/1440);
+  const hh = Math.floor((totalMin%1440)/60);
+  const mm = totalMin%60;
+  timeDisplay.textContent = `DAY ${day}  ${String(hh).padStart(2,"0")}:${String(mm).padStart(2,"0")}`;
+}
+
+function escapeHtml(s){
+  return s.replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
+}
+
+/* ============================= MAIN LOOP ============================= */
+
+let lastT = performance.now();
+let statsAccum = 0, logRefreshAccum = 0;
+
+function frame(now){
+  const realDtSec = Math.min((now-lastT)/1000, 0.25);
+  lastT = now;
+
+  if(running){
+    // 1x speed => 1 sim-minute per real-second (watchable division cadence)
+    const dtSimMinutes = realDtSec * speedMultiplier;
+    step(dtSimMinutes);
+    updateTimeDisplay();
+  }
+
+  draw();
+
+  statsAccum += realDtSec;
+  if(statsAccum > 0.25){
+    statsAccum = 0;
+    updateStats();
+  }
+  logRefreshAccum += realDtSec;
+  if(logRefreshAccum > 1){
+    logRefreshAccum = 0;
+    renderStrainList();
+  }
+
+  requestAnimationFrame(frame);
+}
+
+/* ============================= BOOT ============================= */
+
+buildAntibioticButtons();
+setTool("bacteria");
+resetSim(true);
+requestAnimationFrame(frame);
+
+})();
+</script>
+</body>
+</html>
