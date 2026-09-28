@@ -497,6 +497,17 @@ header p{font-size:0.72rem}
   .info-grid .info-card{overflow:visible}
 }
 </style>
+<style id="cm-mobile">
+/* Phone: stop nowrap timeline labels from widening the single grid column. */
+@media (max-width: 680px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  .layout > *, .right-col, .canvas-wrap, #timeline { min-width: 0; }
+  .tl-group, .tl-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  header h1 { font-size: 1.1rem; letter-spacing: 0.02em; }
+  .pb-btn { font-size: 0.6rem; }
+}
+
+</style>
 </head>
 <body>
 <canvas id="bgCanvas"></canvas>

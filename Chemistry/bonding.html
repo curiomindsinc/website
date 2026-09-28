@@ -250,6 +250,24 @@ body.advanced .advInfo{display:block;}
 }
 .hidden{display:none!important;}
 </style>
+<style id="cm-mobile">
+/* Phone: nav tabs on one swipeable row; atom library becomes a horizontal strip.
+   Cards pan horizontally, so a downward drag still carries an atom into the workspace. */
+@media (max-width: 600px) {
+  #topnav { padding: .45rem .6rem; row-gap: .35rem; }
+  #brand { flex: 1; }
+  .navtabs { order: 3; flex: 1 0 100%; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .navbtn { flex: none; padding: .4rem .65rem; font-size: .76rem; }
+  #library { display: block; max-height: none; padding: .5rem .6rem; }
+  #library h4 { margin-bottom: .3rem; }
+  #atomCards { display: flex; gap: .35rem; overflow-x: auto; padding-bottom: .3rem; }
+  .atom-card { flex: none; margin: 0; touch-action: pan-x; }
+  .atom-card:hover { transform: none; }
+  #libHint { margin-top: .35rem; }
+  .libBtn { margin-top: .3rem; }
+}
+
+</style>
 </head>
 <body>
 

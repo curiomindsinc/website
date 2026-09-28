@@ -263,6 +263,20 @@
     footer{position:sticky;bottom:0;z-index:5}
   }
 </style>
+<style id="cm-mobile">
+/* Phone: let the header credit wrap and keep the single column from widening. */
+@media (max-width: 600px) {
+  header { padding: 8px 12px; gap: 6px 10px; }
+  .credit { white-space: normal; flex-wrap: wrap; gap: 4px; }
+  main { grid-template-columns: minmax(0, 1fr); }
+  main > * { min-width: 0; }
+  footer { padding: 7px 10px 9px; gap: 6px; }
+  .tl-top { gap: 6px; }
+  .tl-top .spacer { display: none; }
+  #dateInput { flex: 1 1 130px; min-width: 0; }
+}
+
+</style>
 </head>
 <body>
 <div id="boot"><div class="bootin"><div class="ring"></div>Loading three.js &amp; Earth textures…</div></div>
@@ -1728,6 +1742,8 @@ function resize(){
       c.height !== Math.floor(h * OV.renderer.getPixelRatio())){
     OV.renderer.setSize(w, h, false);
     OV.camera.aspect = w / h;
+    // Narrow (portrait) canvas: widen the vertical FOV so the whole orbit stays in frame.
+    OV.camera.fov = OV.camera.aspect < 1.4 ? Math.min(80, 2 * Math.atan(Math.tan(21 * Math.PI / 180) * 1.4 / OV.camera.aspect) * 180 / Math.PI) : 42;
     OV.camera.updateProjectionMatrix();
   }
 }

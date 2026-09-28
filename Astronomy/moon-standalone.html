@@ -55,6 +55,23 @@
   }
   #orreryAngle { margin-top:6px; font-size:11px; color:#c4cbea; text-align:center; }
 </style>
+<style id="cm-mobile">
+/* Phone: full-width compact control panel on top, orrery scaled to fit at the bottom. */
+@media (max-width: 600px) {
+  #panel { top: 8px; left: 8px; right: 8px; width: auto; padding: 10px 12px; zoom: 0.9; }
+  #panel label { margin: 8px 0 3px; }
+  #info { margin-top: 10px; padding-top: 8px; line-height: 1.5; }
+  #orrery-panel { right: 8px; bottom: 8px; zoom: 0.85; }
+  #recenterBtn { top: auto; bottom: 336px; right: 8px; padding: 6px 10px; font-size: 12px; }
+  #credit { right: auto; left: 10px; bottom: 340px; }
+}
+@media (max-width: 380px) {
+  #orrery-panel { zoom: 0.76; }
+  #recenterBtn { bottom: 300px; }
+  #credit { bottom: 304px; }
+}
+
+</style>
 </head>
 <body>
 
@@ -21217,6 +21234,9 @@ var require_moon_entry = __commonJS({
     var scene = new Scene();
     var camera = new PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1e3);
     camera.position.set(0, 0, 8);
+    // Portrait screens: widen the vertical FOV so the Moon keeps the same width it has on a square view.
+    const fitFov = () => { camera.fov = camera.aspect < 1 ? Math.min(90, 2 * Math.atan(Math.tan(22.5 * Math.PI / 180) / camera.aspect) * 180 / Math.PI) : 45; camera.updateProjectionMatrix(); };
+    fitFov();
     var renderer = new WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -21565,7 +21585,7 @@ var require_moon_entry = __commonJS({
     animate();
     window.addEventListener("resize", () => {
       camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
+      fitFov();
       renderer.setSize(window.innerWidth, window.innerHeight);
     });
   }

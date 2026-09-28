@@ -219,6 +219,18 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 3px var(-
 @media (prefers-reduced-motion:reduce){
   *{animation-duration:.01ms !important;transition-duration:.01ms !important}
 }
+</style><style id="cm-mobile">
+/* Phone: sliders span the width in two columns; the time bar sits between them and the credit. */
+@media (max-width: 560px) {
+  #controls { left: 10px; right: 10px; bottom: calc(max(6px, env(safe-area-inset-bottom)) + 84px); }
+  #knobs { grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; gap: 6px 14px; padding: 11px 13px; }
+  #time { left: 50%; right: auto; transform: translateX(-50%); bottom: calc(max(6px, env(safe-area-inset-bottom)) + 30px); padding: 5px 8px; }
+  #time .btn { width: 34px; height: 34px; }
+  #tubes { top: calc(max(18px, env(safe-area-inset-top)) + 108px); transform: none; }
+  #phase { max-width: calc(100% - 40px); overflow: hidden; }
+  #phase #phasenote { display: none; }
+}
+
 </style>
 </head>
 <body>
@@ -1647,11 +1659,18 @@ cv.addEventListener('wheel', e => {
   applyCam(); userTouched();
 }, {passive:false});
 
-addEventListener('resize', () => {
+// Portrait screens: widen the vertical FOV so both islands stay in frame, and shrink
+// particle sprites by the same factor so they keep their size relative to the scene.
+function fitCamera(){
   camera.aspect = innerWidth/innerHeight;
+  camera.fov = camera.aspect < 1.3 ? Math.min(95, 2*Math.atan(Math.tan(23*Math.PI/180)*1.3/camera.aspect)*180/Math.PI) : 46;
   camera.updateProjectionMatrix();
+  points.material.uniforms.uScale.value = renderer.getPixelRatio()*300*Math.tan(23*Math.PI/180)/Math.tan(camera.fov*Math.PI/360);
+}
+fitCamera();
+addEventListener('resize', () => {
   renderer.setSize(innerWidth, innerHeight);
-  points.material.uniforms.uScale.value = renderer.getPixelRatio()*300;
+  fitCamera();
 });
 
 /* =====================================================================
