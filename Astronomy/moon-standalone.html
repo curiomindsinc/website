@@ -54,21 +54,27 @@
     color:#fff; text-shadow:0 0 4px #000, 0 0 2px #000; pointer-events:none; white-space:nowrap;
   }
   #orreryAngle { margin-top:6px; font-size:11px; color:#c4cbea; text-align:center; }
-</style>
-<style id="cm-mobile">
-/* Phone: full-width compact control panel on top, orrery scaled to fit at the bottom. */
+</style><style id="cm-mobile">
+/* Phone: full-width compact panel on top, orrery at the bottom. Both headers
+   collapse their panel on tap; the Moon is re-centred in the gap between them. */
 @media (max-width: 600px) {
-  #panel { top: 8px; left: 8px; right: 8px; width: auto; padding: 10px 12px; zoom: 0.9; }
-  #panel label { margin: 8px 0 3px; }
-  #info { margin-top: 10px; padding-top: 8px; line-height: 1.5; }
-  #orrery-panel { right: 8px; bottom: 8px; zoom: 0.85; }
-  #recenterBtn { top: auto; bottom: 336px; right: 8px; padding: 6px 10px; font-size: 12px; }
-  #credit { right: auto; left: 10px; bottom: 340px; }
-}
-@media (max-width: 380px) {
-  #orrery-panel { zoom: 0.76; }
-  #recenterBtn { bottom: 300px; }
-  #credit { bottom: 304px; }
+  #panel { top: 8px; left: 8px; right: 8px; width: auto; padding: 10px 12px; zoom: 0.88; }
+  #panel label { margin: 7px 0 3px; }
+  #info { margin-top: 8px; padding-top: 6px; line-height: 1.45; }
+  #info .phase-name { font-size: 16px; }
+  #orrery-panel { left: 8px; right: 8px; bottom: 8px; width: auto; zoom: 0.85; }
+  #orrery-container { margin: 0 auto; }
+  #panel h1, #orrery-panel h2 { cursor: pointer; display: flex; justify-content: space-between; align-items: center; margin-bottom: 0; }
+  #panel h1::after, #orrery-panel h2::after { content: "▾"; font-size: 14px; color: #9aa3c7; transition: transform .2s; }
+  #panel h1 { margin-bottom: 8px; }
+  #panel.collapsed h1::after, #orrery-panel.collapsed h2::after { transform: rotate(-90deg); }
+  #orrery-panel h2 { padding: 4px 2px; font-size: 12px; }
+  #orrery-panel:not(.collapsed) h2 { margin-bottom: 6px; }
+  #orrery-panel.collapsed #orrery-container, #orrery-panel.collapsed #orreryAngle { display: none; }
+  #panel.collapsed label, #panel.collapsed input, #panel.collapsed .playRow, #panel.collapsed select { display: none; }
+  #panel.collapsed #info { margin-top: 0; }
+  #recenterBtn { top: auto; right: 8px; padding: 6px 10px; font-size: 12px; }
+  #credit { right: auto; left: 10px; }
 }
 
 </style>
@@ -21235,7 +21241,41 @@ var require_moon_entry = __commonJS({
     var camera = new PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1e3);
     camera.position.set(0, 0, 8);
     // Portrait screens: widen the vertical FOV so the Moon keeps the same width it has on a square view.
-    const fitFov = () => { camera.fov = camera.aspect < 1 ? Math.min(90, 2 * Math.atan(Math.tan(22.5 * Math.PI / 180) / camera.aspect) * 180 / Math.PI) : 45; camera.updateProjectionMatrix(); };
+    // Phones: the panels cover most of the screen, so size the Moon to the free gap
+    // between them and shift the view so it is centred there. Desktop keeps fov 45.
+    const fitFov = () => {
+      const W = window.innerWidth, H = window.innerHeight;
+      const recenter = document.getElementById("recenterBtn"), hint = document.getElementById("credit");
+      if (W > 600) {
+        camera.clearViewOffset();
+        camera.fov = 45;
+        recenter.style.bottom = hint.style.bottom = "";
+        camera.updateProjectionMatrix();
+        return;
+      }
+      const top = document.getElementById("panel").getBoundingClientRect().bottom + 6;
+      const orreryTop = document.getElementById("orrery-panel").getBoundingClientRect().top;
+      recenter.style.bottom = H - orreryTop + 6 + "px";
+      hint.style.bottom = H - orreryTop + 14 + "px";
+      const bottom = orreryTop - 44;
+      const gap = Math.max(140, bottom - top);
+      const radiusPx = 0.44 * Math.min(gap, W);
+      camera.fov = Math.min(100, 2 * Math.atan(Math.tan(Math.asin(2 / 8)) * (H / 2) / radiusPx) * 180 / Math.PI);
+      camera.setViewOffset(W, H, 0, H / 2 - (top + gap / 2), W, H);
+      camera.updateProjectionMatrix();
+    };
+    {
+      const panelEl = document.getElementById("panel"), orreryEl = document.getElementById("orrery-panel");
+      if (window.innerWidth <= 600) orreryEl.classList.add("collapsed");
+      // Accordion: opening one panel folds the other, so the Moon always keeps some room.
+      const toggle = (el, other) => {
+        if (window.innerWidth > 600) return;
+        if (el.classList.toggle("collapsed") === false) other.classList.add("collapsed");
+        fitFov();
+      };
+      panelEl.querySelector("h1").addEventListener("click", () => toggle(panelEl, orreryEl));
+      orreryEl.querySelector("h2").addEventListener("click", () => toggle(orreryEl, panelEl));
+    }
     fitFov();
     var renderer = new WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(window.devicePixelRatio);
