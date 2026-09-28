@@ -960,8 +960,7 @@ body.cine-active #scene-holder { cursor: default; }
   letter-spacing: 0.5px;
 }
 
-</style>
-<style id="cm-mobile">
+</style><style id="cm-mobile">
 /* Phone: title pill drops below the icon row, the mouse-only legend is hidden,
    and the organisms badge sits above the credit instead of on top of it. */
 @media (max-width: 720px) {
@@ -976,6 +975,14 @@ body.cine-active #scene-holder { cursor: default; }
 }
 @media (max-width: 720px) {
   #tide-panel { top: 104px; left: 10px; zoom: 0.88; }
+}
+/* Phone: tide panel folds to its title + readout; tap the title to open it. */
+@media (max-width: 720px) {
+  #tide-panel .panel-title { cursor: pointer; display: flex; justify-content: space-between; }
+  #tide-panel .panel-title::after { content: "▾"; transition: transform .2s; }
+  #tide-panel.collapsed .panel-title::after { transform: rotate(-90deg); }
+  #tide-panel.collapsed > :not(.panel-title):not(.tide-head) { display: none; }
+  #tide-panel.collapsed { padding-bottom: 10px; }
 }
 
 </style>
@@ -29366,6 +29373,18 @@ window.OtterMesh = {
   } else {
     start();
   }
+})();
+
+</script>
+<script id="cm-mobile-js">
+// Phone: tide panel starts folded so the shore stays visible; tap its title to toggle.
+(function () {
+  var panel = document.getElementById('tide-panel');
+  if (!panel) return;
+  if (window.innerWidth <= 720) panel.classList.add('collapsed');
+  panel.querySelector('.panel-title').addEventListener('click', function () {
+    if (window.innerWidth <= 720) panel.classList.toggle('collapsed');
+  });
 })();
 
 </script>

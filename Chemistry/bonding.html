@@ -249,8 +249,7 @@ body.advanced .advInfo{display:block;}
   #goalBanner{max-width:96%;}
 }
 .hidden{display:none!important;}
-</style>
-<style id="cm-mobile">
+</style><style id="cm-mobile">
 /* Phone: nav tabs on one swipeable row; atom library becomes a horizontal strip.
    Cards pan horizontally, so a downward drag still carries an atom into the workspace. */
 @media (max-width: 600px) {
@@ -265,6 +264,13 @@ body.advanced .advInfo{display:block;}
   .atom-card:hover { transform: none; }
   #libHint { margin-top: .35rem; }
   .libBtn { margin-top: .3rem; }
+}
+/* Phone: the page scrolls instead of squeezing library, workspace and inspector into 100vh. */
+@media (max-width: 600px) {
+  body { height: auto; min-height: 100vh; overflow-y: auto; }
+  #app { flex: none; overflow: visible; grid-template-rows: auto auto auto; }
+  #workspaceWrap { height: 62vh; min-height: 320px; touch-action: none; }
+  #inspector { max-height: none; overflow: visible; }
 }
 
 </style>

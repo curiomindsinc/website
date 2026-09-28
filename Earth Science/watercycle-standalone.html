@@ -230,6 +230,12 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 3px var(-
   #phase { max-width: calc(100% - 40px); overflow: hidden; }
   #phase #phasenote { display: none; }
 }
+/* Phone: sliders stay hidden until the sliders button in the time bar opens them. */
+#slidersbtn { display: none; }
+@media (max-width: 560px) {
+  #slidersbtn { display: grid; }
+  body:not(.sliders-open) #controls { display: none; }
+}
 
 </style>
 </head>
@@ -1771,6 +1777,25 @@ function frame(now){
 requestAnimationFrame(frame);
 
 })();
+</script>
+<script id="cm-mobile-js">
+// Phone: a button in the time bar shows/hides the slider panel so the island is not covered.
+(function () {
+  var time = document.getElementById('time');
+  if (!time) return;
+  var btn = document.createElement('button');
+  btn.className = 'btn';
+  btn.id = 'slidersbtn';
+  btn.title = btn.ariaLabel = 'Show sliders';
+  btn.innerHTML = '&#9881;';
+  btn.addEventListener('click', function () {
+    var open = document.body.classList.toggle('sliders-open');
+    btn.classList.toggle('on', open);
+    btn.title = btn.ariaLabel = open ? 'Hide sliders' : 'Show sliders';
+  });
+  time.insertBefore(btn, time.firstChild);
+})();
+
 </script>
 </body>
 </html>
