@@ -15,8 +15,11 @@ function readSims() {
   return eval(m[1]);
 }
 
-const files = ['index.html', 'about.html', 'robots.txt', 'sitemap.xml', '_redirects'];
+const files = ['index.html', 'about.html', 'impact.html', 'robots.txt', 'sitemap.xml', '_redirects'];
 const dirs = ['assets'];
+// Raw source files (uncropped screenshots with participant names, feedback PDF) stay private;
+// the page uses the cleaned copies in assets/impact/.
+const SKIP = [path.join('assets', 'professional impact')];
 for (const s of readSims()) {
   if (s.href && !/^https?:/.test(s.href)) files.push(s.href);
 }
@@ -35,7 +38,7 @@ const copy = rel => {
 files.forEach(copy);
 for (const d of dirs) {
   const walk = rel => fs.readdirSync(path.join(ROOT, rel), { withFileTypes: true })
-    .forEach(e => e.isDirectory() ? walk(path.join(rel, e.name)) : copy(path.join(rel, e.name)));
+    .forEach(e => { const r = path.join(rel, e.name); if (SKIP.includes(r)) return; e.isDirectory() ? walk(r) : copy(r); });
   walk(d);
 }
 
