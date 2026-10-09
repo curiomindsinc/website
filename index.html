@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>CurioMinds.inc — Free Science Simulations for Singapore Secondary Schools</title>
-  <meta name="description" content="Free interactive science simulations for Singapore secondary classrooms — Physics, Chemistry, Biology, Earth Science and Astronomy. MOE-syllabus aligned. No login, no install, works in any browser."/>
+  <title>CurioMinds.inc — Free Interactive Simulations for Singapore Secondary Schools</title>
+  <meta name="description" content="Free interactive science simulations for Singapore secondary classrooms — Physics, Chemistry, Biology, Earth Science and Astronomy, plus life skills like financial literacy. MOE-syllabus aligned. No login, no install, works in any browser."/>
   <link rel="canonical" href="https://curiomindsinc.pages.dev/"/>
   <meta name="theme-color" content="#0D1B3E"/>
 
@@ -12,15 +12,15 @@
   <meta property="og:type" content="website"/>
   <meta property="og:site_name" content="CurioMinds.inc"/>
   <meta property="og:url" content="https://curiomindsinc.pages.dev/"/>
-  <meta property="og:title" content="CurioMinds.inc — Free Science Simulations for Singapore Secondary Schools"/>
-  <meta property="og:description" content="Interactive Physics, Chemistry, Biology, Earth Science and Astronomy simulations. MOE-syllabus aligned, free, no login."/>
+  <meta property="og:title" content="CurioMinds.inc — Free Interactive Simulations for Singapore Secondary Schools"/>
+  <meta property="og:description" content="Interactive Physics, Chemistry, Biology, Earth Science and Astronomy simulations, plus life skills like financial literacy. MOE-syllabus aligned, free, no login."/>
   <meta property="og:image" content="https://curiomindsinc.pages.dev/assets/og-cover.png"/>
   <meta property="og:image:width" content="1200"/>
   <meta property="og:image:height" content="630"/>
   <meta property="og:image:alt" content="CurioMinds.inc — Where concepts click."/>
   <meta name="twitter:card" content="summary_large_image"/>
-  <meta name="twitter:title" content="CurioMinds.inc — Free Science Simulations for Singapore Secondary Schools"/>
-  <meta name="twitter:description" content="Interactive Physics, Chemistry, Biology, Earth Science and Astronomy simulations. MOE-syllabus aligned, free, no login."/>
+  <meta name="twitter:title" content="CurioMinds.inc — Free Interactive Simulations for Singapore Secondary Schools"/>
+  <meta name="twitter:description" content="Interactive Physics, Chemistry, Biology, Earth Science and Astronomy simulations, plus life skills like financial literacy. MOE-syllabus aligned, free, no login."/>
   <meta name="twitter:image" content="https://curiomindsinc.pages.dev/assets/og-cover.png"/>
 
   <!-- Icons -->
@@ -35,7 +35,7 @@
     "name": "CurioMinds.inc",
     "url": "https://curiomindsinc.pages.dev/",
     "logo": "https://curiomindsinc.pages.dev/assets/logo-512.png",
-    "description": "Free interactive science simulations for Singapore secondary students, aligned to the MOE syllabus.",
+    "description": "Free interactive simulations for Singapore secondary students — science first, plus life skills like financial literacy, aligned to the MOE syllabus.",
     "sameAs": ["https://www.instagram.com/curiominds.inc"]
   }
   </script>
@@ -693,7 +693,7 @@
     <div class="hero-text">
       <h1>Curio<span>Minds</span>.inc</h1>
       <p class="tagline">Where concepts click.</p>
-      <p class="hero-sub"><strong>Free interactive science simulations for Singapore secondary classrooms.</strong> Aligned to the MOE syllabus. No login, no install — open one mid-lesson in any browser.</p>
+      <p class="hero-sub"><strong>Free interactive simulations for Singapore secondary classrooms — science first, plus life skills beyond the syllabus.</strong> Aligned to the MOE syllabus. No login, no install — open one mid-lesson in any browser.</p>
     </div>
   </div>
 
@@ -714,6 +714,7 @@
     <button class="filter-btn" data-cat="biology">🧬 Biology</button>
     <button class="filter-btn" data-cat="earth-science">🌍 Earth Science</button>
     <button class="filter-btn" data-cat="astronomy">🔭 Astronomy</button>
+    <button class="filter-btn" data-cat="beyond">💡 Beyond the Syllabus</button>
   </div>
 </div>
 
@@ -763,6 +764,15 @@
     </div>
     <div class="divider"></div>
     <div class="cards-grid" id="grid-astronomy"></div>
+  </section>
+
+  <section class="category" id="beyond">
+    <div class="category-header">
+      <div class="cat-icon">💡</div>
+      <h2>Beyond the Syllabus<span></span></h2>
+    </div>
+    <div class="divider"></div>
+    <div class="cards-grid" id="grid-beyond"></div>
   </section>
 
 
@@ -830,15 +840,22 @@ const SIMS = [
   { cat:'astronomy', href:'Astronomy/season-standalone.html', title:'Why Earth Has Seasons', desc:'Tilt and orbit Earth around the Sun and see why the tilt — not distance — drives the seasons.' },
   { cat:'astronomy', href:'Astronomy/daynight-standalone.html', title:'Day-Night Cycle', desc:'Spin a 3D Earth, pick any city, and watch how rotation brings sunrise and sunset — and why the length of the day changes through the year.' },
   { cat:'astronomy', title:'Solar & Lunar Eclipses', desc:'Line up Sun, Earth, and Moon and see exactly when and why solar and lunar eclipses occur.', status:'coming-soon' },
+  // ── Beyond the Syllabus ──
+  { cat:'beyond', href:'beyond_the_syllabus/LIFE_demo.html', title:'LIFE: A Financial Literacy Simulation', desc:'Live a whole Singapore life — choose your studies, career, partner and investments, then ride out booms, crashes and rate hikes to see how everyday money decisions compound over the decades.' },
+  { cat:'beyond', title:'Spot the Scam', desc:'Sort real messages from phishing texts, fake job offers and impersonation calls, and learn the red flags scammers rely on before they cost you money.', status:'coming-soon' },
+  { cat:'beyond', title:'The House Always Wins', desc:'Play thousands of rounds of lottery, roulette and loot boxes in seconds and watch expected value quietly drain the wallet, no matter how lucky you feel.', status:'coming-soon' },
+  { cat:'beyond', title:'Hawker Stall Tycoon', desc:'Set your prices, buy ingredients and pay the rent on your own hawker stall, and discover how costs, demand and profit decide whether a small business survives.', status:'coming-soon' },
+  { cat:'beyond', title:'Fact or Fake?', desc:'Investigate viral posts, doctored photos and misleading charts with real fact-checking tools, and learn how misinformation spreads faster than the truth.', status:'coming-soon' },
+  { cat:'beyond', title:'Crack the Password', desc:'Watch an attacker guess passwords in real time and see how length, randomness and two-factor authentication turn seconds of cracking into centuries.', status:'coming-soon' },
 ];
 
-const CAT_ICON = { physics:'⚛️', chemistry:'🧪', biology:'🧬', 'earth-science':'🌍', astronomy:'🔭' };
+const CAT_ICON = { physics:'⚛️', chemistry:'🧪', biology:'🧬', 'earth-science':'🌍', astronomy:'🔭', beyond:'💡' };
 
 // Thumbnail filenames are the slugified sim title — see tools/shoot.js
 const slug = t => t.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
 function renderSims() {
-  ['physics','chemistry','biology','earth-science','astronomy'].forEach(cat => {
+  ['physics','chemistry','biology','earth-science','astronomy','beyond'].forEach(cat => {
     const grid = document.getElementById('grid-' + cat);
     if (!grid) return;
     grid.innerHTML = SIMS.filter(s => s.cat === cat).map(s => {
@@ -872,7 +889,7 @@ document.querySelectorAll('.filter-btn[data-cat]').forEach(btn => {
     document.querySelectorAll('.filter-btn[data-cat]').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     const cat = btn.dataset.cat;
-    ['physics','chemistry','biology','earth-science','astronomy'].forEach(id => {
+    ['physics','chemistry','biology','earth-science','astronomy','beyond'].forEach(id => {
       const section = document.getElementById(id);
       if (section) section.style.display = (cat === 'all' || cat === id) ? '' : 'none';
     });
