@@ -15,13 +15,17 @@ function readSims() {
   return eval(m[1]);
 }
 
-const files = ['index.html', 'about.html', 'impact.html', 'robots.txt', 'sitemap.xml', '_redirects'];
+const files = ['index.html', 'about.html', 'impact.html', 'robots.txt', 'sitemap.xml', '_redirects',
+  'google2ca19aafd4576171.html']; // Google Search Console verification
 const dirs = ['assets'];
 // Raw source files (uncropped screenshots with participant names, feedback PDF) stay private;
 // the page uses the cleaned copies in assets/impact/.
 const SKIP = [path.join('assets', 'professional impact')];
 for (const s of readSims()) {
-  if (s.href && !/^https?:/.test(s.href)) files.push(s.href);
+  if (!s.href || /^https?:/.test(s.href)) continue;
+  // A hub (folder/index.html) links to sibling pages, so ship the whole folder.
+  if (path.basename(s.href) === 'index.html') dirs.push(path.dirname(s.href));
+  else files.push(s.href);
 }
 
 fs.rmSync(DIST, { recursive: true, force: true });
