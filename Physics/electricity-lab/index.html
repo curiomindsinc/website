@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Electricity Lab — Curiominds</title><meta name="description" content="Four free, offline simulations covering the electricity strand of O-Level and IGCSE Physics."><meta name="author" content="Mr Lau Chin Hang / @curiominds.inc"><link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2034%2034%22%3E%3Crect%20width%3D%2234%22%20height%3D%2234%22%20rx%3D%229%22%20fill%3D%22%23d97757%22%2F%3E%3Cpath%20d%3D%22M19%204%209%2019h7l-2%2011%2011-16h-7l1-10z%22%20fill%3D%22%23141413%22%2F%3E%3C%2Fsvg%3E">
+<!-- Curiominds Electricity Lab · Mr Lau Chin Hang / @curiominds.inc · self-contained, works offline -->
+<style>
+:root{--cream:#faf9f5;--navy:#141413;--coral:#d97757;--magenta:#c41e7e;--muted:#5f5e58;--line:#e3e0d6;--soft:#f1efe8}
+*{box-sizing:border-box}body{margin:0;background:var(--cream);color:var(--navy);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+a{color:#a8492c}main{max-width:900px;margin:0 auto;padding:24px 18px 60px}
+header.top{background:var(--navy);color:var(--cream);padding:14px 18px}header.top .in{max-width:900px;margin:0 auto;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+header.top a{color:var(--cream);display:inline-flex;align-items:center;min-height:44px}
+.noprint a,.simcard .docs a{display:inline-flex;align-items:center;min-height:44px;padding:0 12px;border:1px solid var(--line);border-radius:10px;background:#fff;text-decoration:none;font-weight:600;margin:2px 4px 2px 0}header.top b{font-size:1.05em}.attr{font-size:.85em;opacity:.85;margin-left:auto}
+h1{font-size:1.7em;letter-spacing:-.01em;margin:.2em 0}h2{font-size:1.25em;margin:1.6em 0 .4em;padding-top:.6em;border-top:2px solid var(--line)}h3{font-size:1.02em;margin:1.1em 0 .3em}
+.note{color:var(--muted);font-size:.9em}.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin:10px 0}
+table{border-collapse:collapse;width:100%;margin:8px 0;font-size:.92em}th,td{border:1px solid #cfcabd;padding:6px 8px;text-align:left;vertical-align:top}th{background:var(--soft)}
+ol.qs>li{margin:.5em 0}.ans{background:var(--soft);border-radius:8px;padding:6px 10px;margin-top:4px;font-size:.92em}
+.box{border:2px solid var(--navy);border-radius:8px;min-height:70px;padding:6px 10px;margin:6px 0}.box small{color:var(--muted)}
+.lines{border-bottom:1px solid #999;height:28px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tag{display:inline-block;background:var(--coral);color:var(--navy);border-radius:999px;padding:1px 10px;font-size:.78em;font-weight:700}
+.mis{border-left:4px solid var(--magenta);background:#fbecf4;padding:6px 12px;border-radius:0 8px 8px 0}
+footer{max-width:900px;margin:0 auto;padding:10px 18px 30px;color:var(--muted);font-size:.85em;text-align:center}footer b{color:var(--navy)}
+footer .credit-links a{color:#a8492c;text-decoration:none;font-weight:600;display:inline-flex;align-items:center;min-height:44px;padding:0 4px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}.simcard{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:6px}
+.simcard .n{font-weight:900;color:#a8492c}.simcard a.go{display:inline-flex;align-items:center;justify-content:center;min-height:44px;background:var(--navy);color:var(--cream);border-radius:10px;text-decoration:none;font-weight:700;padding:0 14px;margin-top:auto}
+.simcard .docs{display:flex;gap:12px;flex-wrap:wrap;font-size:.9em}.simcard ul{margin:4px 0 6px;padding-left:18px;font-size:.9em}
+@media print{header.top{background:none;color:var(--navy);border-bottom:2px solid var(--navy)}header.top a{color:var(--navy)}body{background:#fff;font-size:12pt}h2{break-before:auto}.chapter{break-inside:avoid-page}.noprint{display:none}a{color:var(--navy);text-decoration:none}main{padding:0}}
+@page{size:A4;margin:16mm}</style></head><body>
+<header class="top"><div class="in"><svg width="30" height="30" viewBox="0 0 34 34" aria-hidden="true"><rect width="34" height="34" rx="9" fill="#d97757"/><path d="M19 4 9 19h7l-2 11 11-16h-7l1-10z" fill="#141413"/></svg><a href="index.html"><b>Curiominds Electricity Lab</b></a></div></header>
+<main><h1>Electricity Lab</h1>
+<p>Four linked simulations covering the whole electricity strand of upper-secondary Physics. Students build circuits, watch charge move, predict meter readings and test them, then work through chapter challenges and exam-style questions. Each sim has a free-build sandbox.</p>
+<p class="note">Written for Singapore-Cambridge O-Level Physics (6091), with Cambridge IGCSE references. Symbol view uses exam-style circuit symbols; Real view shows illustrated parts. Every file works offline, on phones and tablets, and inside SLS.</p>
+<div class="cards"><article class="simcard"><span class="n">Sim 1</span><h2 style="margin:0;border:0;padding:0;font-size:1.15em">Current, P.D. &amp; Resistance</h2><p class="note" style="margin:0">6091 topic 14 (and 15(i): thermistor and LDR) · IGCSE 4.2</p><p style="margin:4px 0">Charge and current, e.m.f. and p.d., resistance and Ohm’s law, I–V characteristics of a resistor, filament lamp and diode, resistance of a wire, thermistors and LDRs.</p>
+<ul><li>a. Charge and current</li><li>b. E.m.f. and potential difference</li><li>c. Resistance</li><li>d. I–V characteristics</li><li>e. Resistance of a wire</li><li>f. Thermistor and LDR</li></ul>
+<div class="docs"><a href="current-resistance-teacher-notes.html">Teacher notes</a><a href="current-resistance-worksheet.html">Worksheet</a></div>
+<a class="go" href="current-resistance.html">Open Current, P.D. &amp; Resistance →</a></article><article class="simcard"><span class="n">Sim 2</span><h2 style="margin:0;border:0;padding:0;font-size:1.15em">D.C. Circuits</h2><p class="note" style="margin:0">6091 topic 15 · IGCSE 4.3</p><p style="margin:4px 0">Series and parallel circuits, effective resistance, potential dividers and potentiometers, and sensing circuits with thermistors and LDRs. Includes the full component sandbox.</p>
+<ul><li>a. Series circuits</li><li>b. Parallel circuits</li><li>c. Effective resistance</li><li>d. Potential dividers</li><li>e. Sensing circuits</li></ul>
+<div class="docs"><a href="dc-circuits-teacher-notes.html">Teacher notes</a><a href="dc-circuits-worksheet.html">Worksheet</a></div>
+<a class="go" href="dc-circuits.html">Open D.C. Circuits →</a></article><article class="simcard"><span class="n">Sim 3</span><h2 style="margin:0;border:0;padding:0;font-size:1.15em">Practical Electricity</h2><p class="note" style="margin:0">6091 topic 16 · IGCSE 4.2.5, 4.4</p><p style="margin:4px 0">Power and the heating effect, energy and cost in kWh with the current SP Group tariff, mains wiring and hazards, fuses and circuit breakers, earthing and fault scenarios — set in a Singapore HDB flat.</p>
+<ul><li>a. Electrical power</li><li>b. Energy and cost</li><li>c. Mains wiring and hazards</li><li>d. Fuses and circuit breakers</li><li>e. Earthing and faults</li></ul>
+<div class="docs"><a href="practical-teacher-notes.html">Teacher notes</a><a href="practical-worksheet.html">Worksheet</a></div>
+<a class="go" href="practical.html">Open Practical Electricity →</a></article><article class="simcard"><span class="n">Sim 4</span><h2 style="margin:0;border:0;padding:0;font-size:1.15em">Electromagnetism &amp; Induction</h2><p class="note" style="margin:0">6091 topics 17–19 · IGCSE 4.1, 4.5</p><p style="margin:4px 0">Magnetic fields and the plotting compass, the motor effect, the d.c. motor, electromagnetic induction with a live e.m.f.–time graph, the a.c. generator and transformers.</p>
+<ul><li>a. Magnetic fields</li><li>b. Force on a current in a field</li><li>c. The d.c. motor</li><li>d. Electromagnetic induction</li><li>e. The a.c. generator</li><li>f. Transformers</li></ul>
+<div class="docs"><a href="electromagnetism-teacher-notes.html">Teacher notes</a><a href="electromagnetism-worksheet.html">Worksheet</a></div>
+<a class="go" href="electromagnetism.html">Open Electromagnetism &amp; Induction →</a></article></div>
+<h2>Three misconceptions, tested head-on</h2>
+<ul><li><b>“Adding a parallel branch adds resistance.”</b> Students predict the ammeter reading before a branch is added (D.C. Circuits, chapter c).</li>
+<li><b>“A battery supplies a constant current.”</b> The same battery drives different loads; the e.m.f. stays the same while the current changes (Current, P.D. &amp; Resistance, chapter c).</li>
+<li><b>“The fuse and the earth wire do the same job.”</b> Fault scenarios separate their roles (Practical Electricity, chapter e).</li></ul>
+<h2>Credits</h2><p>Created by <b>Mr Lau Chin Hang</b> (@curiominds.inc). Hand-built canvas illustrations; no AI-generated imagery; no third-party libraries. Tariff in Practical Electricity: SP Group, 1 October – 31 December 2026 (checked 13 October 2026).</p></main>
+<footer><div class="credit-line">Created by <b>Mr Lau Chin Hang</b></div><div class="credit-links">🏫 <a href="https://www.instagram.com/curiominds.inc/" target="_blank" rel="noopener noreferrer">@curiominds.inc</a> · ▶ <a href="https://www.youtube.com/@Curiominds.inc88" target="_blank" rel="noopener noreferrer">YouTube</a> · 🌐 <a href="https://curiomindsinc.pages.dev/" target="_blank" rel="noopener noreferrer">Website</a></div></footer>
+</body></html>
