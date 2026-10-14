@@ -280,6 +280,17 @@ body.mode-translocation .chain li.end { background: rgba(255, 183, 77, 0.15); co
   .stat b { font-size: 22px; }
   .top-actions #btn-labels { display: none; }
 }
+
+/* touch screens: bigger slider thumbs */
+@media (pointer: coarse) {
+  input[type=range] { height: 10px; margin: 9px 0; }
+  input[type=range]::-webkit-slider-thumb { width: 28px; height: 28px; }
+  input[type=range]::-moz-range-thumb { width: 22px; height: 22px; }
+}
+/* phones held sideways: stage fills the screen instead of a short sticky strip */
+@media (max-width: 900px) and (orientation: landscape) {
+  #stage { position: relative; height: 86vh; height: 86svh; min-height: 240px; }
+}
 </style>
 </head>
 <body class="mode-transpiration">
