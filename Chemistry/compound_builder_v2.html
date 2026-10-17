@@ -224,6 +224,7 @@ select { width: 100%; padding: 7px 8px; border-radius: 10px; border: 1px solid v
 .try-q { font-weight: 800; margin-bottom: 4px; }
 .try-q b { color: var(--gold); }
 .try-ions { font-size: 13px; color: var(--dim); margin-bottom: 10px; }
+.try-ions small { display: block; margin-top: 3px; font-size: 11.5px; opacity: .8; }
 .try-row { display: flex; flex-direction: column; gap: 6px; }
 .try-row .stepper { justify-content: space-between; }
 .try-res { margin-top: 10px; font-size: 13px; color: var(--dim); min-height: 20px; }
@@ -1339,8 +1340,9 @@ function fillSelects() {
   $('cx-cat').innerHTML = CATIONS.map(opt).join('');
   $('cx-an').innerHTML = ANIONS.map(opt).join('');
 }
-function cxSet(c, a) {
+function cxSet(c, a, keepTry) {
   CX.c = c; CX.a = a; CX.step = 1; CX.t0 = NOW;
+  if (!keepTry && CX.tryQ) newTry();
   $('cx-cat').value = c.id; $('cx-an').value = a.id;
   const bad = notReal(c, a);
   if (bad) banner('Method works, but ' + cName(c, a) + ' is not a real compound', 'info', 3200);
@@ -1463,15 +1465,23 @@ function drawCross() {
 }
 
 /* your turn */
+// Practice follows the example on the left: same charges and same kind of ions
+// (brackets or not), so the same steps apply. Widens the match if nothing fits.
 function newTry() {
-  let p; do p = pick(PAIRS); while (CX.tryQ && p[0] === CX.tryQ[0] && p[1] === CX.tryQ[1]);
+  const { c, a } = CX, poly = !!(c.poly || a.poly), last = CX.tryQ;
+  const fresh = p => !(p[0] === c && p[1] === a) && !(last && p[0] === last[0] && p[1] === last[1]);
+  const tiers = [p => p[0].ch === c.ch && p[1].ch === a.ch && !!(p[0].poly || p[1].poly) === poly, p => p[0].ch === c.ch && p[1].ch === a.ch, () => true];
+  let pool = [], i = 0;
+  for (; i < tiers.length; i++) if ((pool = PAIRS.filter(p => fresh(p) && tiers[i](p))).length) break;
+  CX.trySame = i < 2;
+  const p = pick(pool);
   CX.tryQ = p; CX.tryNc = 1; CX.tryNa = 1; CX.tryDone = false; renderTry('');
 }
 function renderTry(res, kind = '') {
   const [c, a] = CX.tryQ;
   $('try').innerHTML =
     `<div class="try-q">Formula of <b>${esc(cName(c, a))}</b>?</div>` +
-    `<div class="try-ions">Ions: ${ionHTML(c)} and ${ionHTML(a)}</div>` +
+    `<div class="try-ions">Ions: ${ionHTML(c)} and ${ionHTML(a)}${CX.trySame ? ' <small>same charges as the example</small>' : ''}</div>` +
     `<div class="try-row"><div class="stepper c" data-s="c">${stepperHTML(c, CX.tryNc)}</div><div class="stepper a" data-s="a">${stepperHTML(a, CX.tryNa)}</div></div>` +
     `<div class="try-res ${kind}">${res || 'Your formula: <span class="f">' + fHTML(c, CX.tryNc, a, CX.tryNa) + '</span>'}</div>` +
     `<div class="try-btns">${CX.tryDone ? '<button class="btn" id="try-show">🪜 Show steps</button><button class="btn primary" id="try-next">Next question ▶</button>' : '<button class="btn" id="try-show">🪜 Show steps</button><button class="btn primary" id="try-check">Check</button><button class="btn try-new" id="try-next">🎲 New question</button>'}</div>` +
@@ -1482,7 +1492,7 @@ $('try').onclick = e => {
   const [c, a] = CX.tryQ;
   if (b.id === 'try-show') {
     if (!CX.tryDone) { const [nc, na] = ratio(c, a); CX.tryDone = true; renderTry(`Steps shown on the left. Answer: <span class="f">${fHTML(c, nc, a, na)}</span>`); }
-    cxSet(c, a); if (window.innerWidth <= 900) window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+    cxSet(c, a, true); if (window.innerWidth <= 900) window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
   if (b.id === 'try-next') { newTry(); sClick(); return; }
   if (b.id === 'try-check') {
     const [nc, na] = ratio(c, a), pos = CX.tryNc * c.ch, neg = CX.tryNa * a.ch;
@@ -1745,35 +1755,38 @@ function toLobby() {
 
 /* ═════════════════════════ LEADERBOARD ═════════════════════════ */
 const TAG = /\s\[L([12])\]$/;
-let LB_LVL = 1, LB_CACHE = null;
+// The script filters by ?level= (level 1 also gets old untagged v1 scores); renderLB
+// filters again, so an older script that ignores the parameter still works.
+let LB_LVL = 1, LB_CACHE = {};
 function saveScore() {
   const m = $('save-msg'); m.textContent = 'Saving your score…';
   const tagged = GAME.name + ' [L' + GAME.lvl + ']';
   GAME.saved = { name: GAME.name, score: GAME.score, lvl: GAME.lvl };
   fetch(SHEETS_URL + '?action=save&name=' + encodeURIComponent(tagged) + '&score=' + encodeURIComponent(GAME.score), { redirect: 'follow' })
     .then(r => r.json())
-    .then(() => { m.textContent = 'Score saved to the Level ' + GAME.lvl + ' leaderboard ✓'; LB_CACHE = null; })
+    .then(() => { m.textContent = 'Score saved to the Level ' + GAME.lvl + ' leaderboard ✓'; LB_CACHE = {}; })
     .catch(() => { m.textContent = 'Could not save the score (no internet connection?).'; });
 }
 function openLB(lvl) {
   LB_LVL = lvl || LB_LVL;
   $('lb').hidden = false;
   $('lb-seg').querySelectorAll('button').forEach(b => b.classList.toggle('on', +b.dataset.lvl === LB_LVL));
-  if (LB_CACHE) { renderLB(); return; }
+  if (LB_CACHE[LB_LVL]) { renderLB(); return; }
   $('lb-list').innerHTML = '<li class="msg">Loading…</li>';
-  fetch(SHEETS_URL + '?action=get', { redirect: 'follow' })
+  const want = LB_LVL;
+  fetch(SHEETS_URL + '?action=get&level=' + want, { redirect: 'follow' })
     .then(r => r.json())
     .then(rows => {
-      LB_CACHE = (Array.isArray(rows) ? rows : []).map(r => {
+      LB_CACHE[want] = (Array.isArray(rows) ? rows : []).map(r => {
         const name = String(r.name || ''), m = name.match(TAG);
         return { name: m ? name.replace(TAG, '') : name, lvl: m ? +m[1] : 1, v1: !m, score: +r.score || 0 };
       });
-      renderLB();
+      if (want === LB_LVL) renderLB();
     })
     .catch(() => { $('lb-list').innerHTML = '<li class="msg">Could not load scores. Check your internet connection.</li>'; });
 }
 function renderLB() {
-  const rows = LB_CACHE.filter(r => r.lvl === LB_LVL).sort((a, b) => b.score - a.score).slice(0, 10);
+  const rows = LB_CACHE[LB_LVL].filter(r => r.lvl === LB_LVL).sort((a, b) => b.score - a.score).slice(0, 10);
   const me = GAME.saved;
   let marked = false;
   $('lb-list').innerHTML = rows.length ? rows.map((r, i) => {
