@@ -9,8 +9,10 @@
 /moonphase.html /Astronomy/moon-standalone  301
 /Biology/antcolony      /Biology/antcolony-standalone  301
 /Biology/antcolony.html /Biology/antcolony-standalone  301
-/Biology/centraldogma      /Biology/central_dogma-standalone  301
-/Biology/centraldogma.html /Biology/central_dogma-standalone  301
+/Biology/centraldogma      /Biology/central_dogma  301
+/Biology/centraldogma.html /Biology/central_dogma  301
+/Biology/central_dogma-standalone      /Biology/central_dogma  301
+/Biology/central_dogma-standalone.html /Biology/central_dogma  301
 /Biology/chekjawa      /Biology/chekjawa-standalone  301
 /Biology/chekjawa.html /Biology/chekjawa-standalone  301
 /Biology/ecosim      /Biology/ecology-standalone  301
