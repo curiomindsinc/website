@@ -17,7 +17,7 @@ function readSims() {
 
 const files = ['index.html', 'about.html', 'impact.html', 'robots.txt', 'sitemap.xml', '_redirects',
   'google2ca19aafd4576171.html']; // Google Search Console verification
-const dirs = ['assets'];
+const dirs = ['assets', 'colleagues']; // colleague sims linked from impact.html
 // Raw source files (uncropped screenshots with participant names, feedback PDF) stay private;
 // the page uses the cleaned copies in assets/impact/.
 const SKIP = [path.join('assets', 'professional impact')];

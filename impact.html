@@ -786,6 +786,73 @@
       .award-card.wide { flex-direction: column; align-items: flex-start; }
     }
 
+    /* ── MENTORING ── */
+    .mentor-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.25rem;
+      margin-top: 1.4rem;
+    }
+    .mentor-card {
+      display: flex;
+      flex-direction: column;
+      background: rgba(0,0,0,0.22);
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1.5px solid rgba(255,255,255,0.08);
+      color: inherit;
+      text-decoration: none;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .mentor-card:hover { transform: translateY(-3px); border-color: rgba(217,79,107,0.5); }
+    .mentor-card:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+    .mentor-thumb { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; }
+    .mentor-body { padding: 1.2rem 1.3rem 1.3rem; display: flex; flex-direction: column; flex: 1; }
+    .mentor-body .event-meta { margin-bottom: 0.6rem; }
+    .mentor-body h3 {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 900;
+      font-size: 1.1rem;
+      line-height: 1.3;
+      color: var(--white);
+    }
+    .mentor-body p {
+      font-size: 0.88rem;
+      color: rgba(255,255,255,0.68);
+      line-height: 1.6;
+      margin-top: 0.5rem;
+    }
+    .credits {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.3rem 0.8rem;
+      margin-top: 0.9rem;
+      padding: 0.75rem 0.9rem;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      font-size: 0.8rem;
+      line-height: 1.45;
+    }
+    .credits dt {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      color: var(--gold);
+      white-space: nowrap;
+    }
+    .credits dd { margin: 0; color: rgba(255,255,255,0.80); }
+    .mentor-link {
+      margin-top: auto;
+      padding-top: 0.9rem;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      font-size: 0.78rem;
+      color: var(--red);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .mentor-link::after { content: ' →'; }
+
     /* ── FADE IN ANIMATION ── */
     .stats-grid, .impact-section, .instagram-cta {
       opacity: 0;
@@ -797,7 +864,8 @@
     .impact-section:nth-of-type(2) { animation-delay: 0.25s; }
     .impact-section:nth-of-type(3) { animation-delay: 0.35s; }
     .impact-section:nth-of-type(4) { animation-delay: 0.45s; }
-    .instagram-cta { animation-delay: 0.55s; }
+    .impact-section:nth-of-type(5) { animation-delay: 0.5s; }
+    .instagram-cta { animation-delay: 0.6s; }
 
     @keyframes fadeUp {
       to { opacity: 1; transform: translateY(0); }
@@ -1098,6 +1166,62 @@
           <figcaption>Opening slide of the science department sharing.</figcaption>
         </figure>
       </div>
+    </div>
+  </section>
+
+  <!-- MENTORING -->
+  <section class="impact-section" id="mentoring">
+    <div class="section-header">
+      <div class="sec-icon">🤝</div>
+      <h2>Mentoring Colleagues<span></span></h2>
+    </div>
+    <div class="divider"></div>
+
+    <div class="event-card">
+      <div class="event-meta">
+        <span class="tag red">2026</span>
+        <span class="tag">Cross-subject</span>
+        <span class="tag gold">Mentor</span>
+      </div>
+      <div class="event-title">Building Simulations Together</div>
+      <div class="event-subtitle">Helping colleagues beyond Science</div>
+      <p>I also guide colleagues from other subjects who want to build simulations of their own. I take them through my approach: start from a concept students struggle with, design for inquiry, then build and refine the sim with AI. Some I mentor from the side; others I co-design and code with them.</p>
+
+    <div class="mentor-grid">
+      <a class="mentor-card" href="colleagues/unit-circle-trig.html" target="_blank" rel="noopener">
+        <img class="mentor-thumb" src="assets/impact/mentor-unit-circle.webp" width="960" height="540" loading="lazy" alt="Unit Circle and Trigonometric Explorer: a point on the unit circle beside live sine, cosine and tangent graphs"/>
+        <div class="mentor-body">
+          <div class="event-meta">
+            <span class="tag gold">Mathematics</span>
+            <span class="tag">Mentored</span>
+          </div>
+          <h3>Unit Circle &amp; Trigonometric Explorer</h3>
+          <p>Spin a point round the unit circle and watch sin x, cos x and tan x trace out their graphs live, from −720° to 720°, to see why the curves repeat.</p>
+          <dl class="credits">
+            <dt>Created by</dt><dd>Mr Yong Jui Jin</dd>
+            <dt>My role</dt><dd>Guided the design and build process</dd>
+          </dl>
+          <span class="mentor-link">Launch simulation</span>
+        </div>
+      </a>
+
+      <a class="mentor-card" href="colleagues/the-ratchet.html" target="_blank" rel="noopener">
+        <img class="mentor-thumb" src="assets/impact/mentor-the-ratchet.webp" width="960" height="540" loading="lazy" alt="The Ratchet: a decision card titled The Depression hits Japan, 1930, with three policy choices"/>
+        <div class="mentor-body">
+          <div class="event-meta">
+            <span class="tag gold">History</span>
+            <span class="tag red">Co-developed</span>
+          </div>
+          <h3>The Ratchet: Japan's Expansionism, 1930–1945</h3>
+          <p>Lead the Tōseiha, the faction running Japan's army, through fifteen years of decisions. Watch silk, oil and shipping run out as the empire grows faster than Japan can supply it.</p>
+          <dl class="credits">
+            <dt>Original idea</dt><dd>Mr Seow Yongzhi</dd>
+            <dt>My role</dt><dd>Co-designed with Mr Seow, coded the simulation and developed its improvements</dd>
+          </dl>
+          <span class="mentor-link">Launch simulation</span>
+        </div>
+      </a>
+    </div>
     </div>
   </section>
 
