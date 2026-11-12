@@ -25,6 +25,7 @@
   <url><loc>https://curiomindsinc.pages.dev/Physics/electricity-lab/electromagnetism</loc><lastmod>2026-10-13</lastmod><priority>0.8</priority></url>
 
   <!-- Chemistry -->
+  <url><loc>https://curiomindsinc.pages.dev/Chemistry/periodic_table</loc><lastmod>2026-11-12</lastmod><priority>0.8</priority></url>
   <url><loc>https://curiomindsinc.pages.dev/Chemistry/ph_lab</loc><lastmod>2026-11-04</lastmod><priority>0.8</priority></url>
   <url><loc>https://curiomindsinc.pages.dev/Chemistry/compound_builder_v2</loc><lastmod>2026-10-17</lastmod><priority>0.8</priority></url>
   <url><loc>https://curiomindsinc.pages.dev/Chemistry/equation_balancer_v2</loc><lastmod>2026-10-17</lastmod><priority>0.8</priority></url>
@@ -36,8 +37,8 @@
   <!-- Biology -->
   <url><loc>https://curiomindsinc.pages.dev/Biology/monster_genetics_lab_v5</loc><lastmod>2026-10-13</lastmod><priority>0.8</priority></url>
   <url><loc>https://curiomindsinc.pages.dev/Biology/enzymes_v2</loc><lastmod>2026-10-15</lastmod><priority>0.8</priority></url>
-  <url><loc>https://curiomindsinc.pages.dev/Biology/photosynthesis</loc><lastmod>2026-10-25</lastmod><priority>0.8</priority></url>
-  <url><loc>https://curiomindsinc.pages.dev/Biology/bioflow_v2</loc><lastmod>2026-11-11</lastmod><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Biology/photosynthesis</loc><lastmod>2026-11-12</lastmod><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Biology/bioflow_v2</loc><lastmod>2026-11-12</lastmod><priority>0.8</priority></url>
   <url><loc>https://curiomindsinc.pages.dev/Biology/osmosis_v2</loc><lastmod>2026-10-14</lastmod><priority>0.8</priority></url>
   <url><loc>https://curiomindsinc.pages.dev/Biology/savanna-standalone</loc><lastmod>2026-09-22</lastmod><priority>0.8</priority></url>
   <url><loc>https://curiomindsinc.pages.dev/Biology/chekjawa-standalone</loc><lastmod>2026-09-22</lastmod><priority>0.8</priority></url>
@@ -48,13 +49,13 @@
   <url><loc>https://curiomindsinc.pages.dev/Biology/heart_detective_v5</loc><lastmod>2026-08-19</lastmod><priority>0.8</priority></url>
   <url><loc>https://curiomindsinc.pages.dev/Biology/naturalselection-standalone</loc><lastmod>2026-09-22</lastmod><priority>0.8</priority></url>
   <url><loc>https://curiomindsinc.pages.dev/Biology/bacteria-standalone</loc><lastmod>2026-09-22</lastmod><priority>0.8</priority></url>
-  <url><loc>https://curiomindsinc.pages.dev/Biology/respiration</loc><lastmod>2026-11-11</lastmod><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Biology/respiration</loc><lastmod>2026-11-12</lastmod><priority>0.8</priority></url>
   <url><loc>https://curiomindsinc.pages.dev/Biology/digestive_system</loc><lastmod>2026-11-06</lastmod><priority>0.8</priority></url>
   <url><loc>https://curiomindsinc.pages.dev/Biology/central_dogma</loc><lastmod>2026-11-04</lastmod><priority>0.8</priority></url>
   <url><loc>https://curiomindsinc.pages.dev/Biology/cell_division</loc><lastmod>2026-11-07</lastmod><priority>0.8</priority></url>
 
   <!-- Earth Science -->
-  <url><loc>https://curiomindsinc.pages.dev/Earth%20Science/rock_cycle</loc><lastmod>2026-11-11</lastmod><priority>0.8</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/Earth%20Science/rock_cycle</loc><lastmod>2026-11-12</lastmod><priority>0.8</priority></url>
   <url><loc>https://curiomindsinc.pages.dev/Earth%20Science/tectonics-standalone</loc><lastmod>2026-10-13</lastmod><priority>0.8</priority></url>
   <url><loc>https://curiomindsinc.pages.dev/Earth%20Science/watercycle-standalone</loc><lastmod>2026-09-22</lastmod><priority>0.8</priority></url>
   <url><loc>https://curiomindsinc.pages.dev/Earth%20Science/seismicwaves-standalone</loc><lastmod>2026-10-11</lastmod><priority>0.8</priority></url>
