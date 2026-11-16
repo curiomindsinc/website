@@ -513,22 +513,6 @@
     .notify-note { flex-basis: 100%; font-size: 0.74rem; color: rgba(255,255,255,0.55); line-height: 1.4; }
     .notify-note.ok { color: var(--gold); font-weight: 700; }
 
-    /* ── REEL LINK (on a card) ── */
-    .card-reel {
-      align-self: flex-start;
-      font-family: 'Nunito', sans-serif;
-      font-weight: 700;
-      font-size: 0.74rem;
-      letter-spacing: 0.04em;
-      color: rgba(255,255,255,0.8);
-      background: rgba(255,255,255,0.07);
-      border: 1.5px solid rgba(255,255,255,0.15);
-      border-radius: 20px;
-      padding: 0.25rem 0.7rem;
-      cursor: pointer;
-    }
-    .card-reel:hover { border-color: var(--red); color: var(--red); }
-
     /* ── RESPONSIVE ── */
     @media (max-width: 600px) {
       nav a:not(.nav-logo) { font-size: 0.72rem; }
@@ -838,7 +822,6 @@
 </footer>
 
 <script>
-// Optional on any live sim: reel:'https://…' (its Instagram / YouTube / TikTok video) adds a "Watch the reel" link to the card.
 const SIMS = [
   // ── Physics ──
   { cat:'physics', href:'Physics/springs.html', title:'Springs & Hooke\'s Law Lab', desc:'Hang 100 g masses on a spring in 3D, read the pointer at eye level and plot your own force–extension graph to find the spring constant and the limit of proportionality. Compare stiff and soft springs and a rubber band, zoom inside the wire to see atoms slip past the elastic limit, build your own spring balance for the wet market and spot the mistakes in flawed experiments.' },
@@ -932,7 +915,6 @@ function renderSims() {
         <div class="card-body">
           <div class="card-title">${s.title}</div>
           <div class="card-desc">${s.desc}</div>
-          ${s.reel ? `<span class="card-reel" role="link" tabindex="0" data-reel="${s.reel}">▶ Watch the reel</span>` : ''}
           <div class="card-link">Launch simulation</div>
         </div>
       </a>`;
@@ -1068,16 +1050,6 @@ document.querySelectorAll('.filter-btn[data-cat]').forEach(btn => {
       send.disabled = false;
     }
   });
-
-  // "Watch the reel" sits inside the card link, so open it without launching the sim.
-  const openReel = (e) => {
-    const el = e.target.closest('[data-reel]');
-    if (!el) return;
-    e.preventDefault();
-    window.open(el.dataset.reel, '_blank', 'noopener');
-  };
-  document.addEventListener('click', openReel);
-  document.addEventListener('keydown', (e) => { if (e.key === 'Enter') openReel(e); });
 
   mbForm.addEventListener('submit', async (e) => {
     e.preventDefault();

@@ -48,7 +48,10 @@
   #info .phase-name { font-size:18px; font-weight:600; color:#fff; }
   #info .row { display:flex; justify-content:space-between; color:#c4cbea; }
   #info .row span:last-child { color:#fff; font-weight:500; }
-  #credit { position:fixed; bottom:10px; right:14px; font-size:10px; color:#6b7299; }
+  #credit { position:fixed; bottom:10px; right:14px; font-size:11px; line-height:1.6; color:#8f96bd; text-align:right; }
+#credit b { color:#c9cdea; }
+#credit a { color:#a9b6ff; text-decoration:none; }
+#credit a:hover { text-decoration:underline; }
 
   #recenterBtn {
     position:fixed; top:16px; right:16px; z-index:5;
@@ -91,7 +94,7 @@
   #panel.collapsed label, #panel.collapsed input, #panel.collapsed .playRow, #panel.collapsed select { display: none; }
   #panel.collapsed #info { margin-top: 0; }
   #recenterBtn { top: auto; right: 8px; padding: 6px 10px; font-size: 12px; }
-  #credit { right: auto; left: 10px; }
+  #credit { right: auto; left: 10px; text-align: left; max-width: calc(100vw - 160px); }
 }
 
 </style>
@@ -137,7 +140,7 @@
   </div>
 </div>
 
-<div id="credit">Drag to rotate · scroll to zoom</div>
+<div id="credit">Drag to rotate · scroll to zoom<br>Created by <b>Mr Lau Chin Hang</b> · <a href="https://www.instagram.com/curiominds.inc" target="_blank" rel="noopener">Instagram</a> · <a href="https://www.youtube.com/@Curiominds.inc88" target="_blank" rel="noopener">YouTube</a> · <a href="https://curiomindsinc.pages.dev/" target="_blank" rel="noopener">Website</a></div>
 
 <script>
 /*
