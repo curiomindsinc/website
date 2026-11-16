@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sim launches — CurioMinds.inc</title>
+  <meta name="robots" content="noindex, nofollow"/>
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Nunito', 'Segoe UI', system-ui, sans-serif; background: #0D1B3E; color: #fff; min-height: 100vh; padding: 2rem 1rem 4rem; }
+    main { max-width: 760px; margin: 0 auto; }
+    a { color: #D94F6B; text-decoration: none; }
+    h1 { font-size: 1.6rem; font-weight: 900; margin: 0.8rem 0 0.3rem; }
+    p.sub { color: rgba(255,255,255,0.65); font-size: 0.92rem; line-height: 1.5; margin-bottom: 1.4rem; }
+    .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.8rem; margin-bottom: 1.4rem; }
+    .tile { background: #1A2B52; border: 1.5px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 0.9rem 1rem; }
+    .tile b { display: block; font-size: 1.7rem; font-weight: 900; font-variant-numeric: tabular-nums; }
+    .tile span { font-size: 0.78rem; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; }
+    .wrap { background: #1A2B52; border: 1.5px solid rgba(255,255,255,0.08); border-radius: 14px; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+    th, td { padding: 0.6rem 0.9rem; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    th:first-child, td:first-child { text-align: left; white-space: normal; }
+    th { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.06em; color: rgba(255,255,255,0.6); border-bottom: 1.5px solid rgba(255,255,255,0.12); }
+    tr + tr td { border-top: 1px solid rgba(255,255,255,0.06); }
+    td.dim { color: rgba(255,255,255,0.55); }
+    #msg { padding: 1.2rem; color: rgba(255,255,255,0.65); }
+    @media (max-width: 480px) { th, td { padding: 0.55rem 0.55rem; font-size: 0.84rem; } .tile b { font-size: 1.35rem; } th:nth-child(5), td:nth-child(5) { display: none; } }
+  </style>
+</head>
+<body>
+<main>
+  <a href="index.html">← Simulations</a>
+  <h1>Sim launches</h1>
+  <p class="sub">How many times each sim was opened on the website. Counts only: the sim name and the date, nothing about the visitor. Sims opened from a saved file are not counted.</p>
+  <div class="tiles">
+    <div class="tile"><b id="t-week">–</b><span>Last 7 days</span></div>
+    <div class="tile"><b id="t-month">–</b><span>Last 30 days</span></div>
+    <div class="tile"><b id="t-total">–</b><span>All time</span></div>
+  </div>
+  <div class="wrap">
+    <table>
+      <thead><tr><th>Sim</th><th>7 days</th><th>30 days</th><th>All time</th><th>Last opened</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div id="msg">Loading…</div>
+  </div>
+</main>
+<script>
+  const esc = s => { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; };
+  fetch('/api/launch').then(r => { if (!r.ok) throw 0; return r.json(); }).then(rows => {
+    const sum = k => rows.reduce((a, r) => a + r[k], 0);
+    document.getElementById('t-week').textContent = sum('week');
+    document.getElementById('t-month').textContent = sum('month');
+    document.getElementById('t-total').textContent = sum('total');
+    document.getElementById('msg').textContent = rows.length ? '' : 'No launches counted yet.';
+    if (rows.length) document.getElementById('msg').remove();
+    document.getElementById('rows').innerHTML = rows.map(r =>
+      `<tr><td>${esc(r.sim)}</td><td>${r.week}</td><td>${r.month}</td><td>${r.total}</td><td class="dim">${esc(r.last)}</td></tr>`).join('');
+  }).catch(() => { document.getElementById('msg').textContent = 'Could not load the counts.'; });
+</script>
+</body>
+</html>

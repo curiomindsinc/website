@@ -3,8 +3,13 @@ export async function onRequestGet(context) {
   const { results } = await env.DB.prepare(
     "SELECT id, name, message, created_at FROM messages ORDER BY created_at DESC LIMIT 100"
   ).all();
-  return Response.json(results);
+  // The board is public, so never show an email address someone typed into it.
+  // The full text stays in the database for the site owner.
+  const hide = s => (s || "").replace(EMAIL, "[email hidden]");
+  return Response.json(results.map(m => ({ ...m, name: hide(m.name), message: hide(m.message) })));
 }
+
+const EMAIL = /[^\s@<>()]+@[^\s@<>()]+\.[a-z]{2,}/gi;
 
 export async function onRequestPost(context) {
   const { request, env } = context;

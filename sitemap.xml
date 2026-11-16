@@ -2,7 +2,7 @@
 <!-- Cloudflare Pages serves these without the .html extension (/foo.html 308s to /foo),
      so every URL below is listed in its extension-less canonical form. -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://curiomindsinc.pages.dev/</loc><lastmod>2026-09-22</lastmod><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://curiomindsinc.pages.dev/</loc><lastmod>2026-11-16</lastmod><changefreq>weekly</changefreq><priority>1.0</priority></url>
   <url><loc>https://curiomindsinc.pages.dev/about</loc><lastmod>2026-07-31</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://curiomindsinc.pages.dev/impact</loc><lastmod>2026-10-02</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
 

@@ -55,7 +55,9 @@ function walk(dir, rel = '', out = []) {
   execFileSync(process.execPath, [path.join(__dirname, 'build-dist.js')], { stdio: 'inherit' });
 
   // 3. Compare dist/ with the repo; refuse to overwrite newer GitHub edits.
-  const files = [...walk(DIST).map(f => ['dist', f]), ['tools', 'build-dist.js'], ['tools', 'deploy.js']];
+  // functions/ holds the Pages Functions (/api/messages, /api/notify); it is not in dist/.
+  const files = [...walk(DIST).map(f => ['dist', f]), ['tools', 'build-dist.js'], ['tools', 'deploy.js'],
+    ...walk(path.join(ROOT, 'functions')).map(f => ['functions', f]), ['.', 'schema.sql']];
   const changed = [], newerOnGithub = [];
   for (const [from, f] of files) {
     const src = from === 'dist' ? path.join(DIST, f) : path.join(ROOT, from, f);
@@ -63,9 +65,21 @@ function walk(dir, rel = '', out = []) {
     const dst = path.join(REPO, rel);
     if (fs.existsSync(dst) && same(src, dst)) continue;
     if (fs.existsSync(dst)) {
-      const committed = Number(git('log', '-1', '--format=%ct', '--', rel.replace(/\\/g, '/'))) * 1000;
-      // dist/ copies get fresh timestamps, so check the original file in the project
-      if (committed > fs.statSync(path.join(ROOT, rel)).mtimeMs) { newerOnGithub.push(rel); continue; }
+      const orig = path.join(ROOT, rel);
+      // build-dist.js adds head tags to sim pages, so dist/ can differ from the project file.
+      // If GitHub still holds exactly my project file, nothing was edited there: safe to replace.
+      const untouched = from === 'dist' && same(orig, dst);
+      if (!untouched) {
+        const committed = Number(git('log', '-1', '--format=%ct', '--', rel.replace(/\\/g, '/'))) * 1000;
+        // dist/ copies get fresh timestamps, so check the original file in the project.
+        // A sim page in dist/ is also built from index.html (title, description) and build-dist.js.
+        let local = fs.statSync(orig).mtimeMs;
+        if (from === 'dist' && /\.html$/i.test(f)) {
+          local = Math.max(local, fs.statSync(path.join(ROOT, 'index.html')).mtimeMs,
+            fs.statSync(path.join(__dirname, 'build-dist.js')).mtimeMs);
+        }
+        if (committed > local) { newerOnGithub.push(rel); continue; }
+      }
     }
     changed.push([src, dst, rel]);
   }

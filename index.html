@@ -36,7 +36,7 @@
     "url": "https://curiomindsinc.pages.dev/",
     "logo": "https://curiomindsinc.pages.dev/assets/logo-512.png",
     "description": "Free interactive simulations for Singapore secondary students — science first, plus life skills like financial literacy, aligned to the MOE syllabus.",
-    "sameAs": ["https://www.instagram.com/curiominds.inc"]
+    "sameAs": ["https://www.instagram.com/curiominds.inc", "https://www.youtube.com/@Curiominds.inc88", "https://www.tiktok.com/@curiominds.inc"]
   }
   </script>
   <style>
@@ -491,6 +491,43 @@
     }
 
     footer span { color: var(--red); }
+    footer a { color: var(--red); text-decoration: none; }
+    footer a:hover { opacity: 0.8; }
+
+    /* ── NOTIFY FORM (coming-soon cards) ── */
+    .notify-form { margin-top: 0.5rem; display: flex; flex-wrap: wrap; gap: 0.4rem; }
+    .notify-form input[type="email"] {
+      flex: 1 1 10rem;
+      min-width: 0;
+      background: var(--navy);
+      border: 1.5px solid rgba(255,255,255,0.18);
+      border-radius: 20px;
+      padding: 0.4rem 0.8rem;
+      color: var(--white);
+      font-family: 'Nunito Sans', sans-serif;
+      font-size: 0.85rem;
+    }
+    .notify-form input[type="email"]:focus { outline: none; border-color: var(--gold); }
+    .notify-form .notify-btn { margin-top: 0; }
+    .notify-form .notify-hp { position: absolute; left: -9999px; width: 1px; height: 1px; }
+    .notify-note { flex-basis: 100%; font-size: 0.74rem; color: rgba(255,255,255,0.55); line-height: 1.4; }
+    .notify-note.ok { color: var(--gold); font-weight: 700; }
+
+    /* ── REEL LINK (on a card) ── */
+    .card-reel {
+      align-self: flex-start;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      font-size: 0.74rem;
+      letter-spacing: 0.04em;
+      color: rgba(255,255,255,0.8);
+      background: rgba(255,255,255,0.07);
+      border: 1.5px solid rgba(255,255,255,0.15);
+      border-radius: 20px;
+      padding: 0.25rem 0.7rem;
+      cursor: pointer;
+    }
+    .card-reel:hover { border-color: var(--red); color: var(--red); }
 
     /* ── RESPONSIVE ── */
     @media (max-width: 600px) {
@@ -680,6 +717,9 @@
       min-height: 1em;
     }
 
+    /* keep the footer links clear of the Leave a note button */
+    footer { padding-bottom: 5.5rem; }
+
     @media (max-width: 480px) {
       #mb-panel { width: calc(100vw - 1.5rem); right: 0.75rem; bottom: 0.75rem; }
       #mb-tab { bottom: 0.75rem; right: 0.75rem; height: 46px; font-size: 0.9rem; padding: 0 1rem 0 0.85rem; }
@@ -715,6 +755,9 @@
     <span class="trust-chip"><span class="tc-ico">📚</span>MOE-syllabus aligned</span>
     <span class="trust-chip"><span class="tc-ico">💻</span>Runs in any browser</span>
     <a class="trust-chip" href="about.html"><span class="tc-ico">👤</span>Who made this →</a>
+    <a class="trust-chip" href="https://www.instagram.com/curiominds.inc" target="_blank" rel="noopener"><span class="tc-ico">📷</span>Instagram</a>
+    <a class="trust-chip" href="https://www.youtube.com/@Curiominds.inc88" target="_blank" rel="noopener"><span class="tc-ico">▶️</span>YouTube</a>
+    <a class="trust-chip" href="https://www.tiktok.com/@curiominds.inc" target="_blank" rel="noopener"><span class="tc-ico">🎵</span>TikTok</a>
   </div>
 </header>
 
@@ -791,10 +834,11 @@
 </main>
 
 <footer>
-  © 2026 <span>CurioMinds.inc</span> &nbsp;·&nbsp; Where concepts click.
+  © 2026 <span>CurioMinds.inc</span> &nbsp;·&nbsp; Where concepts click. &nbsp;·&nbsp; <a href="https://www.instagram.com/curiominds.inc" target="_blank" rel="noopener">Instagram</a> &nbsp;·&nbsp; <a href="https://www.youtube.com/@Curiominds.inc88" target="_blank" rel="noopener">YouTube</a> &nbsp;·&nbsp; <a href="https://www.tiktok.com/@curiominds.inc" target="_blank" rel="noopener">TikTok</a>
 </footer>
 
 <script>
+// Optional on any live sim: reel:'https://…' (its Instagram / YouTube / TikTok video) adds a "Watch the reel" link to the card.
 const SIMS = [
   // ── Physics ──
   { cat:'physics', href:'Physics/springs.html', title:'Springs & Hooke\'s Law Lab', desc:'Hang 100 g masses on a spring in 3D, read the pointer at eye level and plot your own force–extension graph to find the spring constant and the limit of proportionality. Compare stiff and soft springs and a rubber band, zoom inside the wire to see atoms slip past the elastic limit, build your own spring balance for the wet market and spot the mistakes in flawed experiments.' },
@@ -888,6 +932,7 @@ function renderSims() {
         <div class="card-body">
           <div class="card-title">${s.title}</div>
           <div class="card-desc">${s.desc}</div>
+          ${s.reel ? `<span class="card-reel" role="link" tabindex="0" data-reel="${s.reel}">▶ Watch the reel</span>` : ''}
           <div class="card-link">Launch simulation</div>
         </div>
       </a>`;
@@ -919,7 +964,7 @@ document.querySelectorAll('.filter-btn[data-cat]').forEach(btn => {
   </div>
   <div id="mb-messages"><div class="mb-empty">Loading…</div></div>
   <form id="mb-form">
-    <div id="mb-hint">Loved a sim? Spotted a bug? Need a sim for a topic? Drop a note — I read every one.</div>
+    <div id="mb-hint">Loved a sim? Spotted a bug? Need a sim for a topic? Drop a note — I read every one. Notes are public, so please leave out emails and phone numbers.</div>
     <input type="text" id="mb-name" maxlength="60" placeholder="Name / school (optional)"/>
     <textarea id="mb-message" rows="2" maxlength="500" required placeholder="e.g. The heart sim worked great with my Sec 2s!"></textarea>
     <input type="text" id="mb-website" tabindex="-1" autocomplete="off"/>
@@ -982,24 +1027,57 @@ document.querySelectorAll('.filter-btn[data-cat]').forEach(btn => {
     mbTab.style.display = 'flex';
   });
 
-  function mbOpen(prefill) {
-    mbPanel.classList.add('open');
-    mbTab.style.display = 'none';
-    if (!mbLoaded) { mbLoaded = true; mbLoadMessages(); }
-    if (prefill) {
-      const box = document.getElementById('mb-message');
-      box.value = prefill;
-      box.focus();
-      box.setSelectionRange(box.value.length, box.value.length);
-    }
-  }
-
-  // "Notify me" on coming-soon cards → message board, pre-filled
+  // "Notify me" on coming-soon cards → a small email form in the card.
+  // The email goes to a private list (/api/notify), never to the public message board.
   document.addEventListener('click', (e) => {
-    const btn = e.target.closest('[data-notify]');
+    const btn = e.target.closest('button[data-notify]');
     if (!btn) return;
-    mbOpen(`Notify me when "${btn.dataset.notify}" is ready — my email is: `);
+    const form = document.createElement('form');
+    form.className = 'notify-form';
+    form.dataset.sim = btn.dataset.notify;
+    form.innerHTML = `
+      <input type="email" required maxlength="254" autocomplete="email" placeholder="Your email" aria-label="Your email"/>
+      <input type="text" class="notify-hp" tabindex="-1" autocomplete="off" aria-hidden="true"/>
+      <button type="submit" class="notify-btn">Notify me</button>
+      <div class="notify-note">Kept private. Used once, to tell you when this sim is ready.</div>`;
+    btn.replaceWith(form);
+    form.querySelector('input[type="email"]').focus();
   });
+
+  document.addEventListener('submit', async (e) => {
+    const form = e.target.closest('.notify-form');
+    if (!form) return;
+    e.preventDefault();
+    const note = form.querySelector('.notify-note');
+    const send = form.querySelector('button');
+    send.disabled = true;
+    try {
+      const res = await fetch('/api/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sim: form.dataset.sim,
+          email: form.querySelector('input[type="email"]').value,
+          website: form.querySelector('.notify-hp').value
+        })
+      });
+      if (!res.ok) throw new Error('failed');
+      form.innerHTML = '<div class="notify-note ok">Thanks! I will email you when it is ready.</div>';
+    } catch (err) {
+      note.textContent = 'That did not go through. Check the email and try again.';
+      send.disabled = false;
+    }
+  });
+
+  // "Watch the reel" sits inside the card link, so open it without launching the sim.
+  const openReel = (e) => {
+    const el = e.target.closest('[data-reel]');
+    if (!el) return;
+    e.preventDefault();
+    window.open(el.dataset.reel, '_blank', 'noopener');
+  };
+  document.addEventListener('click', openReel);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Enter') openReel(e); });
 
   mbForm.addEventListener('submit', async (e) => {
     e.preventDefault();
