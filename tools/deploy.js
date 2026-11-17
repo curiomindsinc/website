@@ -97,6 +97,18 @@ function walk(dir, rel = '', out = []) {
   if (!msg) msg = await ask('\nWhat changed? (commit message, blank = cancel): ');
   if (!msg) fail('cancelled, nothing uploaded.');
 
+  // Coming-soon cards that this deploy turns into live sims (old = live site, new = this build).
+  const { simsIn, linkFor } = require('./notify-db');
+  let launched = [], vanished = [];
+  try {
+    const before = simsIn(path.join(REPO, 'index.html')), after = simsIn(path.join(DIST, 'index.html'));
+    for (const old of before.filter(s => s.comingSoon)) {
+      const now = after.find(s => s.title === old.title);
+      if (!now) vanished.push(old.title);
+      else if (now.href && !now.comingSoon) launched.push({ title: now.title, link: linkFor(now.href) });
+    }
+  } catch (e) { console.log('(Could not compare coming-soon cards: ' + e.message + ')'); }
+
   // 5. Copy, commit, push.
   for (const [src, dst] of changed) {
     fs.mkdirSync(path.dirname(dst), { recursive: true });
@@ -109,4 +121,18 @@ function walk(dir, rel = '', out = []) {
   catch { fail('git push failed (see above). Your commit is saved in the repo copy; run "git push" there to retry.'); }
 
   console.log(`\nDone: ${git('log', '-1', '--format=%h')} pushed. ${SITE} updates in about 20 seconds.`);
+
+  // 6. Launch emails for "Notify me" sign-ups. Never fails the deploy: it is already pushed.
+  if (launched.length || vanished.length) {
+    try {
+      const { launch } = require('./launch-email');
+      const { emailsFor } = require('./notify-db');
+      for (const s of launched) await launch(s.title, { link: s.link, confirm: 'ask' });
+      for (const t of vanished) {
+        const n = emailsFor(t).length;
+        if (n) console.log(`\n"${t}" was coming soon and is no longer on the site (renamed?). ${n} people were waiting.` +
+          `\n  See them:  node tools/notify-list.js "${t}"`);
+      }
+    } catch (e) { console.log('\nLaunch email step did not finish: ' + e.message); }
+  }
 })();
