@@ -201,36 +201,34 @@
 
     header p.hero-sub strong { color: var(--white); font-weight: 700; }
 
-    /* ── TRUST STRIP ── */
-    .trust-strip {
+    /* ── TRUST LINE: one quiet line of facts + socials ── */
+    .trust-line {
       position: relative;
       z-index: 1;
-      margin: 1.6rem auto 0;
+      margin: 1.4rem auto 0;
       max-width: 900px;
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
-      align-items: center;
-      gap: 0.5rem 0.65rem;
-    }
-    .trust-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
+      align-items: baseline;
+      gap: 0.35rem 2rem;
       font-family: 'Nunito', sans-serif;
-      font-weight: 700;
-      font-size: 0.76rem;
-      letter-spacing: 0.02em;
-      color: rgba(255,255,255,0.78);
-      background: rgba(255,255,255,0.07);
-      border: 1.5px solid rgba(255,255,255,0.13);
-      border-radius: 20px;
-      padding: 0.32rem 0.8rem;
-      white-space: nowrap;
+      font-weight: 600;
+      font-size: 0.82rem;
+      color: rgba(255,255,255,0.6);
     }
-    .trust-chip .tc-ico { font-size: 0.9rem; line-height: 1; }
-    a.trust-chip { text-decoration: none; transition: border-color 0.2s, color 0.2s; }
-    a.trust-chip:hover { border-color: var(--red); color: var(--red); }
+    .trust-line p { margin: 0; }
+    .trust-line .f, .trust-line a { white-space: nowrap; }
+    .trust-line .dot { margin: 0 0.45rem; opacity: 0.5; }
+    .trust-line a {
+      color: rgba(255,255,255,0.78);
+      text-decoration: underline;
+      text-decoration-color: rgba(255,255,255,0.25);
+      text-underline-offset: 3px;
+      transition: color 0.2s, text-decoration-color 0.2s;
+    }
+    .trust-line a:hover { color: var(--red); text-decoration-color: var(--red); }
+    .trust-line a:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 3px; }
 
     /* ── MAIN ── */
     main {
@@ -826,15 +824,9 @@
     </div>
   </div>
 
-  <div class="trust-strip">
-    <span class="trust-chip"><span class="tc-ico">🎓</span>Built by a practising MOE science teacher</span>
-    <span class="trust-chip"><span class="tc-ico">🆓</span>Free — no login, no student data collected</span>
-    <span class="trust-chip"><span class="tc-ico">📚</span>MOE-syllabus aligned</span>
-    <span class="trust-chip"><span class="tc-ico">💻</span>Runs in any browser</span>
-    <a class="trust-chip" href="about.html"><span class="tc-ico">👤</span>Who made this →</a>
-    <a class="trust-chip" href="https://www.instagram.com/curiominds.inc" target="_blank" rel="noopener"><span class="tc-ico">📷</span>Instagram</a>
-    <a class="trust-chip" href="https://www.youtube.com/@Curiominds.inc88" target="_blank" rel="noopener"><span class="tc-ico">▶️</span>YouTube</a>
-    <a class="trust-chip" href="https://www.tiktok.com/@curiominds.inc" target="_blank" rel="noopener"><span class="tc-ico">🎵</span>TikTok</a>
+  <div class="trust-line">
+    <p class="trust-facts"><a href="about.html">Built by an MOE teacher</a><span class="dot" aria-hidden="true">·</span><span class="f">Free</span><span class="dot" aria-hidden="true">·</span><span class="f">No login</span><span class="dot" aria-hidden="true">·</span><span class="f">No student data</span></p>
+    <p class="trust-social"><a href="https://www.instagram.com/curiominds.inc" target="_blank" rel="noopener">Instagram</a><span class="dot" aria-hidden="true">·</span><a href="https://www.youtube.com/@Curiominds.inc88" target="_blank" rel="noopener">YouTube</a><span class="dot" aria-hidden="true">·</span><a href="https://www.tiktok.com/@curiominds.inc" target="_blank" rel="noopener">TikTok</a></p>
   </div>
 </header>
 
