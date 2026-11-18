@@ -476,6 +476,99 @@
     }
     .filter-btn:hover { border-color: var(--red); color: var(--red); }
     .filter-btn.active { background: var(--red); border-color: var(--red); color: var(--white); }
+    .filter-btn:focus-visible, .level-chip:focus-visible, .tag:focus-visible, #search-clear:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+    /* ── FINDER ── */
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    .finder-row {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.6rem 0.9rem;
+      padding: 0.7rem 0 0.15rem;
+    }
+    .search-wrap { position: relative; flex: 1 1 280px; min-width: 0; }
+    .search-ico { position: absolute; left: 0.8rem; top: 50%; transform: translateY(-50%); font-size: 0.85rem; opacity: 0.6; pointer-events: none; }
+    #sim-search {
+      width: 100%;
+      font: 600 0.92rem 'Nunito', sans-serif;
+      color: var(--white);
+      background: rgba(255,255,255,0.06);
+      border: 1.5px solid rgba(255,255,255,0.18);
+      border-radius: 22px;
+      padding: 0.55rem 2.2rem 0.55rem 2.2rem;
+      transition: border-color 0.2s, background 0.2s;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    #sim-search::placeholder { color: rgba(255,255,255,0.45); }
+    #sim-search::-webkit-search-cancel-button { display: none; }
+    #sim-search:focus { outline: none; border-color: var(--gold); background: rgba(255,255,255,0.09); }
+    #search-clear {
+      position: absolute; right: 0.4rem; top: 50%; transform: translateY(-50%);
+      width: 1.7rem; height: 1.7rem; border-radius: 50%;
+      border: none; background: rgba(255,255,255,0.12); color: var(--white);
+      font-size: 0.75rem; cursor: pointer;
+    }
+    #search-clear:hover { background: var(--red); }
+    .level-chips { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+    .level-chip {
+      font: 800 0.76rem 'Nunito', sans-serif;
+      letter-spacing: 0.03em;
+      padding: 0.38rem 0.85rem;
+      border-radius: 20px;
+      border: 1.5px solid rgba(245,200,66,0.40);
+      background: transparent;
+      color: var(--gold);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.2s, color 0.2s;
+    }
+    .level-chip:hover { background: rgba(245,200,66,0.12); }
+    .level-chip[aria-pressed="true"] { background: var(--gold); color: var(--bg); border-color: var(--gold); }
+    .sim-count { font: 700 0.76rem 'Nunito', sans-serif; color: rgba(255,255,255,0.55); white-space: nowrap; margin-left: auto; }
+
+    /* card meta: level badges + topic tags */
+    .card-badges { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+    .lvl {
+      font: 800 0.64rem 'Nunito', sans-serif;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 0.12rem 0.5rem;
+      border-radius: 6px;
+      background: rgba(245,200,66,0.14);
+      color: var(--gold);
+    }
+    .lvl.enrich { background: rgba(107,63,160,0.35); color: #D9C6F2; }
+    .card-tags { display: flex; flex-wrap: wrap; gap: 0.3rem; position: relative; z-index: 2; }
+    .tag {
+      font: 700 0.7rem 'Nunito', sans-serif;
+      padding: 0.15rem 0.55rem;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: transparent;
+      color: rgba(255,255,255,0.72);
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .tag:hover { border-color: var(--red); color: var(--white); }
+    /* whole card clickable via the title link; tags sit above it */
+    .card-main { color: inherit; text-decoration: none; }
+    .card-main::after { content: ''; position: absolute; inset: 0; z-index: 1; border-radius: inherit; }
+    .card-main:focus-visible { outline: none; }
+    .card:has(.card-main:focus-visible) { outline: 2px solid var(--gold); outline-offset: 3px; }
+    .card[hidden], .category[hidden] { display: none !important; }
+
+    .no-results { max-width: 560px; margin: 1rem auto 4rem; text-align: center; }
+    .nr-title { font: 800 1.3rem 'Nunito', sans-serif; color: var(--white); margin-bottom: 0.4rem; }
+    .nr-sub { color: rgba(255,255,255,0.65); font-size: 0.92rem; line-height: 1.55; margin-bottom: 1rem; }
+    .nr-actions { display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap; }
+    @media (max-width: 600px) {
+      .filter-bar { padding: 0 1rem; }
+      .sim-count { margin-left: 0; }
+    }
 
     /* ── FOOTER ── */
     footer {
@@ -745,15 +838,29 @@
   </div>
 </header>
 
-<div class="filter-bar">
-  <div class="filter-row">
-    <button class="filter-btn active" data-cat="all">All</button>
-    <button class="filter-btn" data-cat="physics">⚛️ Physics</button>
-    <button class="filter-btn" data-cat="chemistry">🧪 Chemistry</button>
-    <button class="filter-btn" data-cat="biology">🧬 Biology</button>
-    <button class="filter-btn" data-cat="earth-science">🌍 Earth Science</button>
-    <button class="filter-btn" data-cat="astronomy">🔭 Astronomy</button>
-    <button class="filter-btn" data-cat="beyond">💡 Beyond the Syllabus</button>
+<div class="filter-bar" role="search">
+  <div class="finder-row">
+    <div class="search-wrap">
+      <label for="sim-search" class="sr-only">Search simulations</label>
+      <span class="search-ico" aria-hidden="true">🔍</span>
+      <input type="search" id="sim-search" placeholder="Search sims or topics, e.g. osmosis, titration" autocomplete="off" spellcheck="false"/>
+      <button type="button" id="search-clear" aria-label="Clear search" hidden>✕</button>
+    </div>
+    <div class="level-chips" role="group" aria-label="Filter by level">
+      <button type="button" class="level-chip" data-level="sec" aria-pressed="false">Sec 1–2</button>
+      <button type="button" class="level-chip" data-level="o" aria-pressed="false">O-Level</button>
+      <button type="button" class="level-chip" data-level="a" aria-pressed="false">A-Level</button>
+    </div>
+    <span id="sim-count" class="sim-count" aria-live="polite"></span>
+  </div>
+  <div class="filter-row" role="group" aria-label="Filter by subject">
+    <button class="filter-btn active" data-cat="all" aria-pressed="true">All</button>
+    <button class="filter-btn" data-cat="physics" aria-pressed="false">⚛️ Physics</button>
+    <button class="filter-btn" data-cat="chemistry" aria-pressed="false">🧪 Chemistry</button>
+    <button class="filter-btn" data-cat="biology" aria-pressed="false">🧬 Biology</button>
+    <button class="filter-btn" data-cat="earth-science" aria-pressed="false">🌍 Earth Science</button>
+    <button class="filter-btn" data-cat="astronomy" aria-pressed="false">🔭 Astronomy</button>
+    <button class="filter-btn" data-cat="beyond" aria-pressed="false">💡 Beyond the Syllabus</button>
   </div>
 </div>
 
@@ -814,6 +921,14 @@
     <div class="cards-grid" id="grid-beyond"></div>
   </section>
 
+  <div id="no-results" class="no-results" hidden>
+    <p class="nr-title">No sim for that yet.</p>
+    <p class="nr-sub">Try a different word or clear the filters, or tell me which topic you need and I may build it.</p>
+    <div class="nr-actions">
+      <button type="button" id="nr-reset" class="filter-btn">Clear filters</button>
+      <button type="button" id="nr-suggest" class="filter-btn active">💬 Suggest a sim</button>
+    </div>
+  </div>
 
 </main>
 
@@ -824,69 +939,69 @@
 <script>
 const SIMS = [
   // ── Physics ──
-  { cat:'physics', href:'Physics/springs.html', title:'Springs & Hooke\'s Law Lab', desc:'Hang 100 g masses on a spring in 3D, read the pointer at eye level and plot your own force–extension graph to find the spring constant and the limit of proportionality. Compare stiff and soft springs and a rubber band, zoom inside the wire to see atoms slip past the elastic limit, build your own spring balance for the wet market and spot the mistakes in flawed experiments.' },
-  { cat:'physics', href:'Physics/magnetism.html', title:'Magnetism Lab', desc:'Lay magnets, soft iron, a wire, a coil and a solenoid on a card in 3D and watch the field lines, iron filings and compasses. Find neutral points, shield with an iron ring and see the force on a wire, then test materials, magnetise and demagnetise a bar, and build an electromagnet.' },
-  { cat:'physics', href:'Physics/radioactivity.html', title:'Radioactivity & Cloud Chamber', desc:'Watch alpha, beta and gamma tracks glow in a cloud chamber, test paper, aluminium and lead as shields with a GM tube and counter, correct for background radiation, identify a mystery source, and watch a half-life curve build from random decays.' },
-  { cat:'physics', href:'Physics/waves_lab.html', title:'Ripple Tank & Waves', desc:'Change the frequency in a ripple tank and watch the wavelength shrink, send waves through a gap and over shallow water to see diffraction and refraction, compare transverse and longitudinal waves, time an echo, and explore the EM spectrum. v = fλ.' },
-  { cat:'physics', href:'Physics/motion_graphs.html', title:'Motion Graphs Lab', desc:'Drive a cart along a flat track and watch its distance–time and speed–time graphs plot live. Read speed from a gradient, shade the area under the graph to get distance, and beat the classic mistake of reading a graph as a picture of the path.' },
-  { cat:'physics', href:'Physics/light_lab.html', title:'Light Lab', desc:'Bounce a torch beam off smooth and rough mirrors, construct plane-mirror ray diagrams, bend light through glass blocks, an optical fibre and a prism, then find the image formed by a converging lens.' },
-  { cat:'physics', href:'Physics/brownian_motion.html', title:'Brownian Motion', desc:'Watch tiny particles collide randomly with invisible molecules — a window into the kinetic theory of matter.' },
-  { cat:'physics', href:'Physics/heat_transfer.html', title:'Heat Transfer Lab', desc:'Heat a rod of vibrating particles and race copper against glass, watch convection currents carry dye round a beaker, compare black and shiny cans as radiators, then strip a vacuum flask part by part to see what each part does.' },
-  { cat:'physics', href:'Physics/catapult_simulator.html', title:'Catapult & Projectile Motion', desc:'Adjust launch angle and speed to fire a catapult at a distant castle — discover how the range formula governs every shot through open-ended experimentation.' },
-  { cat:'physics', href:'Physics/fma-standalone.html', title:'F = ma: Track & Ramp Lab', desc:'Send carts down a track-and-pulley rig or up a ramp and watch force, mass and acceleration play out in real time — test Newton\'s Second Law scene by scene.' },
-  { cat:'physics', href:'Physics/conservationenergy-standalone.html', title:'Pendulum & Energy', desc:'Swing pendulums side by side and vary length, mass, and pull-back angle to see what controls the period — and watch energy flow between height and motion.' },
-  { cat:'physics', href:'Physics/moments-standalone.html', title:'Moments & Levers', desc:'Drag masses onto a beam and slide the pivot to balance it, then compare clockwise and anticlockwise moments to discover the principle of moments.' },
-  { cat:'physics', href:'Physics/electricity-lab/index.html', title:'Electricity Lab', desc:'Four linked sims covering the whole electricity strand: build series and parallel circuits, predict meter readings, work out the cost of running appliances in an HDB flat, and explore motors, generators and transformers. Teacher notes and worksheets included.' },
+  { cat:'physics', href:'Physics/springs.html', title:'Springs & Hooke\'s Law Lab', desc:'Hang 100 g masses on a spring in 3D, read the pointer at eye level and plot your own force–extension graph to find the spring constant and the limit of proportionality. Compare stiff and soft springs and a rubber band, zoom inside the wire to see atoms slip past the elastic limit, build your own spring balance for the wet market and spot the mistakes in flawed experiments.', hook:'Hang masses, plot force–extension and find the spring constant.', levels:['sec','o','a'], topics:['Dynamics','Hooke\'s Law'], kw:'hooke, spring constant, extension, elastic' },
+  { cat:'physics', href:'Physics/magnetism.html', title:'Magnetism Lab', desc:'Lay magnets, soft iron, a wire, a coil and a solenoid on a card in 3D and watch the field lines, iron filings and compasses. Find neutral points, shield with an iron ring and see the force on a wire, then test materials, magnetise and demagnetise a bar, and build an electromagnet.', hook:'See field lines around magnets, wires and solenoids in 3D.', levels:['o'], topics:['Magnetism','Electromagnetism'], kw:'field lines, compass, solenoid, electromagnet' },
+  { cat:'physics', href:'Physics/radioactivity.html', title:'Radioactivity & Cloud Chamber', desc:'Watch alpha, beta and gamma tracks glow in a cloud chamber, test paper, aluminium and lead as shields with a GM tube and counter, correct for background radiation, identify a mystery source, and watch a half-life curve build from random decays.', hook:'Watch α, β and γ tracks, test shields and time a half-life.', levels:['sec','o','a'], topics:['Radioactivity'], kw:'alpha, beta, gamma, half-life, nuclear, decay' },
+  { cat:'physics', href:'Physics/waves_lab.html', title:'Ripple Tank & Waves', desc:'Change the frequency in a ripple tank and watch the wavelength shrink, send waves through a gap and over shallow water to see diffraction and refraction, compare transverse and longitudinal waves, time an echo, and explore the EM spectrum. v = fλ.', hook:'Change frequency and watch waves reflect, refract and diffract.', levels:['sec','o','a'], topics:['General Properties of Waves','EM Spectrum','Sound'], kw:'wavelength, frequency, diffraction, refraction, sound, echo' },
+  { cat:'physics', href:'Physics/motion_graphs.html', title:'Motion Graphs Lab', desc:'Drive a cart along a flat track and watch its distance–time and speed–time graphs plot live. Read speed from a gradient, shade the area under the graph to get distance, and beat the classic mistake of reading a graph as a picture of the path.', hook:'Drive a cart and watch its d–t and v–t graphs plot live.', levels:['sec','o','a'], topics:['Kinematics'], kw:'speed, velocity, acceleration, distance-time, gradient' },
+  { cat:'physics', href:'Physics/light_lab.html', title:'Light Lab', desc:'Bounce a torch beam off smooth and rough mirrors, construct plane-mirror ray diagrams, bend light through glass blocks, an optical fibre and a prism, then find the image formed by a converging lens.', hook:'Bend a beam with mirrors, glass blocks, a prism and a lens.', levels:['sec','o'], topics:['Light'], kw:'reflection, refraction, lens, mirror, prism, optical fibre, total internal reflection' },
+  { cat:'physics', href:'Physics/brownian_motion.html', title:'Brownian Motion', desc:'Watch tiny particles collide randomly with invisible molecules — a window into the kinetic theory of matter.', hook:'Watch smoke particles jiggle as invisible molecules hit them.', levels:['sec','o'], topics:['Kinetic Particle Model of Matter'] },
+  { cat:'physics', href:'Physics/heat_transfer.html', title:'Heat Transfer Lab', desc:'Heat a rod of vibrating particles and race copper against glass, watch convection currents carry dye round a beaker, compare black and shiny cans as radiators, then strip a vacuum flask part by part to see what each part does.', hook:'Race copper against glass and see convection and radiation at work.', levels:['sec','o'], topics:['Thermal Processes'], kw:'conduction, convection, radiation, vacuum flask' },
+  { cat:'physics', href:'Physics/catapult_simulator.html', title:'Catapult & Projectile Motion', desc:'Adjust launch angle and speed to fire a catapult at a distant castle — discover how the range formula governs every shot through open-ended experimentation.', hook:'Set angle and speed to hit a castle and find the range rule.', levels:['a'], topics:['Kinematics','Projectiles'] },
+  { cat:'physics', href:'Physics/fma-standalone.html', title:'F = ma: Track & Ramp Lab', desc:'Send carts down a track-and-pulley rig or up a ramp and watch force, mass and acceleration play out in real time — test Newton\'s Second Law scene by scene.', hook:'Pull carts along a track and test Newton\'s Second Law.', levels:['o','a'], topics:['Dynamics'], kw:'newton, force, acceleration, friction' },
+  { cat:'physics', href:'Physics/conservationenergy-standalone.html', title:'Pendulum & Energy', desc:'Swing pendulums side by side and vary length, mass, and pull-back angle to see what controls the period — and watch energy flow between height and motion.', hook:'Find what controls a pendulum\'s period and watch energy change form.', levels:['sec','o'], topics:['Energy'], kw:'kinetic energy, potential energy, GPE, period' },
+  { cat:'physics', href:'Physics/moments-standalone.html', title:'Moments & Levers', desc:'Drag masses onto a beam and slide the pivot to balance it, then compare clockwise and anticlockwise moments to discover the principle of moments.', hook:'Balance a beam with masses and discover the principle of moments.', levels:['sec','o'], topics:['Turning Effect of Forces'], kw:'lever, pivot, torque, seesaw, centre of gravity' },
+  { cat:'physics', href:'Physics/electricity-lab/index.html', title:'Electricity Lab', desc:'Four linked sims covering the whole electricity strand: build series and parallel circuits, predict meter readings, work out the cost of running appliances in an HDB flat, and explore motors, generators and transformers. Teacher notes and worksheets included.', hook:'Build circuits, predict meter readings and cost an HDB electricity bill.', levels:['sec','o'], topics:['Current of Electricity','D.C. Circuits','Practical Electricity','Electromagnetism'], kw:'circuit, current, voltage, resistance, ohm, series, parallel, motor, generator, transformer' },
   // ── Chemistry ──
-  { cat:'chemistry', href:'Chemistry/periodic_table.html', title:'Periodic Table Lab — Trends & Reactivity', desc:'Turn the periodic table into a 3D skyline of melting points, atomic radius and more, and watch the trends rise and fall. Compare atoms shell by shell, drop lithium, sodium and potassium into water, run halogen displacement, and write a CER checked against your own results.' },
-  { cat:'chemistry', href:'Chemistry/ph_lab.html', title:'pH Lab — Acids, Alkalis & Titration', desc:'Test lemon juice, soap, bleach and lab acids with universal indicator, litmus and phenolphthalein in 3D, then check with a pH meter. Run a titration with a burette and watch the pH curve build, and zoom in to see H⁺ and OH⁻ ions neutralise.' },
-  { cat:'chemistry', href:'Chemistry/compound_builder_v2.html', title:'Chemical Compound Builder', desc:'Experiment with atoms and ions as they combine in fixed ratios — uncover the patterns behind chemical compounds through hands-on discovery.' },
-  { cat:'chemistry', href:'Chemistry/equation_balancer_v2.html', title:'Chemical Equation Balancer', desc:'Visualise atom counts on both sides of a reaction and learn to balance chemical equations by adjusting coefficients in real time.' },
-  { cat:'chemistry', href:'Chemistry/states_of_matter_v2.html', title:'States of Matter — Particle Simulator', desc:'Heat and cool water, ethanol, oxygen or copper and watch the particles melt, boil and condense. Plot heating and cooling curves, run diffusion experiments and test your predictions.' },
-  { cat:'chemistry', href:'Chemistry/bonding.html', title:'How Atoms Bond', desc:'Drag atoms together and watch electrons transfer or share to form ionic and covalent bonds, then build up to simple molecules and giant structures like diamond and graphite.' },
-  { cat:'chemistry', href:'Chemistry/electrolysis_standalone.html', title:'Electrolysis Lab', desc:'Choose a molten or aqueous electrolyte, predict the products, then switch on the current and watch ions migrate to the electrodes as the half equations play out.' },
-  { cat:'chemistry', href:'Chemistry/rate_of_reaction.html', title:'Rate of Reaction — Collision Theory', desc:'Change temperature, concentration, surface area and add a catalyst, and watch which particle collisions react. Run gas syringe, mass loss and disappearing cross experiments and compare rates on the same graph.' },
+  { cat:'chemistry', href:'Chemistry/periodic_table.html', title:'Periodic Table Lab — Trends & Reactivity', desc:'Turn the periodic table into a 3D skyline of melting points, atomic radius and more, and watch the trends rise and fall. Compare atoms shell by shell, drop lithium, sodium and potassium into water, run halogen displacement, and write a CER checked against your own results.', hook:'See trends rise as a 3D skyline, then drop alkali metals in water.', levels:['sec','o','a'], topics:['The Periodic Table'], kw:'group, period, alkali metals, halogens, displacement, trends' },
+  { cat:'chemistry', href:'Chemistry/ph_lab.html', title:'pH Lab — Acids, Alkalis & Titration', desc:'Test lemon juice, soap, bleach and lab acids with universal indicator, litmus and phenolphthalein in 3D, then check with a pH meter. Run a titration with a burette and watch the pH curve build, and zoom in to see H⁺ and OH⁻ ions neutralise.', hook:'Test household liquids with indicators and run a titration.', levels:['sec','o','a'], topics:['Acids and Bases'], kw:'acid, alkali, base, indicator, titration, neutralisation, litmus' },
+  { cat:'chemistry', href:'Chemistry/compound_builder_v2.html', title:'Chemical Compound Builder', desc:'Experiment with atoms and ions as they combine in fixed ratios — uncover the patterns behind chemical compounds through hands-on discovery.', hook:'Combine ions in the right ratio to write ionic formulae.', levels:['o'], topics:['Chemical Bonding','Formulae'], kw:'ionic formula, ions, valency, cation, anion' },
+  { cat:'chemistry', href:'Chemistry/equation_balancer_v2.html', title:'Chemical Equation Balancer', desc:'Visualise atom counts on both sides of a reaction and learn to balance chemical equations by adjusting coefficients in real time.', hook:'Balance equations by adjusting coefficients with a live atom count.', levels:['sec','o'], topics:['Chemical Equations','Stoichiometry'], kw:'balancing, coefficients, mole, stoichiometry' },
+  { cat:'chemistry', href:'Chemistry/states_of_matter_v2.html', title:'States of Matter — Particle Simulator', desc:'Heat and cool water, ethanol, oxygen or copper and watch the particles melt, boil and condense. Plot heating and cooling curves, run diffusion experiments and test your predictions.', hook:'Heat and cool substances and watch particles melt, boil and condense.', levels:['sec','o'], topics:['Kinetic Particle Theory'], kw:'melting, boiling, evaporation, condensation, diffusion, particles' },
+  { cat:'chemistry', href:'Chemistry/bonding.html', title:'How Atoms Bond', desc:'Drag atoms together and watch electrons transfer or share to form ionic and covalent bonds, then build up to simple molecules and giant structures like diamond and graphite.', hook:'Watch electrons transfer or share to form ionic and covalent bonds.', levels:['o','a'], topics:['Chemical Bonding','Structure and Properties'], kw:'ionic, covalent, metallic, diamond, graphite, dot-and-cross' },
+  { cat:'chemistry', href:'Chemistry/electrolysis_standalone.html', title:'Electrolysis Lab', desc:'Choose a molten or aqueous electrolyte, predict the products, then switch on the current and watch ions migrate to the electrodes as the half equations play out.', hook:'Predict the products, then watch ions move to the electrodes.', levels:['o','a'], topics:['Electrolysis'], kw:'electrode, anode, cathode, electroplating' },
+  { cat:'chemistry', href:'Chemistry/rate_of_reaction.html', title:'Rate of Reaction — Collision Theory', desc:'Change temperature, concentration, surface area and add a catalyst, and watch which particle collisions react. Run gas syringe, mass loss and disappearing cross experiments and compare rates on the same graph.', hook:'Change temperature, concentration and surface area and count collisions.', levels:['o','a'], topics:['Rate of Reactions'], kw:'catalyst, collision theory, activation energy, surface area' },
   // ── Biology ──
-  { cat:'biology', href:'Biology/heart.html', title:'Heart & Circulation Lab — Heart, Cardiac Cycle & Blood Vessels', desc:'Cut open a beating 3D heart and follow a drop of blood through all four chambers. Drag across the pressure graph and watch the valves open and shut. Compare double circulation with a fish, watch vein valves stop backflow, build up a coronary plaque over a lifetime, then take your own pulse after exercise and write it up as a CER. A-Level: the SAN, ECG, cardiac output and tissue fluid.' },
-  { cat:'biology', href:'Biology/nervous_system.html', title:'Nervous System Lab — Reflexes, Reaction Time & the Eye', desc:'Follow a 3D reflex arc from a candle flame to the biceps, and feel the pain only after your hand has moved. Measure your own reaction time with a ruler drop and write it up as a CER, focus and dilate a cut-away eye, and race a reflex against a decision. A-Level: build an action potential ion by ion and send a signal across a synapse.' },
-  { cat:'biology', href:'Biology/cell_division.html', title:'Cell Division Lab — Mitosis & Meiosis', desc:'Watch chromatin coil into chromosomes and a 3D cell divide by mitosis or meiosis. Place your own chiasma for crossing over, flip the pairs at metaphase I, and follow the alleles into four different gametes. Make 100 gametes to count the combinations, compare mitosis and meiosis side by side, and drill spotting the stage. A-Level: DNA content and non-disjunction.' },
-  { cat:'biology', href:'Biology/digestive_system.html', title:'The Digestive System', desc:'Follow a meal through a 3D gut from mouth to anus: peristalsis, stomach acid, bile and pancreatic juice, and starch, protein and fat breaking down live. Run enzyme experiments at different temperatures and pH, do the food tests on starch, egg white, oil and milk, zoom into a villus, and see the liver store glycogen and make urea.' },
-  { cat:'biology', href:'Biology/respiration.html', title:'Respiration Lab — Aerobic & Anaerobic', desc:'Measure respiration with a 3D respirometer of germinating peas and maggots, ferment yeast under oil, and put a runner on a treadmill to see the oxygen deficit, lactic acid and oxygen debt. A-Level: step through glycolysis, the link reaction, the Krebs cycle and oxidative phosphorylation.' },
-  { cat:'biology', href:'Biology/central_dogma.html', title:'Central Dogma — DNA to Protein', desc:'Build insulin yourself inside a 3D cell: drag RNA polymerase onto the promoter, pair bases to make mRNA, send it out through a nuclear pore and match tRNAs at the ribosome, then follow the protein through the Golgi body. Plus a mutation lab (sickle cell, frameshifts) and a codon decoder.' },
-  { cat:'biology', href:'Biology/photosynthesis.html', title:'Photosynthesis Lab', desc:'Run the pondweed bubble experiment that never fails on the day: move the lamp, add CO₂, warm the water and count bubbles. Then watch rate curves rise and plateau as the limiting factor switches between light, CO₂ and temperature, and see the bottleneck inside a chloroplast.' },
-  { cat:'biology', href:'Biology/monster_genetics_lab_v5.html', title:'Inheritance Monster Lab', desc:'Breed monsters with traits you cannot miss — horns, extra eyes, patchy or pink fur, gems and striped tails — across 14 levels from dominant and recessive alleles to codominance, ABO blood groups, sex determination, sex linkage, dihybrid crosses and the chi-squared test.' },
-  { cat:'biology', href:'Biology/enzymes_v2.html', title:'Enzymes — Lock and Key Hypothesis', desc:'See why maltase only fits maltose, not sucrose or lactose. Explore temperature, pH and concentration, then follow digestive enzymes along the gut.' },
-  { cat:'biology', href:'Biology/bioflow_v2.html', title:'Transport in Plants', desc:'Change temperature, humidity, wind and light to see transpiration, wilting and translocation in xylem and phloem, then run the potometer practical and write up your results.' },
-  { cat:'biology', href:'Biology/osmosis_v2.html', title:'Osmosis Lab', desc:'Watch water move across a partially permeable membrane, then place plant and animal cells in solutions and run the potato strip practical.' },
-  { cat:'biology', href:'Biology/coralreef-standalone.html', title:'EcoVerse: Coral Reef', desc:'Dive into a living 3D coral reef, inspect each organism\'s adaptations, trace the food web, and trigger heatwaves, storms, or starfish outbreaks to see how the reef responds.' },
-  { cat:'biology', href:'Biology/savanna-standalone.html', title:'EcoVerse: Savanna', desc:'Roam a living 3D savanna, inspect each organism\'s structural and behavioural adaptations, and trigger rain, dust storms, or bushfires to see how the ecosystem responds.' },
-  { cat:'biology', href:'Biology/chekjawa-standalone.html', title:'EcoVerse: Chek Jawa', desc:'Walk Singapore\'s Chek Jawa shore through a full tidal cycle — drag the waterline from spring low to high and inspect the adaptations that let each species survive both.' },
-  { cat:'biology', href:'Biology/hydrothermalvent-standalone.html', title:'EcoVerse: Hydrothermal Vent', desc:'Descend to a deep-sea vent field where life runs on chemicals instead of sunlight, and inspect the adaptations that survive crushing pressure, total darkness, and scalding water.' },
-  { cat:'biology', href:'Biology/antcolony-standalone.html', title:'EcoVerse: Ant Colony', desc:'Steer a living marauder ant colony — follow a single ant, cut its scent trail, send a raid, and watch what becomes of a nest that loses its queen.' },
-  { cat:'biology', href:'Biology/ecology-standalone.html', title:'Spring Meadow — Food Web Simulator', desc:'Run a living meadow of grass, wildflowers, rabbits, mice, foxes and hawks — watch the populations rise and fall, then unleash a wildfire, outbreak or extinction to see the whole food web respond.' },
-  { cat:'biology', href:'Biology/naturalselection-standalone.html', title:'Natural Selection Simulator', desc:'Watch populations evolve. See how predators, prey, and survival traits shape life over generations.' },
-  { cat:'biology', href:'Biology/bacteria-standalone.html', title:'Bacteria Evolution Simulator', desc:'Grow bacteria in a petri dish, drop in antibiotics, and watch random mutations give rise to resistant strains that take over the colony.' },
+  { cat:'biology', href:'Biology/heart.html', title:'Heart & Circulation Lab — Heart, Cardiac Cycle & Blood Vessels', desc:'Cut open a beating 3D heart and follow a drop of blood through all four chambers. Drag across the pressure graph and watch the valves open and shut. Compare double circulation with a fish, watch vein valves stop backflow, build up a coronary plaque over a lifetime, then take your own pulse after exercise and write it up as a CER. A-Level: the SAN, ECG, cardiac output and tissue fluid.', hook:'Cut open a beating 3D heart and follow blood through each chamber.', levels:['sec','o','a'], topics:['Transport in Humans'], kw:'blood, circulation, valve, artery, vein, capillary, pulse, ECG' },
+  { cat:'biology', href:'Biology/nervous_system.html', title:'Nervous System Lab — Reflexes, Reaction Time & the Eye', desc:'Follow a 3D reflex arc from a candle flame to the biceps, and feel the pain only after your hand has moved. Measure your own reaction time with a ruler drop and write it up as a CER, focus and dilate a cut-away eye, and race a reflex against a decision. A-Level: build an action potential ion by ion and send a signal across a synapse.', hook:'Follow a reflex arc and measure your own reaction time.', levels:['sec','o','a'], topics:['Coordination and Response'], kw:'reflex, neurone, synapse, reaction time, eye, pupil' },
+  { cat:'biology', href:'Biology/cell_division.html', title:'Cell Division Lab — Mitosis & Meiosis', desc:'Watch chromatin coil into chromosomes and a 3D cell divide by mitosis or meiosis. Place your own chiasma for crossing over, flip the pairs at metaphase I, and follow the alleles into four different gametes. Make 100 gametes to count the combinations, compare mitosis and meiosis side by side, and drill spotting the stage. A-Level: DNA content and non-disjunction.', hook:'Watch a 3D cell divide by mitosis and meiosis.', levels:['o','a'], topics:['Cell Division','Inheritance'], kw:'mitosis, meiosis, chromosome, gamete, crossing over' },
+  { cat:'biology', href:'Biology/digestive_system.html', title:'The Digestive System', desc:'Follow a meal through a 3D gut from mouth to anus: peristalsis, stomach acid, bile and pancreatic juice, and starch, protein and fat breaking down live. Run enzyme experiments at different temperatures and pH, do the food tests on starch, egg white, oil and milk, zoom into a villus, and see the liver store glycogen and make urea.', hook:'Follow a meal through a 3D gut and run enzyme and food tests.', levels:['sec','o'], topics:['Nutrition in Humans','Biological Molecules'], kw:'enzyme, amylase, protease, lipase, villi, bile, food tests, Benedict\'s, biuret' },
+  { cat:'biology', href:'Biology/respiration.html', title:'Respiration Lab — Aerobic & Anaerobic', desc:'Measure respiration with a 3D respirometer of germinating peas and maggots, ferment yeast under oil, and put a runner on a treadmill to see the oxygen deficit, lactic acid and oxygen debt. A-Level: step through glycolysis, the link reaction, the Krebs cycle and oxidative phosphorylation.', hook:'Measure respiration in peas and yeast, then race an athlete.', levels:['sec','o','a'], topics:['Respiration in Humans'], kw:'aerobic, anaerobic, lactic acid, ATP, yeast, fermentation, Krebs' },
+  { cat:'biology', href:'Biology/central_dogma.html', title:'Central Dogma — DNA to Protein', desc:'Build insulin yourself inside a 3D cell: drag RNA polymerase onto the promoter, pair bases to make mRNA, send it out through a nuclear pore and match tRNAs at the ribosome, then follow the protein through the Golgi body. Plus a mutation lab (sickle cell, frameshifts) and a codon decoder.', hook:'Build insulin from DNA to protein inside a 3D cell.', levels:['o','a'], topics:['Molecular Genetics'], kw:'DNA, RNA, transcription, translation, protein synthesis, mutation, codon' },
+  { cat:'biology', href:'Biology/photosynthesis.html', title:'Photosynthesis Lab', desc:'Run the pondweed bubble experiment that never fails on the day: move the lamp, add CO₂, warm the water and count bubbles. Then watch rate curves rise and plateau as the limiting factor switches between light, CO₂ and temperature, and see the bottleneck inside a chloroplast.', hook:'Count pondweed bubbles and find the limiting factor.', levels:['sec','o','a'], topics:['Nutrition in Plants'], kw:'limiting factor, chlorophyll, pondweed, light intensity' },
+  { cat:'biology', href:'Biology/monster_genetics_lab_v5.html', title:'Inheritance Monster Lab', desc:'Breed monsters with traits you cannot miss — horns, extra eyes, patchy or pink fur, gems and striped tails — across 14 levels from dominant and recessive alleles to codominance, ABO blood groups, sex determination, sex linkage, dihybrid crosses and the chi-squared test.', hook:'Breed monsters to crack dominance, codominance and sex linkage.', levels:['o','a'], topics:['Inheritance'], kw:'genetics, alleles, dominant, recessive, punnett, blood group, genotype' },
+  { cat:'biology', href:'Biology/enzymes_v2.html', title:'Enzymes — Lock and Key Hypothesis', desc:'See why maltase only fits maltose, not sucrose or lactose. Explore temperature, pH and concentration, then follow digestive enzymes along the gut.', hook:'See why each enzyme fits only one substrate.', levels:['o'], topics:['Biological Molecules','Enzymes'], kw:'lock and key, active site, substrate, denature' },
+  { cat:'biology', href:'Biology/bioflow_v2.html', title:'Transport in Plants', desc:'Change temperature, humidity, wind and light to see transpiration, wilting and translocation in xylem and phloem, then run the potometer practical and write up your results.', hook:'Change the weather and watch transpiration, then run a potometer.', levels:['o'], topics:['Transport in Flowering Plants'], kw:'transpiration, xylem, phloem, potometer, translocation, stomata' },
+  { cat:'biology', href:'Biology/osmosis_v2.html', title:'Osmosis Lab', desc:'Watch water move across a partially permeable membrane, then place plant and animal cells in solutions and run the potato strip practical.', hook:'Watch water cross a membrane and run the potato strip practical.', levels:['o'], topics:['Movement of Substances'], kw:'diffusion, water potential, membrane, turgid, plasmolysis' },
+  { cat:'biology', href:'Biology/coralreef-standalone.html', title:'EcoVerse: Coral Reef', desc:'Dive into a living 3D coral reef, inspect each organism\'s adaptations, trace the food web, and trigger heatwaves, storms, or starfish outbreaks to see how the reef responds.', hook:'Dive a 3D reef and see how it copes with heatwaves and storms.', levels:['sec','o'], topics:['Organisms and their Environment','Adaptations'], kw:'ecosystem, food chain, food web, habitat, adaptation, predator, prey' },
+  { cat:'biology', href:'Biology/savanna-standalone.html', title:'EcoVerse: Savanna', desc:'Roam a living 3D savanna, inspect each organism\'s structural and behavioural adaptations, and trigger rain, dust storms, or bushfires to see how the ecosystem responds.', hook:'Roam a 3D savanna and inspect each animal\'s adaptations.', levels:['sec','o'], topics:['Organisms and their Environment','Adaptations'], kw:'ecosystem, food chain, food web, habitat, adaptation, predator, prey' },
+  { cat:'biology', href:'Biology/chekjawa-standalone.html', title:'EcoVerse: Chek Jawa', desc:'Walk Singapore\'s Chek Jawa shore through a full tidal cycle — drag the waterline from spring low to high and inspect the adaptations that let each species survive both.', hook:'Drag the tide in and out on Singapore\'s Chek Jawa shore.', levels:['sec','o'], topics:['Organisms and their Environment','Adaptations'], kw:'ecosystem, food chain, food web, habitat, adaptation, predator, prey' },
+  { cat:'biology', href:'Biology/hydrothermalvent-standalone.html', title:'EcoVerse: Hydrothermal Vent', desc:'Descend to a deep-sea vent field where life runs on chemicals instead of sunlight, and inspect the adaptations that survive crushing pressure, total darkness, and scalding water.', hook:'Visit deep-sea life that runs on chemicals, not sunlight.', levels:['sec','o'], topics:['Organisms and their Environment','Adaptations'], kw:'ecosystem, food chain, food web, habitat, adaptation, predator, prey' },
+  { cat:'biology', href:'Biology/antcolony-standalone.html', title:'EcoVerse: Ant Colony', desc:'Steer a living marauder ant colony — follow a single ant, cut its scent trail, send a raid, and watch what becomes of a nest that loses its queen.', hook:'Steer an ant colony, cut its scent trail and send a raid.', levels:['sec'], topics:['Organisms and their Environment'], kw:'ecosystem, food chain, food web, habitat, adaptation, predator, prey' },
+  { cat:'biology', href:'Biology/ecology-standalone.html', title:'Spring Meadow — Food Web Simulator', desc:'Run a living meadow of grass, wildflowers, rabbits, mice, foxes and hawks — watch the populations rise and fall, then unleash a wildfire, outbreak or extinction to see the whole food web respond.', hook:'Run a meadow food web, then unleash a wildfire.', levels:['sec','o'], topics:['Organisms and their Environment','Food Webs'], kw:'ecosystem, food chain, food web, habitat, adaptation, predator, prey' },
+  { cat:'biology', href:'Biology/naturalselection-standalone.html', title:'Natural Selection Simulator', desc:'Watch populations evolve. See how predators, prey, and survival traits shape life over generations.', hook:'Watch predators shape a population over generations.', levels:['o','a'], topics:['Inheritance','Natural Selection'], kw:'evolution, variation, survival of the fittest, antibiotic resistance, mutation' },
+  { cat:'biology', href:'Biology/bacteria-standalone.html', title:'Bacteria Evolution Simulator', desc:'Grow bacteria in a petri dish, drop in antibiotics, and watch random mutations give rise to resistant strains that take over the colony.', hook:'Add antibiotics and watch resistant bacteria take over.', levels:['o','a'], topics:['Natural Selection','Infectious Diseases'], kw:'evolution, variation, survival of the fittest, antibiotic resistance, mutation' },
   // ── Earth Science ──
-  { cat:'earth-science', href:'Earth Science/rock_cycle.html', title:'Rock Cycle Lab — Rocks & Minerals', desc:'Follow one grain of rock round a 3D cutaway landscape: magma cools into granite or erupts as basalt, rock is weathered, deposited, buried and squeezed into slate, schist and gneiss. Heat and squeeze rocks in the forge, grow salol crystals to link cooling rate to crystal size, and identify 13 rock specimens with real tests and a key.' },
-  { cat:'earth-science', href:'Earth Science/tectonics-standalone.html', title:'Plate Tectonics — Formation of Japan', desc:'Take up the gods\' spear in 3D: stir the mantle, sink the Pacific Plate until a volcano erupts, tear open the Sea of Japan and wake Namazu the earthquake catfish — then trigger quakes on a real map of Japan and see how the myth of Onogoro matches the plate tectonics that built it.' },
-  { cat:'earth-science', href:'Earth Science/watercycle-standalone.html', title:'The Water Cycle', desc:'Trace a water molecule through evaporation, condensation, and precipitation across a live landscape.' },
-  { cat:'earth-science', href:'Earth Science/seismicwaves-standalone.html', title:'Seismic Waves — Locate the Epicentre', desc:'Trigger an earthquake and watch P-waves and S-waves radiate through Earth\'s layers, read arrival times at each station to pinpoint the epicentre, and discover the shadow zone.' },
-  { cat:'earth-science', title:'Weather Systems', desc:'Move air masses and pressure systems across a live map and see how they produce wind, rain, and storms.', status:'coming-soon' },
+  { cat:'earth-science', href:'Earth Science/rock_cycle.html', title:'Rock Cycle Lab — Rocks & Minerals', desc:'Follow one grain of rock round a 3D cutaway landscape: magma cools into granite or erupts as basalt, rock is weathered, deposited, buried and squeezed into slate, schist and gneiss. Heat and squeeze rocks in the forge, grow salol crystals to link cooling rate to crystal size, and identify 13 rock specimens with real tests and a key.', hook:'Follow a grain round the rock cycle and identify 13 rocks.', levels:[], topics:['Rock Cycle','Rocks and Minerals'], kw:'igneous, sedimentary, metamorphic, granite, basalt, crystals' },
+  { cat:'earth-science', href:'Earth Science/tectonics-standalone.html', title:'Plate Tectonics — Formation of Japan', desc:'Take up the gods\' spear in 3D: stir the mantle, sink the Pacific Plate until a volcano erupts, tear open the Sea of Japan and wake Namazu the earthquake catfish — then trigger quakes on a real map of Japan and see how the myth of Onogoro matches the plate tectonics that built it.', hook:'Sink the Pacific Plate and wake a volcano in a myth-told 3D Japan.', levels:[], topics:['Plate Tectonics'], kw:'earthquake, volcano, plates, epicentre, P-wave, S-wave' },
+  { cat:'earth-science', href:'Earth Science/watercycle-standalone.html', title:'The Water Cycle', desc:'Trace a water molecule through evaporation, condensation, and precipitation across a live landscape.', hook:'Follow a water molecule through evaporation and rain.', levels:[], topics:['Water Cycle'] },
+  { cat:'earth-science', href:'Earth Science/seismicwaves-standalone.html', title:'Seismic Waves — Locate the Epicentre', desc:'Trigger an earthquake and watch P-waves and S-waves radiate through Earth\'s layers, read arrival times at each station to pinpoint the epicentre, and discover the shadow zone.', hook:'Trigger a quake and use P and S waves to find the epicentre.', levels:[], topics:['Plate Tectonics','Waves'], kw:'earthquake, volcano, plates, epicentre, P-wave, S-wave' },
+  { cat:'earth-science', title:'Weather Systems', desc:'Move air masses and pressure systems across a live map and see how they produce wind, rain, and storms.', status:'coming-soon', hook:'Move air masses and pressure systems to make wind and rain.', levels:[], topics:['Weather'] },
   // ── Astronomy ──
-  { cat:'astronomy', href:'Astronomy/star_life.html', title:'Life Cycle of Stars', desc:'Watch a cloud of gas and dust collapse into a protostar and ignite. Choose its mass and follow it to a red giant and white dwarf, or a supergiant, supernova, neutron star or black hole, with a cut-away of the forces inside, a live HR diagram and two stars racing side by side.' },
-  { cat:'astronomy', href:'Astronomy/solar-system-simulator.html', title:'Solar System Builder', desc:'Add celestial bodies and observe how their mass and position affect the orbits of our solar system — an open-ended playground for gravitational exploration.' },
-  { cat:'astronomy', href:'Astronomy/wayfinder/wayfinder_v9.html', title:'Wayfinder: A Celestial Navigation Simulation', desc:'Observe the night sky, align stars to the horizon, and navigate across the ocean using celestial clues — a story-driven journey inspired by ancient wayfinding traditions.' },
-  { cat:'astronomy', href:'Astronomy/moon-standalone.html', title:'Phases of the Moon', desc:'Rotate the Moon around Earth and see exactly why we observe each phase throughout the lunar month.' },
-  { cat:'astronomy', href:'Astronomy/season-standalone.html', title:'Why Earth Has Seasons', desc:'Tilt and orbit Earth around the Sun and see why the tilt — not distance — drives the seasons.' },
-  { cat:'astronomy', href:'Astronomy/daynight-standalone.html', title:'Day-Night Cycle', desc:'Spin a 3D Earth, pick any city, and watch how rotation brings sunrise and sunset — and why the length of the day changes through the year.' },
-  { cat:'astronomy', title:'Solar & Lunar Eclipses', desc:'Line up Sun, Earth, and Moon and see exactly when and why solar and lunar eclipses occur.', status:'coming-soon' },
+  { cat:'astronomy', href:'Astronomy/star_life.html', title:'Life Cycle of Stars', desc:'Watch a cloud of gas and dust collapse into a protostar and ignite. Choose its mass and follow it to a red giant and white dwarf, or a supergiant, supernova, neutron star or black hole, with a cut-away of the forces inside, a live HR diagram and two stars racing side by side.', hook:'Choose a star\'s mass and follow it to a white dwarf or black hole.', levels:[], topics:['Stars','HR Diagram'], kw:'supernova, red giant, white dwarf, black hole, neutron star' },
+  { cat:'astronomy', href:'Astronomy/solar-system-simulator.html', title:'Solar System Builder', desc:'Add celestial bodies and observe how their mass and position affect the orbits of our solar system — an open-ended playground for gravitational exploration.', hook:'Add planets and watch gravity bend their orbits.', levels:[], topics:['Gravity','Solar System'] },
+  { cat:'astronomy', href:'Astronomy/wayfinder/wayfinder_v9.html', title:'Wayfinder: A Celestial Navigation Simulation', desc:'Observe the night sky, align stars to the horizon, and navigate across the ocean using celestial clues — a story-driven journey inspired by ancient wayfinding traditions.', hook:'Steer a canoe across the ocean by reading the stars.', levels:[], topics:['Celestial Navigation'] },
+  { cat:'astronomy', href:'Astronomy/moon-standalone.html', title:'Phases of the Moon', desc:'Rotate the Moon around Earth and see exactly why we observe each phase throughout the lunar month.', hook:'Orbit the Moon round Earth and see why its phases change.', levels:[], topics:['Earth and Space'], kw:'lunar phases, tilt, axis, rotation, orbit, equinox, solstice' },
+  { cat:'astronomy', href:'Astronomy/season-standalone.html', title:'Why Earth Has Seasons', desc:'Tilt and orbit Earth around the Sun and see why the tilt — not distance — drives the seasons.', hook:'Tilt Earth and see why tilt, not distance, makes seasons.', levels:[], topics:['Earth and Space'], kw:'lunar phases, tilt, axis, rotation, orbit, equinox, solstice' },
+  { cat:'astronomy', href:'Astronomy/daynight-standalone.html', title:'Day-Night Cycle', desc:'Spin a 3D Earth, pick any city, and watch how rotation brings sunrise and sunset — and why the length of the day changes through the year.', hook:'Spin a 3D Earth and watch sunrise move across cities.', levels:[], topics:['Earth and Space'], kw:'lunar phases, tilt, axis, rotation, orbit, equinox, solstice' },
+  { cat:'astronomy', title:'Solar & Lunar Eclipses', desc:'Line up Sun, Earth, and Moon and see exactly when and why solar and lunar eclipses occur.', status:'coming-soon', hook:'Line up Sun, Earth and Moon to make an eclipse.', levels:[], topics:['Earth and Space'] },
   // ── Beyond the Syllabus ──
-  { cat:'beyond', href:'beyond_the_syllabus/LIFE_demo.html', title:'LIFE: A Financial Literacy Simulation', desc:'Live a whole Singapore life — choose your studies, career, partner and investments, then ride out booms, crashes and rate hikes to see how everyday money decisions compound over the decades.' },
-  { cat:'beyond', title:'Spot the Scam', desc:'Sort real messages from phishing texts, fake job offers and impersonation calls, and learn the red flags scammers rely on before they cost you money.', status:'coming-soon' },
-  { cat:'beyond', title:'The House Always Wins', desc:'Play thousands of rounds of lottery, roulette and loot boxes in seconds and watch expected value quietly drain the wallet, no matter how lucky you feel.', status:'coming-soon' },
-  { cat:'beyond', title:'Hawker Stall Tycoon', desc:'Set your prices, buy ingredients and pay the rent on your own hawker stall, and discover how costs, demand and profit decide whether a small business survives.', status:'coming-soon' },
-  { cat:'beyond', title:'Fact or Fake?', desc:'Investigate viral posts, doctored photos and misleading charts with real fact-checking tools, and learn how misinformation spreads faster than the truth.', status:'coming-soon' },
-  { cat:'beyond', title:'Crack the Password', desc:'Watch an attacker guess passwords in real time and see how length, randomness and two-factor authentication turn seconds of cracking into centuries.', status:'coming-soon' },
+  { cat:'beyond', href:'beyond_the_syllabus/LIFE_demo.html', title:'LIFE: A Financial Literacy Simulation', desc:'Live a whole Singapore life — choose your studies, career, partner and investments, then ride out booms, crashes and rate hikes to see how everyday money decisions compound over the decades.', hook:'Live a whole Singapore life and see money decisions compound.', levels:[], topics:['Financial Literacy'] },
+  { cat:'beyond', title:'Spot the Scam', desc:'Sort real messages from phishing texts, fake job offers and impersonation calls, and learn the red flags scammers rely on before they cost you money.', status:'coming-soon', hook:'Sort real messages from scams and learn the red flags.', levels:[], topics:['Scams','Digital Literacy'] },
+  { cat:'beyond', title:'The House Always Wins', desc:'Play thousands of rounds of lottery, roulette and loot boxes in seconds and watch expected value quietly drain the wallet, no matter how lucky you feel.', status:'coming-soon', hook:'Play thousands of rounds and watch expected value drain the wallet.', levels:[], topics:['Probability','Gambling'] },
+  { cat:'beyond', title:'Hawker Stall Tycoon', desc:'Set your prices, buy ingredients and pay the rent on your own hawker stall, and discover how costs, demand and profit decide whether a small business survives.', status:'coming-soon', hook:'Run a hawker stall and see whether profit beats the rent.', levels:[], topics:['Business','Financial Literacy'] },
+  { cat:'beyond', title:'Fact or Fake?', desc:'Investigate viral posts, doctored photos and misleading charts with real fact-checking tools, and learn how misinformation spreads faster than the truth.', status:'coming-soon', hook:'Check viral posts and charts with real fact-checking tools.', levels:[], topics:['Misinformation','Digital Literacy'] },
+  { cat:'beyond', title:'Crack the Password', desc:'Watch an attacker guess passwords in real time and see how length, randomness and two-factor authentication turn seconds of cracking into centuries.', status:'coming-soon', hook:'Watch an attacker guess passwords and see why length wins.', levels:[], topics:['Cybersecurity'] },
 ];
 
 const CAT_ICON = { physics:'⚛️', chemistry:'🧪', biology:'🧬', 'earth-science':'🌍', astronomy:'🔭', beyond:'💡' };
@@ -894,47 +1009,167 @@ const CAT_ICON = { physics:'⚛️', chemistry:'🧪', biology:'🧬', 'earth-sc
 // Thumbnail filenames are the slugified sim title — see tools/shoot.js
 const slug = t => t.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
+const CATS = ['physics','chemistry','biology','earth-science','astronomy','beyond'];
+const LEVEL_LABEL = { sec:'Sec 1–2', o:'O-Level', a:'A-Level' };
+const esc = t => String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+// Lower-case, drop accents and punctuation so "Hooke's", "f=ma" and "pH" all match loosely.
+const norm = t => String(t).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9α-ω]+/g,' ').trim();
+
+function badgesHtml(s) {
+  if (s.levels && s.levels.length) return s.levels.map(l => `<span class="lvl">${LEVEL_LABEL[l]}</span>`).join('');
+  if (s.cat === 'earth-science' || s.cat === 'astronomy') return '<span class="lvl enrich">Enrichment</span>';
+  return '';
+}
+function tagsHtml(s) {
+  return (s.topics || []).map(t => `<button type="button" class="tag" data-tag="${esc(t)}">${esc(t)}</button>`).join('');
+}
+
 function renderSims() {
-  ['physics','chemistry','biology','earth-science','astronomy','beyond'].forEach(cat => {
+  CATS.forEach(cat => {
     const grid = document.getElementById('grid-' + cat);
     if (!grid) return;
     grid.innerHTML = SIMS.filter(s => s.cat === cat).map(s => {
+      const i = SIMS.indexOf(s);
+      const badges = badgesHtml(s);
+      const meta = `${badges ? `<div class="card-badges">${badges}</div>` : ''}`;
       if (s.status === 'coming-soon') {
-        return `<div class="card coming-soon">
+        return `<div class="card coming-soon" data-i="${i}">
           <div class="card-thumb thumb-placeholder">${CAT_ICON[s.cat] || '🔬'}</div>
           <div class="card-body">
+            ${meta}
             <div class="card-title">${s.title}</div>
-            <div class="card-desc">${s.desc}</div>
+            <div class="card-desc">${esc(s.hook || s.desc)}</div>
+            <div class="card-tags">${tagsHtml(s)}</div>
             <div class="coming-soon-badge">Coming Soon</div>
             <button class="notify-btn" data-notify="${s.title}">Notify me</button>
           </div>
         </div>`;
       }
-      return `<a class="card thumb-frame" href="${s.href}" target="_blank" rel="noopener">
-        <img class="card-thumb" src="assets/thumbs/${slug(s.title)}.webp" alt="Screenshot of ${s.title}" width="960" height="540" loading="lazy" decoding="async"/>
+      return `<div class="card thumb-frame" data-i="${i}">
+        <img class="card-thumb" src="assets/thumbs/${slug(s.title)}.webp" alt="" width="960" height="540" loading="lazy" decoding="async"/>
         <div class="card-body">
-          <div class="card-title">${s.title}</div>
-          <div class="card-desc">${s.desc}</div>
-          <div class="card-link">Launch simulation</div>
+          ${meta}
+          <a class="card-main card-title" href="${s.href}" target="_blank" rel="noopener">${s.title}</a>
+          <div class="card-desc">${esc(s.hook || s.desc)}</div>
+          <div class="card-tags">${tagsHtml(s)}</div>
+          <div class="card-link" aria-hidden="true">Launch simulation</div>
         </div>
-      </a>`;
+      </div>`;
     }).join('');
   });
 }
 
 renderSims();
 
-document.querySelectorAll('.filter-btn[data-cat]').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.filter-btn[data-cat]').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    const cat = btn.dataset.cat;
-    ['physics','chemistry','biology','earth-science','astronomy','beyond'].forEach(id => {
-      const section = document.getElementById(id);
-      if (section) section.style.display = (cat === 'all' || cat === id) ? '' : 'none';
-    });
+// ── FINDER: search + level + subject, kept in the URL so a filtered view can be shared ──
+const HAY = SIMS.map(s => norm([s.title, s.hook, s.desc, (s.topics || []).join(' '), s.kw || ''].join(' ')));
+const finder = { q: '', level: '', cat: 'all' };
+const $search = document.getElementById('sim-search');
+const $clear = document.getElementById('search-clear');
+const $count = document.getElementById('sim-count');
+const $none = document.getElementById('no-results');
+
+function applyFinder(pushUrl) {
+  // Whole phrase first ("f ma", "lock and key"); if no sim has it, every word must start a word somewhere.
+  const phrase = norm(finder.q);
+  const usePhrase = phrase && HAY.some(h => (' ' + h).includes(' ' + phrase));
+  const words = phrase.split(' ').filter(Boolean);
+  const textOk = i => !phrase || (usePhrase
+    ? (' ' + HAY[i]).includes(' ' + phrase)
+    : words.every(w => (' ' + HAY[i]).includes(' ' + w)));
+  let shown = 0;
+  document.querySelectorAll('.card[data-i]').forEach(card => {
+    const i = +card.dataset.i, s = SIMS[i];
+    const ok = (finder.cat === 'all' || s.cat === finder.cat)
+      && (!finder.level || (s.levels || []).includes(finder.level))
+      && textOk(i);
+    card.hidden = !ok;
+    if (ok) shown++;
   });
+  CATS.forEach(id => {
+    const sec = document.getElementById(id);
+    if (sec) sec.hidden = !sec.querySelector('.card[data-i]:not([hidden])');
+  });
+  const filtered = finder.q || finder.level || finder.cat !== 'all';
+  $count.textContent = filtered ? `${shown} sim${shown === 1 ? '' : 's'}` : '';
+  $none.hidden = shown > 0;
+  $clear.hidden = !finder.q;
+  document.querySelectorAll('.level-chip').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.level === finder.level)));
+  document.querySelectorAll('.filter-btn[data-cat]').forEach(b => {
+    const on = b.dataset.cat === finder.cat;
+    b.classList.toggle('active', on);
+    b.setAttribute('aria-pressed', String(on));
+  });
+  if (pushUrl) {
+    const p = new URLSearchParams();
+    if (finder.q) p.set('q', finder.q);
+    if (finder.level) p.set('level', finder.level);
+    if (finder.cat !== 'all') p.set('subject', finder.cat);
+    const qs = p.toString();
+    history.replaceState(null, '', location.pathname + (qs ? '?' + qs : '') + location.hash);
+  }
+}
+
+function scrollToResults() {
+  const first = document.querySelector('.category:not([hidden])') || $none;
+  const bar = document.querySelector('.filter-bar');
+  const y = first.getBoundingClientRect().top + window.scrollY - (bar.getBoundingClientRect().bottom - bar.getBoundingClientRect().top) - 70;
+  if (window.scrollY > y || first.getBoundingClientRect().top > window.innerHeight * 0.6) {
+    window.scrollTo({ top: y, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  }
+}
+
+let searchTimer;
+$search.addEventListener('input', () => {
+  finder.q = $search.value;
+  clearTimeout(searchTimer);
+  applyFinder(false);
+  searchTimer = setTimeout(() => applyFinder(true), 400);
 });
+$search.addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); applyFinder(true); scrollToResults(); }
+  if (e.key === 'Escape' && $search.value) { e.preventDefault(); $search.value = ''; finder.q = ''; applyFinder(true); }
+});
+$clear.addEventListener('click', () => { $search.value = ''; finder.q = ''; applyFinder(true); $search.focus(); });
+
+document.querySelectorAll('.level-chip').forEach(btn => btn.addEventListener('click', () => {
+  finder.level = finder.level === btn.dataset.level ? '' : btn.dataset.level;
+  applyFinder(true);
+}));
+document.querySelectorAll('.filter-btn[data-cat]').forEach(btn => btn.addEventListener('click', () => {
+  finder.cat = btn.dataset.cat;
+  applyFinder(true);
+}));
+document.querySelector('main').addEventListener('click', e => {
+  const tag = e.target.closest('.tag[data-tag]');
+  if (!tag) return;
+  $search.value = tag.dataset.tag;
+  finder.q = tag.dataset.tag;
+  applyFinder(true);
+  scrollToResults();
+});
+document.getElementById('nr-reset').addEventListener('click', () => {
+  $search.value = ''; Object.assign(finder, { q: '', level: '', cat: 'all' }); applyFinder(true); $search.focus();
+});
+document.getElementById('nr-suggest').addEventListener('click', () => {
+  const tab = document.getElementById('mb-tab');
+  if (tab) tab.click();
+});
+// "/" jumps to the search box (unless already typing somewhere)
+document.addEventListener('keydown', e => {
+  if (e.key === '/' && !/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName) && !document.activeElement.isContentEditable) {
+    e.preventDefault(); $search.focus();
+  }
+});
+
+(function readUrl() {
+  const p = new URLSearchParams(location.search);
+  finder.q = (p.get('q') || '').slice(0, 80);
+  finder.level = LEVEL_LABEL[p.get('level')] ? p.get('level') : '';
+  finder.cat = CATS.includes(p.get('subject')) ? p.get('subject') : 'all';
+  $search.value = finder.q;
+  applyFinder(false);
+})();
 </script>
 
 <!-- MESSAGE BOARD WIDGET -->

@@ -83,7 +83,10 @@ function addHeadTags(html, s) {
       name: s.title, description: s.desc, url, image: img,
       learningResourceType: 'Simulation', interactivityType: 'active',
       about: SUBJECT[s.cat] || 'Science',
-      educationalLevel: 'Secondary school (Singapore)',
+      educationalLevel: (s.levels && s.levels.length)
+        ? s.levels.map(l => ({ sec: 'Lower Secondary (Singapore)', o: 'GCE O-Level', a: 'GCE A-Level' })[l])
+        : 'Secondary school (Singapore)',
+      ...(s.topics && s.topics.length ? { keywords: s.topics.join(', ') } : {}),
       audience: { '@type': 'EducationalAudience', educationalRole: ['student', 'teacher'] },
       inLanguage: 'en', isAccessibleForFree: true,
       provider: { '@type': 'EducationalOrganization', name: 'CurioMinds.inc', url: SITE + '/' },
