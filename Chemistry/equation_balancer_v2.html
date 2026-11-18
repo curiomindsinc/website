@@ -461,6 +461,18 @@ select { width: 100%; padding: 9px 10px; border-radius: 10px; border: 1px solid 
 .pane { padding-bottom: 12px; }
 .pane > .stage-bar { position: sticky; left: auto; bottom: 12px; transform: none; margin-top: 16px; flex: none; }
 @media (max-width: 900px) { .pane { padding-bottom: 12px; min-height: 0; } }
+
+/* A5 accessibility (18 Nov 2026): honour the reduce-motion setting and show where keyboard focus is. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+:focus-visible { outline: 3px solid #F5C842; outline-offset: 2px; }
+#side:focus-visible { outline-offset: -3px; }
 </style>
 </head>
 <body class="mode-practice">
@@ -623,7 +635,7 @@ select { width: 100%; padding: 9px 10px; border-radius: 10px; border: 1px solid 
     </div>
   </section>
 
-  <aside id="side" class="col">
+  <aside id="side" class="col" tabindex="0" aria-label="Controls and readings">
     <!-- practice -->
     <div class="card only-practice">
       <div class="card-h">⚛️ Atom count</div>

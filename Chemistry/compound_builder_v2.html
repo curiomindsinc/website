@@ -505,6 +505,18 @@ body.mode-lab #scene { touch-action: none; }
 .tut-rules b { font-size: 20px; font-weight: 900; color: var(--gold); }
 .tut-rules span { font-size: 12px; font-weight: 700; color: var(--dim); }
 #lobby #btn-howto { margin-top: -4px; }
+
+/* A5 accessibility (18 Nov 2026): honour the reduce-motion setting and show where keyboard focus is. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+:focus-visible { outline: 3px solid #F5C842; outline-offset: 2px; }
+#side:focus-visible { outline-offset: -3px; }
 </style>
 </head>
 <body class="mode-lab">
@@ -659,7 +671,7 @@ body.mode-lab #scene { touch-action: none; }
     </div>
   </section>
 
-  <aside id="side" class="col">
+  <aside id="side" class="col" tabindex="0" aria-label="Controls and readings">
     <!-- explore lab -->
     <div class="card only-lab">
       <div class="card-h">🧾 Formula <span class="sub" id="lab-fsub"></span></div>

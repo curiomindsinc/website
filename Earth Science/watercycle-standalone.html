@@ -1814,5 +1814,184 @@ requestAnimationFrame(frame);
 })();
 
 </script>
+<!-- curiominds-a11y v1: baseline accessibility layer (tools/a11y-layer.html, added by tools/add-a11y.js). Safe to remove as one block. -->
+<style id="cm-a11y-css">
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+:focus-visible { outline: 3px solid #F5C842 !important; outline-offset: 2px !important; }
+canvas:focus-visible { outline-offset: -3px !important; }
+:where(p, li, td, .credit) > a[href]:not([class]) { text-decoration: underline; }
+.cm-sr-only { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
+</style>
+<script id="cm-a11y-js">
+(function () {
+  'use strict';
+  var doc = document;
+  // Symbols that buttons often show instead of a word.
+  var SYMBOL = {
+    '✕': 'Close', '✖': 'Close', '×': 'Close', 'x': 'Close', 'X': 'Close',
+    '▶': 'Play', '►': 'Play', '⏵': 'Play', '⏸': 'Pause', '❚❚': 'Pause', '||': 'Pause', '⏹': 'Stop', '■': 'Stop',
+    '↺': 'Reset', '⟲': 'Reset', '↻': 'Redo', '⟳': 'Reset', '🔄': 'Reset', '♻': 'Reset',
+    '?': 'Help', '❓': 'Help', 'ℹ': 'Information', 'ⓘ': 'Information', 'i': 'Information',
+    '⚙': 'Settings', '⚙️': 'Settings', '☰': 'Menu', '≡': 'Menu',
+    '+': 'Increase', '＋': 'Increase', '−': 'Decrease', '-': 'Decrease', '–': 'Decrease',
+    '◀': 'Previous', '◄': 'Previous', '‹': 'Previous', '«': 'Previous', '←': 'Back',
+    '›': 'Next', '»': 'Next', '→': 'Next', '⏭': 'Skip forward', '⏮': 'Skip back',
+    '🔊': 'Sound on', '🔇': 'Mute', '🔈': 'Sound', '⛶': 'Full screen', '⤢': 'Full screen',
+    '🔍': 'Zoom', '📷': 'Camera', '💾': 'Save', '🗑': 'Delete', '🗑️': 'Delete'
+  };
+  var FOCUSABLE = 'a[href],button,input,select,textarea,summary,[tabindex],[contenteditable="true"],audio[controls],video[controls]';
+  var simName = (doc.title || 'Simulation').split(/[|–—-]/)[0].trim() || 'Simulation';
+
+  function hasName(el) {
+    if (el.getAttribute('aria-label') || el.getAttribute('aria-labelledby')) return true;
+    var t = (el.textContent || '').replace(/\s+/g, ' ').trim();
+    if (t && !SYMBOL[t] && t.length > 1) return true;
+    if (el.querySelector && el.querySelector('img[alt]:not([alt=""]),svg title')) return true;
+    return false;
+  }
+  function nameFromSymbol(el) {
+    var t = (el.textContent || '').replace(/\s+/g, ' ').trim();
+    return el.getAttribute('title') || SYMBOL[t] || (t ? t : '');
+  }
+  function textNear(el) {
+    if (el.id) {
+      var lab = doc.querySelector('label[for="' + (window.CSS && CSS.escape ? CSS.escape(el.id) : el.id) + '"]');
+      if (lab && lab.textContent.trim()) return null; // already labelled
+    }
+    if (el.closest('label')) return null;
+    var p = el.previousElementSibling, hops = 0;
+    // <label><span>name</span><span>value</span></label><input>: use the name part only.
+    if (p && p.tagName === 'LABEL' && p.children.length > 1 && p.children[0].textContent.trim()) return p.children[0].textContent.trim().slice(0, 80);
+    while (p && hops < 3) {
+      var t = (p.textContent || '').replace(/\s+/g, ' ').trim();
+      if (t && !/^[\d.,\s%°+−-]+$/.test(t)) return t.slice(0, 80);
+      p = p.previousElementSibling; hops++;
+    }
+    var par = el.parentElement, depth = 0;
+    while (par && depth < 3) {
+      var clone = par.cloneNode(true);
+      [].forEach.call(clone.querySelectorAll('input,select,textarea,output,script,style'), function (n) { n.remove(); });
+      var tt = (clone.textContent || '').replace(/\s+/g, ' ').trim();
+      if (tt && tt.length <= 80 && !/^[\d.,\s%°+−-]+$/.test(tt)) return tt;
+      par = par.parentElement; depth++;
+    }
+    var key = el.getAttribute('name') || el.id || el.getAttribute('placeholder') || '';
+    key = key.replace(/[-_]+/g, ' ').replace(/([a-z])([A-Z])/g, '$1 $2').trim();
+    return key ? key.charAt(0).toUpperCase() + key.slice(1) : (el.tagName === 'SELECT' ? 'Choose an option' : 'Value');
+  }
+  function activate(e) {
+    if (e.key !== 'Enter' && e.key !== ' ' && e.key !== 'Spacebar') return;
+    e.preventDefault();
+    this.click();
+  }
+
+  function pass(full) {
+    var html = doc.documentElement;
+    if (!html.getAttribute('lang')) html.setAttribute('lang', 'en');
+
+    // Allow pinch-zoom (WCAG 1.4.4). Canvases keep their own touch handling.
+    var vp = doc.querySelector('meta[name="viewport"]');
+    if (vp && /user-scalable\s*=\s*(no|0)|maximum-scale\s*=\s*1(\.0)?\b/i.test(vp.content)) {
+      vp.content = vp.content.replace(/,?\s*user-scalable\s*=\s*(no|0)/ig, '').replace(/,?\s*maximum-scale\s*=\s*[\d.]+/ig, '');
+    }
+
+    // Buttons that show only a symbol or nothing.
+    [].forEach.call(doc.querySelectorAll('button,[role="button"],a[href]'), function (b) {
+      if (!hasName(b)) { var n = nameFromSymbol(b); b.setAttribute('aria-label', n || 'Button'); }
+    });
+
+    // Sliders, dropdowns and fields with no label.
+    [].forEach.call(doc.querySelectorAll('input:not([type="hidden"]):not([type="button"]):not([type="submit"]),select,textarea'), function (el) {
+      if (el.getAttribute('aria-label') || el.getAttribute('aria-labelledby') || el.dataset.cmA11y) return;
+      el.dataset.cmA11y = '1';
+      var t = textNear(el);
+      if (t) el.setAttribute('aria-label', t);
+    });
+
+    // Exact names for this sim's controls, set by tools/add-a11y.js (window.CM_A11Y_LABELS).
+    var fixed = window.CM_A11Y_LABELS || {};
+    Object.keys(fixed).forEach(function (sel) {
+      [].forEach.call(doc.querySelectorAll(sel), function (el) { el.setAttribute('aria-label', fixed[sel]); el.dataset.cmA11y = '1'; });
+    });
+
+    // Canvases: give each one a name so a screen reader announces the sim.
+    [].forEach.call(doc.querySelectorAll('canvas'), function (c) {
+      if (c.getAttribute('aria-label') || c.getAttribute('role') || c.getAttribute('aria-hidden')) return;
+      var w = c.clientWidth || c.width, h = c.clientHeight || c.height;
+      if (w < 40 || h < 40) { c.setAttribute('aria-hidden', 'true'); return; }
+      c.setAttribute('role', 'img');
+      c.setAttribute('aria-label', simName + ' – interactive simulation view');
+    });
+
+    // SVG diagrams marked as images need a name.
+    [].forEach.call(doc.querySelectorAll('svg[role="img"]'), function (s) {
+      if (!s.getAttribute('aria-label') && !s.querySelector('title')) s.setAttribute('aria-label', simName + ' diagram');
+    });
+
+    if (!full) return;
+
+    // Each element's style is read once (seen); later passes only look at new elements.
+    var all = doc.body ? doc.body.getElementsByTagName('*') : [];
+    for (var i = 0; i < all.length; i++) {
+      var el = all[i];
+      if (seen.has(el)) continue;
+      seen.add(el);
+      if (el.namespaceURI !== 'http://www.w3.org/1999/xhtml') continue;
+      var tag = el.tagName;
+      if (/^(SCRIPT|STYLE|BR|OPTION|SOURCE|TEMPLATE)$/.test(tag)) continue;
+      var cs = getComputedStyle(el);
+      if (/(auto|scroll)/.test(cs.overflowY + cs.overflowX) && !/^(BODY|HTML|TEXTAREA|SELECT)$/.test(tag)) scrollBoxes.push(el);
+      // Clickable elements that a keyboard cannot reach (div/span with click handlers).
+      if (/^(A|BUTTON|INPUT|SELECT|TEXTAREA|LABEL|CANVAS|VIDEO|AUDIO|SUMMARY|DETAILS|BODY|HTML|IFRAME|IMG)$/.test(tag)) continue;
+      if (el.matches(FOCUSABLE) || el.closest('a[href],button,label,[role="button"]')) continue;
+      if (!el.hasAttribute('onclick')) {
+        if (cs.cursor !== 'pointer') continue;
+        // Only the outermost pointer element in a group, and only if it has nothing focusable inside.
+        var parent = el.parentElement;
+        if (parent && !/^(BODY|HTML)$/.test(parent.tagName) && getComputedStyle(parent).cursor === 'pointer') continue;
+        if (el.querySelector(FOCUSABLE)) continue;
+      }
+      if (!el.getAttribute('role')) el.setAttribute('role', 'button');
+      el.setAttribute('tabindex', '0');
+      el.addEventListener('keydown', activate);
+      if (!hasName(el)) { var nm = nameFromSymbol(el); if (nm) el.setAttribute('aria-label', nm); }
+    }
+
+    // Scroll boxes with no focusable content: let keyboard users scroll them.
+    for (var j = 0; j < scrollBoxes.length; j++) {
+      var box = scrollBoxes[j];
+      if (box.hasAttribute('tabindex') || !box.isConnected) continue;
+      if (box.scrollHeight <= box.clientHeight + 4 && box.scrollWidth <= box.clientWidth + 4) continue;
+      if (box.querySelector(FOCUSABLE)) continue;
+      box.setAttribute('tabindex', '0');
+      if (!box.getAttribute('aria-label') && !box.getAttribute('role')) { box.setAttribute('role', 'region'); box.setAttribute('aria-label', 'Scrollable panel'); }
+    }
+  }
+  var seen = window.WeakSet ? new WeakSet() : { has: function () { return false; }, add: function () {} };
+  var scrollBoxes = [];
+
+  var timer = null, last = 0;
+  function schedule() {
+    if (timer) return;
+    var wait = Math.max(600, 2000 - (Date.now() - last));
+    timer = setTimeout(function () { timer = null; last = Date.now(); try { pass(true); } catch (e) {} }, wait);
+  }
+  function start() {
+    try { pass(true); } catch (e) {}
+    last = Date.now();
+    if (window.MutationObserver && doc.body) new MutationObserver(schedule).observe(doc.body, { childList: true, subtree: true });
+    setTimeout(schedule, 2500); // late-built UI
+  }
+  if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', start); else start();
+})();
+</script>
+<!-- /curiominds-a11y -->
 </body>
 </html>

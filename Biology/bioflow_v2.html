@@ -487,6 +487,18 @@ body.mode-sg #scene, body.mode-sg #banner, body.mode-sg #info { display: none !i
 .rl { display: block; font-size: 11px; font-weight: 900; color: var(--gold, #ffd166); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 2px; }
 .btn.mini { padding: 4px 9px; font-size: 12px; border-radius: 8px; margin-top: 6px; display: flex; }
 .cer-done { background: rgba(110, 231, 168, 0.12); border: 1px solid rgba(110, 231, 168, 0.4); border-radius: 10px; padding: 7px 10px; font-size: 12.5px; font-weight: 700; }
+
+/* A5 accessibility (18 Nov 2026): honour the reduce-motion setting and show where keyboard focus is. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+:focus-visible { outline: 3px solid #F5C842; outline-offset: 2px; }
+#side:focus-visible { outline-offset: -3px; }
 </style>
 </head>
 <body class="mode-transpiration">
@@ -556,7 +568,7 @@ body.mode-sg #scene, body.mode-sg #banner, body.mode-sg #info { display: none !i
   <div id="zoom-backdrop" hidden></div>
   <div id="chal" class="card" hidden></div>
 
-  <aside id="side" class="col">
+  <aside id="side" class="col" tabindex="0" aria-label="Controls and readings">
     <div class="card hide-pot hide-sg" id="zoom-card">
       <div class="card-h">🔬 Inside a leaf <span class="sub">cross-section</span><button class="btn mini" id="btn-zoom-big" aria-pressed="false" title="Enlarge for teaching (Esc to close)">⛶ Enlarge</button></div>
       <canvas id="zoom"></canvas>

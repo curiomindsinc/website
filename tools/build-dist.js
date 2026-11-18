@@ -133,7 +133,7 @@ function addHeadTags(html, s) {
   files.forEach(copy);
   for (const d of dirs) {
     const walk = rel => fs.readdirSync(path.join(ROOT, rel), { withFileTypes: true })
-      .forEach(e => { const r = path.join(rel, e.name); if (SKIP.includes(r)) return; e.isDirectory() ? walk(r) : copy(r); });
+      .forEach(e => { const r = path.join(rel, e.name); if (SKIP.includes(r) || /\.bak[^\\/]*$/i.test(e.name)) return; e.isDirectory() ? walk(r) : copy(r); });
     walk(d);
   }
 
