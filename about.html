@@ -134,8 +134,8 @@
     }
 
     .avatar-wrap .avatar-ring {
-      width: 110px;
-      height: 110px;
+      width: clamp(150px, 22vw, 200px);
+      height: clamp(150px, 22vw, 200px);
       border-radius: 50%;
       background: linear-gradient(135deg, var(--red), var(--navy-lt));
       display: flex;
@@ -144,7 +144,10 @@
       box-shadow: 0 0 40px rgba(217,79,107,0.35);
       border: 3px solid rgba(255,255,255,0.15);
       font-size: 2.8rem;
+      overflow: hidden;
     }
+    .avatar-ring img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    header .hero-link { display: inline-block; margin-top: 1rem; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.85rem; color: var(--white); text-underline-offset: 3px; }
 
     header h1 {
       font-family: 'Nunito', sans-serif;
@@ -534,11 +537,12 @@
 <header>
   <div class="hero-inner">
     <div class="avatar-wrap">
-      <div class="avatar-ring">🧬</div>
+      <div class="avatar-ring"><img src="assets/profile.webp" width="400" height="400" alt="Portrait of Lau Chin Hang"/></div>
     </div>
     <h1>Lau <span>Chin Hang</span></h1>
     <p class="tagline">Biology Educator &amp; Digital Resource Creator</p>
     <p class="sub">Passionate about making science engaging, meaningful, and accessible for every learner.</p>
+    <a class="hero-link" href="https://www.linkedin.com/in/chin-hang-lau-881859267/" target="_blank" rel="noopener">Connect on LinkedIn ↗</a>
   </div>
 </header>
 
@@ -650,7 +654,7 @@
 </main>
 
 <footer>
-  © 2026 <span>CurioMinds.inc</span> &nbsp;·&nbsp; Where concepts click. &nbsp;·&nbsp; <a href="https://www.instagram.com/curiominds.inc" target="_blank" rel="noopener">Instagram</a> &nbsp;·&nbsp; <a href="https://www.youtube.com/@Curiominds.inc88" target="_blank" rel="noopener">YouTube</a> &nbsp;·&nbsp; <a href="https://www.tiktok.com/@curiominds.inc" target="_blank" rel="noopener">TikTok</a>
+  © 2026 <span>CurioMinds.inc</span> &nbsp;·&nbsp; Where concepts click. &nbsp;·&nbsp; <a href="https://www.instagram.com/curiominds.inc" target="_blank" rel="noopener">Instagram</a> &nbsp;·&nbsp; <a href="https://www.youtube.com/@Curiominds.inc88" target="_blank" rel="noopener">YouTube</a> &nbsp;·&nbsp; <a href="https://www.tiktok.com/@curiominds.inc" target="_blank" rel="noopener">TikTok</a> &nbsp;·&nbsp; <a href="https://www.linkedin.com/in/chin-hang-lau-881859267/" target="_blank" rel="noopener">LinkedIn</a>
 </footer>
 
 <!-- Cloudflare Web Analytics is enabled on the Pages project and injected
