@@ -27,7 +27,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png"/>
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png"/>
 
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Nunito+Sans:wght@400;600&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Nunito:wght@400;600;700;800;900&family=Nunito+Sans:wght@400;600&display=swap" rel="stylesheet"/>
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -800,6 +800,282 @@
       #mb-tab { bottom: 0.75rem; right: 0.75rem; height: 46px; font-size: 0.9rem; padding: 0 1rem 0 0.85rem; }
     }
   </style>
+  <style id="uiux">
+/* ===== UI/UX fundamentals pass — PREVIEW overrides ===== */
+:root{
+  /* 4-pt spacing scale */
+  --s1:4px;--s2:8px;--s3:12px;--s4:16px;--s5:20px;--s6:24px;--s8:32px;--s10:40px;--s12:48px;--s16:64px;
+  /* 6-step type scale */
+  --t-xs:12px;--t-sm:14px;--t-md:16px;--t-lg:18px;--t-xl:24px;--t-hero:clamp(32px,5vw,48px);
+  /* red ramp (primary) */
+  --red-50:rgba(217,79,107,.12);--red-100:rgba(217,79,107,.22);--red-300:#E57A90;
+  /* dark-mode depth = lighter surfaces, soft shadows */
+  --card:#1C2D57;--card-hi:#233766;
+  --card-shadow:0 1px 2px rgba(0,0,0,.18),0 8px 24px rgba(0,0,0,.18);
+  --card-shadow-hover:0 2px 4px rgba(0,0,0,.2),0 16px 40px rgba(0,0,0,.28);
+  --border:rgba(255,255,255,.07);--border-hi:rgba(255,255,255,.14);
+}
+
+/* ── one font family ── */
+body,#mb-form input,#mb-form textarea,.notify-form input[type="email"]{font-family:'Nunito',sans-serif}
+body{font-size:var(--t-md);-webkit-font-smoothing:antialiased}
+
+/* ── nav: active item gets underline signifier, not colour alone ── */
+nav{height:56px;padding:0 var(--s8);gap:var(--s6);box-shadow:none;border-bottom:1px solid var(--border)}
+nav .nav-logo{font-size:var(--t-lg);letter-spacing:-0.01em}
+nav a{font-size:var(--t-sm);letter-spacing:0;text-transform:none;position:relative;padding:var(--s2) 0}
+nav a:not(.nav-logo)::after{content:'';position:absolute;left:0;right:0;bottom:0;height:2px;border-radius:2px;background:var(--red);transform:scaleX(0);transition:transform .2s}
+nav a:not(.nav-logo):hover{color:var(--white)}
+nav a:not(.nav-logo):hover::after{transform:scaleX(.5)}
+nav a.active{color:var(--white)}
+nav a.active::after{transform:scaleX(1)}
+
+/* ── hero: tighter big type, clearer hierarchy ── */
+header{padding:var(--s12) var(--s8) var(--s10)}
+header::after{display:none}
+.hero-inner{gap:var(--s8)}
+.logo-wrap img{width:120px;height:120px;box-shadow:0 0 40px rgba(217,79,107,.25)}
+header h1{font-size:var(--t-hero);letter-spacing:-0.025em;line-height:1.1}
+header p.tagline{margin-top:var(--s2);font-size:var(--t-lg);letter-spacing:-0.01em;text-transform:none;color:var(--red-300);font-weight:800}
+header p.hero-sub{margin-top:var(--s3);max-width:40rem;font-size:var(--t-md);line-height:1.6;color:rgba(255,255,255,.68)}
+header p.hero-sub strong{display:block;margin-bottom:var(--s2);font-size:var(--t-lg);line-height:1.35;font-weight:700;color:var(--white)}
+.trust-line{margin-top:var(--s6);gap:var(--s2) var(--s8);font-size:var(--t-sm)}
+
+/* ── finder bar ── */
+.filter-bar{top:56px;padding:0 var(--s8);background:rgba(27,47,94,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--border);box-shadow:0 8px 24px rgba(0,0,0,.18)}
+.finder-row{gap:var(--s3) var(--s4);padding:var(--s3) 0 var(--s1)}
+.filter-row{gap:var(--s2);padding:var(--s2) 0 var(--s3)}
+#sim-search{font-size:var(--t-md);padding:var(--s2) var(--s10);height:40px;border-radius:999px;border:1px solid var(--border-hi)}
+#sim-search:focus{border-color:var(--red);box-shadow:0 0 0 3px var(--red-50)}
+.search-ico{left:var(--s4)}
+/* both chip groups share one pattern: ghost pill → filled red when on */
+.filter-btn,.level-chip{font-size:var(--t-sm);font-weight:700;letter-spacing:0;height:32px;padding:0 var(--s4);border-radius:999px;border:1px solid var(--border-hi);color:rgba(255,255,255,.82);background:transparent;transition:background .15s,border-color .15s,color .15s,transform .1s}
+.filter-btn:hover,.level-chip:hover{background:var(--red-50);border-color:var(--red-100);color:var(--white)}
+.filter-btn:active,.level-chip:active{transform:translateY(1px)}
+.filter-btn.active,.level-chip[aria-pressed="true"]{background:var(--red);border-color:var(--red);color:var(--white)}
+.level-chips{gap:var(--s2)}
+.sim-count{font-size:var(--t-xs)}
+
+/* ── sections ── */
+main{padding:var(--s12) var(--s6) var(--s16)}
+.category{margin-bottom:var(--s16)}
+.category-header{gap:var(--s3);margin-bottom:var(--s4)}
+.cat-icon{width:40px;height:40px;border-radius:12px;font-size:20px;box-shadow:none;background:var(--card-hi)}
+.category-header h2{font-size:var(--t-xl);letter-spacing:-0.02em;text-transform:none;font-weight:900}
+.category-header h2 span{display:none}
+.divider{height:1px;margin-bottom:var(--s6)}
+.cards-grid{gap:var(--s6)}
+
+/* ── cards: lighter surface = depth; soft shadow; one dominant title ── */
+.card{border-radius:16px;border:1px solid var(--border);gap:0;transition:transform .2s ease,box-shadow .2s ease,background .2s ease,border-color .2s ease}
+.card:hover{transform:translateY(-4px);background:var(--card-hi);border-color:var(--border-hi)}
+.card:active{transform:translateY(-1px)}
+.card::before{display:none}
+.card-body{gap:var(--s2);padding:var(--s5) var(--s6) var(--s6)}
+.card-title{font-size:var(--t-lg);line-height:1.25;letter-spacing:-0.01em}
+.card-desc{font-size:var(--t-sm);line-height:1.55;color:rgba(255,255,255,.62);margin-bottom:var(--s2)}
+.lvl{font-size:var(--t-xs);letter-spacing:.02em;text-transform:none;padding:2px var(--s2)}
+.card-badges{gap:var(--s1)}
+.tag{font-size:var(--t-xs);padding:2px var(--s2);border-radius:999px;border-color:var(--border-hi);color:rgba(255,255,255,.66)}
+.tag:hover{background:var(--red-50);border-color:var(--red-100);color:var(--white)}
+.card-tags{gap:var(--s1)}
+.card-link{font-size:var(--t-sm);letter-spacing:0;text-transform:none;margin-top:var(--s2);font-weight:800}
+.card-thumb{border-bottom:1px solid var(--border)}
+
+/* coming soon: muted, but notify button still reads as a button */
+.card.coming-soon{opacity:1}
+.card.coming-soon .thumb-placeholder,.card.coming-soon .card-title,.card.coming-soon .card-desc{opacity:.6}
+.card.coming-soon:hover{background:var(--card)}
+.coming-soon-badge{font-size:var(--t-xs);letter-spacing:.02em;text-transform:none;padding:2px var(--s2);border-width:1px}
+.notify-btn{font-size:var(--t-sm);letter-spacing:0;text-transform:none;height:32px;padding:0 var(--s4);border-radius:999px;border:1px solid var(--red);color:var(--white);background:transparent;transition:background .15s,transform .1s}
+.notify-btn:hover{background:var(--red);color:var(--white)}
+.notify-btn:active{transform:translateY(1px)}
+.notify-btn:disabled{opacity:.45;cursor:not-allowed}
+.notify-form input[type="email"]{font-size:var(--t-sm);height:32px;border-width:1px}
+.notify-form input[type="email"]:focus{border-color:var(--red);box-shadow:0 0 0 3px var(--red-50)}
+.notify-note{font-size:var(--t-xs)}
+.notify-note.ok{color:#5BD49A} /* green = success */
+
+/* ── footer ── */
+footer{font-size:var(--t-sm);letter-spacing:0;text-transform:none;font-weight:600;padding:var(--s8) var(--s8) 88px;color:rgba(255,255,255,.5)}
+
+/* ── message board ── */
+#mb-tab{height:48px;padding:0 var(--s5) 0 var(--s4);font-size:var(--t-md);box-shadow:0 8px 24px rgba(217,79,107,.35);transition:transform .15s,filter .15s}
+#mb-tab:hover{transform:translateY(-2px);filter:brightness(1.06)}
+#mb-tab:active{transform:translateY(0)}
+#mb-panel{border:1px solid var(--border-hi);box-shadow:0 24px 64px rgba(0,0,0,.5)} /* floating layer = stronger shadow */
+#mb-header span{font-size:var(--t-md)}
+.mb-msg-name{font-size:var(--t-sm)} .mb-msg-time{font-size:var(--t-xs)} .mb-msg-body{font-size:var(--t-sm)}
+#mb-form input,#mb-form textarea{font-size:var(--t-sm);border-width:1px;padding:var(--s2) var(--s3);margin-bottom:var(--s2)}
+#mb-form input:focus,#mb-form textarea:focus{box-shadow:0 0 0 3px var(--red-50)}
+#mb-hint,#mb-status{font-size:var(--t-xs)}
+#mb-submit{font-size:var(--t-sm);letter-spacing:0;text-transform:none;height:40px;transition:filter .15s,transform .1s}
+#mb-submit:hover:not(:disabled){filter:brightness(1.08)}
+#mb-submit:active:not(:disabled){transform:translateY(1px)}
+
+@media (max-width:600px){
+  nav{padding:0 var(--s4);gap:var(--s4)}
+  nav .nav-logo{font-size:var(--t-md)}
+  nav a:not(.nav-logo){font-size:var(--t-xs)}
+  header{padding:var(--s12) var(--s4) var(--s10)}
+  .hero-inner{gap:var(--s4)}
+  .logo-wrap img{width:96px;height:96px}
+  .filter-bar{padding:0 var(--s4)}
+  main{padding:var(--s8) var(--s4) var(--s12)}
+  .category{margin-bottom:var(--s12)}
+  .trust-line{font-size:13px;gap:var(--s1) var(--s4)}
+  .filter-btn,.level-chip{height:30px;padding:0 var(--s3);font-size:13px}
+  .level-chips{gap:6px;flex-wrap:nowrap}
+  #sim-search{font-size:var(--t-sm)}
+}
+  </style>
+  <style id="playful">
+/* ===== Brand-B personality layer (cosmic sticker style) — keeps CurioMinds palette + Nunito ===== */
+:root{
+  --cream-a:rgba(240,237,232,.16);
+  --acc:var(--red); /* per-section accent, overridden below */
+  --hand:'Caveat',cursive;
+}
+
+/* ── hero ── */
+header.hero2{padding:var(--s12) var(--s8) var(--s12);text-align:left;background:var(--navy);position:relative;overflow:hidden}
+header.hero2::before,header.hero2::after{display:none}
+.cosmos{position:absolute;inset:0;pointer-events:none}
+#stars{position:absolute;inset:0;width:100%;height:100%}
+.glow{position:absolute;border-radius:50%;filter:blur(60px);opacity:.55;animation:drift 18s ease-in-out infinite alternate}
+.g1{width:420px;height:420px;background:var(--purple);left:-120px;top:-140px}
+.g2{width:380px;height:380px;background:var(--red);right:-100px;top:40px;opacity:.35;animation-duration:22s}
+.g3{width:360px;height:360px;background:var(--navy-lt);left:35%;bottom:-220px;animation-duration:26s}
+@keyframes drift{to{transform:translate(40px,30px) scale(1.08)}}
+
+.hero2-grid{position:relative;z-index:1;max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1.05fr 1fr;gap:var(--s12);align-items:center}
+.brand-row{display:flex;align-items:center;gap:var(--s4);margin-bottom:var(--s4)}
+.hero2-logo{width:72px;height:72px;border-radius:50%;border:2px solid var(--cream-a);box-shadow:0 0 32px rgba(217,79,107,.3)}
+.kicker{display:inline-flex;align-items:center;gap:var(--s2);height:32px;padding:0 var(--s3) 0 var(--s1);border-radius:999px;border:2px solid var(--cream);color:var(--cream);font:800 var(--t-sm) 'Nunito',sans-serif;transform:rotate(-2deg);background:rgba(13,27,62,.6)}
+.kicker-dot{display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--red);color:var(--white);font-size:11px}
+header.hero2 h1{font-size:clamp(40px,5.4vw,60px);letter-spacing:-0.03em;line-height:1.05}
+header.hero2 p.tagline{margin-top:var(--s2);font-size:var(--t-xl);color:var(--cream)}
+.squiggle{position:relative;white-space:nowrap;color:var(--white)}
+.squiggle::after{content:'';position:absolute;left:0;right:0;bottom:-10px;height:12px;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 12' preserveAspectRatio='none'%3E%3Cpath d='M2 7 Q 12 1 22 7 T 42 7 T 62 7 T 82 7 T 102 7 T 118 6' fill='none' stroke='%23D94F6B' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat center/100% 100%;
+  stroke-dasharray:1;animation:draw 1.2s .4s ease-out both;clip-path:inset(0 100% 0 0)}
+@keyframes draw{to{clip-path:inset(0 0 0 0)}}
+header.hero2 p.hero-sub{margin-top:var(--s5);max-width:34rem}
+
+/* trust facts → tilted sticker packs (brand colours only) */
+.packs{display:flex;flex-wrap:wrap;gap:var(--s3);margin-top:var(--s6)}
+.pack{display:inline-flex;align-items:center;gap:var(--s2);height:36px;padding:0 var(--s4);border-radius:12px;border:2px solid var(--cream);font:800 var(--t-sm) 'Nunito',sans-serif;color:var(--white);text-decoration:none;box-shadow:0 3px 0 var(--cream);transition:transform .2s,box-shadow .2s}
+.pack.p-red{background:var(--red);transform:rotate(-1.5deg)}
+.pack.p-purple{background:var(--purple);transform:rotate(1deg)}
+.pack.p-navy{background:var(--navy-lt);transform:rotate(-.5deg)}
+a.pack:hover{transform:rotate(0) translateY(-2px);box-shadow:0 5px 0 var(--cream)}
+a.pack:active{transform:translateY(2px);box-shadow:0 1px 0 var(--cream)}
+a.pack:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+.trust-social{margin-top:var(--s5);font:600 var(--t-sm) 'Nunito',sans-serif;color:rgba(255,255,255,.6)}
+.trust-social a{color:rgba(255,255,255,.78);text-underline-offset:3px;text-decoration-color:rgba(255,255,255,.25)}
+.trust-social a:hover{color:var(--red);text-decoration-color:var(--red)}
+.trust-social .dot{margin:0 var(--s2);opacity:.5}
+
+/* demo sticker */
+.hero2-demo{position:relative;padding:var(--s10) var(--s4) 96px var(--s12)}
+.sticker{margin:0;background:var(--bg);border:2px solid var(--cream);border-radius:24px;box-shadow:8px 8px 0 var(--red);transform:rotate(1.5deg);overflow:hidden}
+.sticker-bar{display:flex;align-items:center;gap:var(--s3);padding:var(--s3) var(--s4);border-bottom:2px solid var(--cream-a);background:var(--card)}
+.sb-dots{display:flex;gap:6px}.sb-dots i{width:10px;height:10px;border-radius:50%;background:var(--cream-a)}
+.sb-dots i:first-child{background:var(--red)}
+.sb-title{font:800 var(--t-sm) 'Nunito',sans-serif;color:var(--cream)}
+.phase-chip{margin-left:auto;height:24px;padding:0 var(--s3);border-radius:999px;display:inline-flex;align-items:center;font:800 var(--t-xs) 'Nunito',sans-serif;color:var(--white);background:var(--navy-lt);transition:background .4s}
+.phase-chip.liquid{background:var(--purple)}.phase-chip.gas{background:var(--red)}
+.sim-stage{position:relative;padding:var(--s4)}
+#mini-sim{display:block;width:100%;height:auto;aspect-ratio:440/230;border-radius:12px;background:radial-gradient(ellipse at 50% 120%,rgba(107,63,160,.25),transparent 70%)}
+.thermo{position:absolute;right:var(--s6);top:var(--s6);bottom:var(--s6);width:10px;border-radius:999px;background:rgba(255,255,255,.08);border:1.5px solid var(--cream-a)}
+#thermo-fill{position:absolute;left:0;right:0;bottom:0;height:10%;border-radius:999px;background:linear-gradient(to top,var(--navy-lt),var(--purple),var(--red))}
+.thermo span{position:absolute;top:-20px;left:50%;transform:translateX(-50%);font:800 10px 'Nunito',sans-serif;color:var(--cream)}
+
+.curio-spot{position:absolute;left:-24px;bottom:-4px;width:124px;z-index:3}
+.curio-spot .curio{width:100%}.curio-spot .curio-svg{width:100%;display:block;overflow:visible;filter:drop-shadow(0 6px 0 rgba(0,0,0,.25))}
+.curio-say{position:absolute;left:128px;bottom:20px;width:max-content;max-width:300px;padding:var(--s2) var(--s3);border-radius:14px 14px 14px 4px;background:var(--cream);color:var(--bg);font:800 var(--t-sm)/1.35 'Nunito',sans-serif;box-shadow:0 3px 0 rgba(0,0,0,.3);transform-origin:0 100%;transition:transform .25s cubic-bezier(.3,1.6,.5,1),opacity .2s}
+.curio-say.pop{animation:pop .35s cubic-bezier(.3,1.6,.5,1)}
+@keyframes pop{from{transform:scale(.6);opacity:0}}
+.hand-note{position:absolute;right:var(--s4);top:0;font:600 24px var(--hand);color:var(--red);transform:rotate(-3deg);display:flex;align-items:flex-end;gap:2px}
+.hand-note svg{transform:translateY(10px) scaleY(-1) scaleX(-1)}
+
+/* ── sections: brand-colour accent per subject ── */
+#physics{--acc:#4A6FC0}#chemistry{--acc:var(--red)}#biology{--acc:#9466D0}
+#earth-science{--acc:var(--navy-lt)}#astronomy{--acc:var(--purple)}#beyond{--acc:var(--cream)}
+.cat-icon{width:44px;height:44px;border-radius:50%;background:var(--acc);border:2px solid var(--cream);box-shadow:0 3px 0 var(--cream);transform:rotate(-8deg);font-size:20px}
+.divider{background:linear-gradient(to right,var(--acc) 0%,transparent 70%);height:2px;opacity:.7}
+
+/* sticker cards: straight grid, pop on hover */
+.card{border:2px solid var(--cream-a);transition:transform .2s cubic-bezier(.3,1.4,.5,1),box-shadow .2s,border-color .2s,background .2s}
+.card:hover{transform:translate(-3px,-3px);border-color:var(--cream);box-shadow:6px 6px 0 var(--acc);background:var(--card-hi)}
+.card:active{transform:translate(0,0);box-shadow:2px 2px 0 var(--acc)}
+.card.coming-soon:hover{transform:none;box-shadow:none;border-color:var(--cream-a)}
+.card-link{color:var(--white)}
+.card-link::after{color:var(--red)}
+
+/* level badges: metadata → quiet cream; gold back to success-only */
+.lvl{background:rgba(240,237,232,.1);color:var(--cream);border:1px solid var(--cream-a)}
+.notify-note.ok{color:var(--gold)}
+
+
+@media (max-width:900px){
+  .hero2-grid{grid-template-columns:1fr;gap:var(--s8)}
+  .hero2-demo{max-width:520px;margin:0 auto;width:100%}
+}
+@media (max-width:600px){
+  header.hero2{padding:var(--s8) var(--s4) var(--s10)}
+  .hero2-logo{width:56px;height:56px}
+  header.hero2 p.tagline{font-size:var(--t-lg)}
+  .hero2-demo{padding:var(--s10) var(--s2) 88px var(--s8)}
+  .curio-spot{width:92px;left:-8px}
+  .curio-say{left:88px;bottom:16px;width:min(240px,calc(100vw - 150px));max-width:none;font-size:13px}
+  .hand-note{font-size:20px}
+}
+@media (prefers-reduced-motion:reduce){
+  .glow,.squiggle::after{animation:none;clip-path:none}
+}
+
+/* ── v2: tighter hero ── */
+header.hero2{padding:var(--s8) var(--s8) var(--s8)}
+.hero2-grid{gap:var(--s10)}
+.brand-row{margin-bottom:var(--s3)}
+.hero2-logo{width:56px;height:56px}
+header.hero2 h1{font-size:clamp(36px,4.4vw,52px)}
+header.hero2 p.tagline{font-size:var(--t-lg);margin-top:var(--s1)}
+header.hero2 p.hero-sub{margin-top:var(--s4)}
+header.hero2 p.hero-sub strong{font-size:var(--t-md);margin-bottom:var(--s1)}
+.packs{margin-top:var(--s4);gap:var(--s2)}
+.pack{height:32px;padding:0 var(--s3);font-size:13px}
+.trust-social{margin-top:var(--s3)}
+.hero2-demo{padding:var(--s8) var(--s4) 72px var(--s12)}
+.sim-stage{padding:var(--s3)}
+.curio-spot{width:108px}
+.curio-say{left:112px;bottom:12px}
+
+/* ── v2: nav links back to original brand style (caps, red when selected) ── */
+nav a{font-size:.82rem;letter-spacing:.05em;text-transform:uppercase;color:rgba(255,255,255,.75);padding:0}
+nav a:not(.nav-logo)::after{display:none}
+nav a:not(.nav-logo):hover,nav a.active{color:var(--red)}
+
+/* ── v2: deep-space hero ── */
+header.hero2{background:radial-gradient(ellipse at 70% 0%,#24205a 0%,transparent 55%),radial-gradient(ellipse at 10% 100%,#2a1850 0%,transparent 55%),linear-gradient(180deg,#0A1430 0%,#0D1B3E 60%,#14224a 100%)}
+.glow{mix-blend-mode:screen}
+.g1{opacity:.4}.g2{opacity:.28}.g3{opacity:.35}
+.nebula{position:absolute;inset:-20%;background:
+  radial-gradient(closest-side at 30% 35%,rgba(107,63,160,.22),transparent),
+  radial-gradient(closest-side at 75% 60%,rgba(217,79,107,.14),transparent),
+  radial-gradient(closest-side at 55% 20%,rgba(43,74,138,.25),transparent);
+  filter:blur(30px);animation:nebula 60s linear infinite}
+@keyframes nebula{to{transform:rotate(360deg)}}
+@media (max-width:600px){
+  header.hero2{padding:var(--s6) var(--s4) var(--s6)}
+  .hero2-demo{padding:var(--s8) var(--s2) 72px var(--s8)}
+  .curio-spot{width:88px}
+  .curio-say{left:84px}
+  nav a:not(.nav-logo){font-size:.68rem;letter-spacing:.03em}
+}
+@media (prefers-reduced-motion:reduce){.nebula{animation:none}}
+  </style>
 </head>
 <body>
 
@@ -812,21 +1088,45 @@
 </nav>
 
 <!-- HERO -->
-<header>
-  <div class="hero-inner">
-    <div class="logo-wrap">
-      <img src="assets/logo.webp" width="130" height="130" alt="CurioMinds.inc logo" fetchpriority="high" />
-    </div>
-    <div class="hero-text">
-      <h1>Curio<span>Minds</span>.inc</h1>
-      <p class="tagline">Where concepts click.</p>
-      <p class="hero-sub"><strong>Free interactive simulations for Singapore secondary classrooms — science first, plus life skills beyond the syllabus.</strong> Aligned to the MOE syllabus. No login, no install — open one mid-lesson in any browser.</p>
-    </div>
+<header class="hero2">
+  <div class="cosmos" aria-hidden="true">
+    <div class="nebula"></div><div class="glow g1"></div><div class="glow g2"></div><div class="glow g3"></div>
+    <canvas id="stars"></canvas>
   </div>
+  <div class="hero2-grid">
+    <div class="hero2-text">
+      <div class="brand-row">
+        <img class="hero2-logo" src="assets/logo.webp" width="72" height="72" alt="CurioMinds.inc logo" fetchpriority="high" />
+        <span class="kicker"><span class="kicker-dot">59</span> free sims · no login</span>
+      </div>
+      <h1>Curio<span>Minds</span>.inc</h1>
+      <p class="tagline">Where <span class="squiggle">concepts click.</span></p>
+      <p class="hero-sub"><strong>Free interactive simulations for Singapore secondary classrooms — science first, plus life skills beyond the syllabus.</strong> Aligned to the MOE syllabus. No login, no install — open one mid-lesson in any browser.</p>
+      <div class="packs">
+        <a class="pack p-red" href="about.html"><span aria-hidden="true">🍎</span>Built by an MOE teacher</a>
+        <span class="pack p-purple"><span aria-hidden="true">🔓</span>Free · no login</span>
+        <span class="pack p-navy"><span aria-hidden="true">🛡️</span>No student data</span>
+      </div>
+      <p class="trust-social"><a href="https://www.instagram.com/curiominds.inc" target="_blank" rel="noopener">Instagram</a><span class="dot" aria-hidden="true">·</span><a href="https://www.youtube.com/@Curiominds.inc88" target="_blank" rel="noopener">YouTube</a><span class="dot" aria-hidden="true">·</span><a href="https://www.tiktok.com/@curiominds.inc" target="_blank" rel="noopener">TikTok</a><span class="dot" aria-hidden="true">·</span><a href="https://www.linkedin.com/in/chin-hang-lau-881859267/" target="_blank" rel="noopener">LinkedIn</a></p>
+    </div>
 
-  <div class="trust-line">
-    <p class="trust-facts"><a href="about.html">Built by an MOE teacher</a><span class="dot" aria-hidden="true">·</span><span class="f">Free</span><span class="dot" aria-hidden="true">·</span><span class="f">No login</span><span class="dot" aria-hidden="true">·</span><span class="f">No student data</span></p>
-    <p class="trust-social"><a href="https://www.instagram.com/curiominds.inc" target="_blank" rel="noopener">Instagram</a><span class="dot" aria-hidden="true">·</span><a href="https://www.youtube.com/@Curiominds.inc88" target="_blank" rel="noopener">YouTube</a><span class="dot" aria-hidden="true">·</span><a href="https://www.tiktok.com/@curiominds.inc" target="_blank" rel="noopener">TikTok</a><span class="dot" aria-hidden="true">·</span><a href="https://www.linkedin.com/in/chin-hang-lau-881859267/" target="_blank" rel="noopener">LinkedIn</a></p>
+    <div class="hero2-demo">
+      <figure class="sticker" aria-label="Animated preview: particles changing from solid to liquid to gas as they are heated">
+        <div class="sticker-bar">
+          <span class="sb-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="sb-title">States of Matter</span>
+          <span id="phase-chip" class="phase-chip">Solid</span>
+        </div>
+        <div class="sim-stage">
+          <canvas id="mini-sim" width="440" height="230"></canvas>
+          <div class="thermo" aria-hidden="true"><div id="thermo-fill"></div><span>°C</span></div>
+        </div>
+      </figure>
+      <div id="curio-spot" class="curio-spot" aria-hidden="true">
+        <div id="curio-say" class="curio-say">Hi! I'm Curio 👋</div>
+      </div>
+      <p class="hand-note" aria-hidden="true">heat it up, watch them break free <svg viewBox="0 0 40 40" width="30" height="30"><path d="M6 30 C14 30 26 26 30 10" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path d="M22 14 L30 9 L34 18" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></p>
+    </div>
   </div>
 </header>
 
@@ -1309,5 +1609,336 @@ document.addEventListener('keydown', e => {
 
 <!-- Cloudflare Web Analytics is enabled on the Pages project and injected
      automatically at build time — no snippet needed here. -->
+<script id="curio-rig">
+/* Curio the otter, built from stacked SVG shapes (traced from reels/curio.png, 1024 × 1024 drawing units).
+   Every moving part is its own group with a joint (pivot), so poses are just numbers:
+     const c = Curio.create(parentEl);  c.pose('wave');  c.talk(2);  c.look(-1, -0.5);  c.blink();
+   Poses: idle, wave, point, surprise, think, cheer. The character animates itself (rAF) until c.stop(). */
+(function () {
+  'use strict';
+  const C = { fur: '#A86B40', dark: '#87492C', deep: '#6E3B22', feet: '#7A4128', cream: '#F5CB93', belly: '#2E9FE3', ink: '#1E1B2E', whisk: '#5A2E1A', mouthIn: '#8C2F39' };
+  // joints, in drawing units
+  const J = { armR: [688, 600], armL: [330, 565], head: [505, 545], tail: [700, 850], body: [505, 940] };
+
+  const SVG = `
+<svg viewBox="150 50 820 920" xmlns="http://www.w3.org/2000/svg" class="curio-svg">
+  <g class="c-all">
+    <g class="c-tail"><path d="M690 858 C800 870 870 820 878 735" fill="none" stroke="${C.dark}" stroke-width="78" stroke-linecap="round"/></g>
+    <ellipse cx="380" cy="912" rx="92" ry="42" fill="${C.feet}"/>
+    <ellipse cx="632" cy="912" rx="92" ry="42" fill="${C.feet}"/>
+    <g class="c-armL"><path d="M330 565 L222 735" fill="none" stroke="${C.dark}" stroke-width="88" stroke-linecap="round"/></g>
+    <path d="M300 560 C280 650 285 800 320 870 C360 915 650 915 690 870 C725 800 728 650 708 560 C690 500 320 500 300 560 Z" fill="${C.fur}"/>
+    <ellipse cx="510" cy="728" rx="143" ry="128" fill="${C.belly}"/>
+    <g class="c-armR"><path d="M688 600 C780 600 850 560 893 468" fill="none" stroke="${C.dark}" stroke-width="88" stroke-linecap="round"/></g>
+    <g class="c-head">
+      <circle cx="258" cy="195" r="48" fill="${C.dark}"/><circle cx="262" cy="200" r="22" fill="${C.deep}"/>
+      <circle cx="757" cy="195" r="48" fill="${C.dark}"/><circle cx="752" cy="200" r="22" fill="${C.deep}"/>
+      <ellipse cx="505" cy="312" rx="282" ry="238" fill="${C.fur}"/>
+      <ellipse cx="505" cy="448" rx="212" ry="105" fill="${C.cream}"/>
+      <g fill="none" stroke="${C.whisk}" stroke-width="13" stroke-linecap="round">
+        <path d="M205 422 Q265 410 325 425"/><path d="M233 480 Q280 462 328 455"/>
+        <path d="M688 425 Q750 410 812 422"/><path d="M688 455 Q735 462 782 480"/>
+      </g>
+      <g class="c-mouth">
+        <ellipse class="c-mouthOpen" cx="505" cy="450" rx="38" ry="0" fill="${C.mouthIn}" stroke="${C.ink}" stroke-width="10"/>
+        <path class="c-smile" d="M410 425 Q450 470 505 432 Q560 470 600 425" fill="none" stroke="${C.ink}" stroke-width="17" stroke-linecap="round"/>
+      </g>
+      <path d="M465 352 Q505 330 545 352 Q550 385 505 402 Q460 385 465 352 Z" fill="${C.ink}"/>
+      <path d="M505 400 L505 430" stroke="${C.ink}" stroke-width="13" stroke-linecap="round"/>
+      <circle cx="360" cy="290" r="110" fill="#fff"/><circle cx="655" cy="290" r="110" fill="#fff"/>
+      <g class="c-pupils" fill="${C.ink}"><circle cx="383" cy="292" r="44"/><circle cx="636" cy="292" r="44"/></g>
+      <g fill="none" stroke="${C.ink}" stroke-width="22" stroke-linecap="round">
+        <circle cx="360" cy="290" r="110"/><circle cx="655" cy="290" r="110"/>
+        <path d="M468 275 Q507 255 546 275"/><path d="M250 275 L222 275"/><path d="M765 275 L793 275"/>
+      </g>
+      <g class="c-brows" fill="none" stroke="${C.deep}" stroke-width="16" stroke-linecap="round" opacity="0">
+        <path d="M310 150 Q360 128 410 150"/><path d="M605 150 Q655 128 705 150"/>
+      </g>
+    </g>
+  </g>
+</svg>`;
+
+  // pose targets: arm angles (deg, + = clockwise), head tilt, pupils (-1..1), brows, squash
+  const POSES = {
+    idle: { armR: 92, armL: 0, head: 0, px: 0, py: 0, brow: 0, wave: 0, bob: 1 },
+    wave: { armR: 0, armL: 0, head: -5, px: 0, py: 0, brow: 0, wave: 1, bob: 1 },
+    point: { armR: 8, armL: 0, head: 6, px: 0.6, py: -0.8, brow: 0, wave: 0, bob: 0.6 },
+    surprise: { armR: 20, armL: 40, head: 0, px: 0, py: -0.2, brow: 1, wave: 0, bob: 0, jump: 1, pupil: 0.72, mouth: 0.8 },
+    think: { armR: 92, armL: 0, head: 9, px: 0.6, py: -0.8, brow: 0.6, wave: 0, bob: 0.4 },
+    cheer: { armR: -15, armL: 115, head: 0, px: 0, py: 0, brow: 0.3, wave: 0.5, bob: 0, hop: 1, mouth: 0.5 },
+  };
+
+  function create(parent) {
+    const host = document.createElement('div');
+    host.className = 'curio';
+    host.innerHTML = SVG;
+    parent.append(host);
+    const q = s => host.querySelector(s);
+    const el = { all: q('.c-all'), tail: q('.c-tail'), armL: q('.c-armL'), armR: q('.c-armR'), head: q('.c-head'), pupils: q('.c-pupils'),
+      mouthOpen: q('.c-mouthOpen'), smile: q('.c-smile'), brows: q('.c-brows') };
+    const cur = { armR: 92, armL: 0, head: 0, px: 0, py: 0, brow: 0, wave: 0, bob: 1, jump: 0, hop: 0, pupil: 1, mouth: 0 };
+    let target = { ...POSES.idle }, poseAt = 0, talkUntil = 0, blinkAt = 1.5, lookOverride = null, raf = 0, t0 = performance.now();
+
+    const rot = (a, [x, y]) => `rotate(${a.toFixed(2)} ${x} ${y})`;
+    function frame(now) {
+      const t = (now - t0) / 1000, k = 1 - Math.exp(-12 * (1 / 60));
+      const tg = { armR: 92, armL: 0, head: 0, px: 0, py: 0, brow: 0, wave: 0, bob: 1, jump: 0, hop: 0, pupil: 1, mouth: 0, ...target };
+      if (lookOverride) { tg.px = lookOverride[0]; tg.py = lookOverride[1]; }
+      for (const key in cur) cur[key] += (tg[key] - cur[key]) * k;
+      const since = t - poseAt;
+
+      // body: gentle breathing bob, a jump on surprise, hops on cheer
+      const bob = Math.sin(t * 2.4) * 6 * cur.bob;
+      const jump = cur.jump * Math.max(0, Math.sin(Math.min(since, 0.45) / 0.45 * Math.PI)) * -60;
+      const hop = cur.hop * -Math.abs(Math.sin(t * 7)) * 45;
+      const squash = 1 + Math.sin(t * 2.4 + 1) * 0.012 * cur.bob;
+      el.all.setAttribute('transform', `translate(0 ${(bob + jump + hop).toFixed(1)}) translate(505 940) scale(${(2 - squash).toFixed(4)} ${squash.toFixed(4)}) translate(-505 -940)`);
+      el.tail.setAttribute('transform', rot(Math.sin(t * 3.1) * 7 + (cur.hop ? Math.sin(t * 14) * 10 : 0), J.tail));
+      el.armR.setAttribute('transform', rot(cur.armR + Math.sin(t * 9) * 16 * cur.wave, J.armR));
+      el.armL.setAttribute('transform', rot(cur.armL + Math.sin(t * 2.4) * 3, J.armL));
+      el.head.setAttribute('transform', rot(cur.head + Math.sin(t * 1.3) * 2.5, J.head));
+
+      // eyes: look direction, blink every few seconds
+      let blink = 1;
+      if (t > blinkAt) { const b = (t - blinkAt) / 0.16; blink = b < 1 ? Math.abs(1 - 2 * b) * 0.9 + 0.1 : 1; if (b >= 1) blinkAt = t + 2.2 + Math.random() * 2.5; }
+      const ps = cur.pupil;
+      el.pupils.setAttribute('transform', `translate(${(cur.px * 30).toFixed(1)} ${(cur.py * 28).toFixed(1)}) translate(510 292) scale(${ps.toFixed(3)} ${(ps * blink).toFixed(3)}) translate(-510 -292)`);
+      el.brows.setAttribute('opacity', cur.brow.toFixed(2));
+      el.brows.setAttribute('transform', `translate(0 ${(-cur.brow * 18).toFixed(1)})`);
+
+      // mouth: open while talking (flaps), or held open for surprise/cheer
+      const talking = t < talkUntil;
+      const open = Math.max(cur.mouth, talking ? 0.25 + 0.75 * Math.abs(Math.sin(t * 13)) * (0.6 + 0.4 * Math.sin(t * 5.3)) : 0);
+      el.mouthOpen.setAttribute('ry', (open * 34).toFixed(1));
+      el.mouthOpen.setAttribute('cy', (440 + open * 22).toFixed(1));
+      el.smile.setAttribute('opacity', (1 - Math.min(1, open * 2.2)).toFixed(2));
+
+      raf = requestAnimationFrame(frame);
+    }
+    raf = requestAnimationFrame(frame);
+
+    return {
+      el: host,
+      pose(name) { target = { ...POSES[name] }; poseAt = (performance.now() - t0) / 1000; },
+      talk(secs) { talkUntil = (performance.now() - t0) / 1000 + secs; },
+      look(x, y) { lookOverride = x === undefined ? null : [x, y]; },
+      blink() { blinkAt = (performance.now() - t0) / 1000; },
+      stop() { cancelAnimationFrame(raf); },
+    };
+  }
+  window.Curio = { create, POSES: Object.keys(POSES) };
+})();
+
+</script>
+<script id="hero-js">
+/* Hero: starfield + looping states-of-matter mini sim + Curio narrating it */
+(function () {
+  'use strict';
+  const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // live sim count in the kicker
+  try {
+    const n = document.querySelectorAll('.card:not(.coming-soon)').length;
+    const k = document.querySelector('.kicker-dot');
+    if (k && n) k.textContent = n;
+  } catch (e) {}
+
+  /* ── space: twinkling starfield, glinting bright stars, shooting stars ── */
+  const sc = document.getElementById('stars');
+  let SW = 0, SH = 0, sx = null, STARS = [], SHOOT = null, nextShoot = 2.5, heroVisible = true;
+  const TINTS = ['240,237,232', '255,255,255', '200,215,255', '255,200,215', '220,200,255'];
+  function buildStars() {
+    if (!sc) return;
+    const r = sc.getBoundingClientRect(), d = Math.min(2, devicePixelRatio || 1);
+    SW = r.width; SH = r.height; sc.width = SW * d; sc.height = SH * d;
+    sx = sc.getContext('2d'); sx.setTransform(d, 0, 0, d, 0, 0);
+    let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    const n = Math.round(SW * SH / 2600);
+    STARS = [];
+    for (let i = 0; i < n; i++) {
+      const big = rnd() < 0.04, mid = !big && rnd() < 0.18;
+      STARS.push({ x: rnd() * SW, y: rnd() * SH, r: big ? 1.6 + rnd() : mid ? 1 + rnd() * .4 : .5 + rnd() * .5,
+        a: .25 + rnd() * .6, sp: .6 + rnd() * 2.2, ph: rnd() * 6.3, c: TINTS[Math.floor(rnd() * TINTS.length)], glint: big });
+    }
+  }
+  function drawSpace(t) {
+    if (!sx) return;
+    sx.clearRect(0, 0, SW, SH);
+    for (const s of STARS) {
+      const tw = RM ? 1 : .55 + .45 * Math.sin(t * s.sp + s.ph);
+      const a = s.a * tw;
+      sx.fillStyle = `rgba(${s.c},${a.toFixed(3)})`;
+      sx.beginPath(); sx.arc(s.x, s.y, s.r, 0, 7); sx.fill();
+      if (s.glint) { // 4-point sparkle with soft halo
+        const L = s.r * (4 + 4 * tw);
+        const gr = sx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.r * 6);
+        gr.addColorStop(0, `rgba(${s.c},${(a * .5).toFixed(3)})`); gr.addColorStop(1, `rgba(${s.c},0)`);
+        sx.fillStyle = gr; sx.beginPath(); sx.arc(s.x, s.y, s.r * 6, 0, 7); sx.fill();
+        sx.strokeStyle = `rgba(${s.c},${(a * .9).toFixed(3)})`; sx.lineWidth = .8;
+        sx.beginPath(); sx.moveTo(s.x - L, s.y); sx.lineTo(s.x + L, s.y); sx.moveTo(s.x, s.y - L); sx.lineTo(s.x, s.y + L); sx.stroke();
+      }
+    }
+    // shooting star
+    if (!RM) {
+      if (!SHOOT && t > nextShoot) {
+        const fromLeft = Math.random() < .5;
+        SHOOT = { x: fromLeft ? Math.random() * SW * .5 : SW * (.5 + Math.random() * .5), y: Math.random() * SH * .35,
+          vx: (fromLeft ? 1 : -1) * (520 + Math.random() * 260), vy: 200 + Math.random() * 120, t0: t, life: .9 };
+      }
+      if (SHOOT) {
+        const k = (t - SHOOT.t0) / SHOOT.life;
+        if (k >= 1) { SHOOT = null; nextShoot = t + 3 + Math.random() * 4; }
+        else {
+          const hx = SHOOT.x + SHOOT.vx * (t - SHOOT.t0), hy = SHOOT.y + SHOOT.vy * (t - SHOOT.t0);
+          const tl = .16, tx = hx - SHOOT.vx * tl, ty = hy - SHOOT.vy * tl, fade = Math.sin(k * Math.PI);
+          const lg = sx.createLinearGradient(tx, ty, hx, hy);
+          lg.addColorStop(0, 'rgba(240,237,232,0)'); lg.addColorStop(1, `rgba(255,255,255,${(.9 * fade).toFixed(3)})`);
+          sx.strokeStyle = lg; sx.lineWidth = 2; sx.lineCap = 'round';
+          sx.beginPath(); sx.moveTo(tx, ty); sx.lineTo(hx, hy); sx.stroke();
+        }
+      }
+    }
+  }
+  buildStars(); addEventListener('resize', buildStars);
+  try { new IntersectionObserver(es => { heroVisible = es[0].isIntersecting; }).observe(sc); } catch (e) {}
+  let lastSpace = 0;
+  (function spaceLoop(now) {
+    requestAnimationFrame(spaceLoop);
+    try {
+      if (!heroVisible || document.hidden) return;
+      if (now - lastSpace < 33) return; // ~30 fps is plenty for twinkle
+      lastSpace = now; drawSpace(now / 1000);
+    } catch (e) {}
+  })(0);
+
+  /* ── mini sim ── */
+  const cv = document.getElementById('mini-sim');
+  if (!cv) return;
+  const W = 440, H = 230, R = 10, PAD = 14, RIGHT = W - 44; // leave room for thermometer
+  const d = Math.min(2, devicePixelRatio || 1);
+  cv.width = W * d; cv.height = H * d;
+  const g = cv.getContext('2d'); g.scale(d, d);
+
+  const COLS = 7, ROWS = 5, SP = 2 * R + 3;
+  const lx0 = (PAD + RIGHT) / 2 - (COLS - 1) * SP / 2, ly0 = H - PAD - R - (ROWS - 1) * SP;
+  const P = [];
+  for (let j = 0; j < ROWS; j++) for (let i = 0; i < COLS; i++) {
+    const hx = lx0 + i * SP, hy = ly0 + j * SP;
+    P.push({ x: hx, y: hy, vx: 0, vy: 0, hx, hy });
+  }
+
+  const CYCLE = 14;
+  // keyframes: [time, temperature 0..1, lattice pull 0..1, gravity]
+  const KF = [[0, .12, 1, .15], [3.5, .12, 1, .15], [4.6, .42, 0, .15], [7.5, .42, 0, .15], [8.6, 1, 0, .01], [11.4, 1, 0, .01], [12.4, .3, .15, .15], [14, .12, 1, .15]];
+  function env(t) {
+    for (let i = 1; i < KF.length; i++) if (t <= KF[i][0]) {
+      const a = KF[i - 1], b = KF[i], f = (t - a[0]) / (b[0] - a[0]), s = f * f * (3 - 2 * f);
+      return { T: a[1] + (b[1] - a[1]) * s, k: a[2] + (b[2] - a[2]) * s, gr: a[3] + (b[3] - a[3]) * s };
+    }
+    return { T: .12, k: 1, gr: .15 };
+  }
+  const phaseOf = t => t < 4 ? 'solid' : t < 8.1 ? 'liquid' : t < 11.6 ? 'gas' : 'cool';
+
+  function step(e) {
+    const vT = .5 + e.T * 5.5;
+    for (const p of P) {
+      // lattice pull (stronger near the end of cooling so it locks back in)
+      const kk = e.k * e.k * 0.08;
+      p.vx += (p.hx - p.x) * kk; p.vy += (p.hy - p.y) * kk;
+      if (e.k > .5) { p.vx *= .82; p.vy *= .82; }
+      p.vy += e.gr;
+      // thermal kick
+      p.vx += (Math.random() - .5) * e.T * 1.2; p.vy += (Math.random() - .5) * e.T * 1.2;
+    }
+    // repulsion
+    for (let i = 0; i < P.length; i++) for (let j = i + 1; j < P.length; j++) {
+      const a = P[i], b = P[j], dx = b.x - a.x, dy = b.y - a.y, dd = dx * dx + dy * dy, m = 2 * R + 1;
+      if (dd < m * m && dd > .01) {
+        const dist = Math.sqrt(dd), o = (m - dist) * .5, nx = dx / dist, ny = dy / dist;
+        a.x -= nx * o; a.y -= ny * o; b.x += nx * o; b.y += ny * o;
+        const rv = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
+        if (rv < 0) { a.vx += rv * nx; a.vy += rv * ny; b.vx -= rv * nx; b.vy -= rv * ny; }
+      }
+    }
+    // thermostat + walls
+    let ms = 0; for (const p of P) ms += Math.hypot(p.vx, p.vy); ms /= P.length;
+    const sF = e.k > .5 ? 1 : 1 + .08 * (vT / Math.max(.05, ms) - 1);
+    for (const p of P) {
+      p.vx *= sF; p.vy *= sF;
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < PAD + R) { p.x = PAD + R; p.vx = Math.abs(p.vx); }
+      if (p.x > RIGHT - R) { p.x = RIGHT - R; p.vx = -Math.abs(p.vx); }
+      if (p.y < PAD + R) { p.y = PAD + R; p.vy = Math.abs(p.vy); }
+      if (p.y > H - PAD - R) { p.y = H - PAD - R; p.vy = -Math.abs(p.vy) * .6; }
+    }
+  }
+
+  // brand gradient: navy-lt → purple → red
+  const STOPS = [[43, 74, 138], [107, 63, 160], [217, 79, 107]];
+  function col(T) {
+    const u = Math.min(1, Math.max(0, T)) * 2, i = Math.min(1, Math.floor(u)), f = u - i, a = STOPS[i], b = STOPS[i + 1];
+    return a.map((v, k) => Math.round(v + (b[k] - v) * f));
+  }
+  function draw(e) {
+    g.clearRect(0, 0, W, H);
+    g.strokeStyle = 'rgba(240,237,232,.18)'; g.lineWidth = 2;
+    g.beginPath(); g.roundRect ? g.roundRect(PAD - 6, PAD - 6, RIGHT - PAD + 12, H - 2 * PAD + 12, 10) : g.rect(PAD - 6, PAD - 6, RIGHT - PAD + 12, H - 2 * PAD + 12); g.stroke();
+    const [r, gg, b] = col(e.T);
+    for (const p of P) {
+      g.fillStyle = `rgb(${r},${gg},${b})`;
+      g.beginPath(); g.arc(p.x, p.y, R, 0, 7); g.fill();
+      g.strokeStyle = 'rgba(240,237,232,.85)'; g.lineWidth = 1.5; g.stroke();
+      g.fillStyle = 'rgba(255,255,255,.55)';
+      g.beginPath(); g.arc(p.x - R * .35, p.y - R * .35, R * .28, 0, 7); g.fill();
+    }
+  }
+
+  /* ── Curio ── */
+  const chip = document.getElementById('phase-chip'), fill = document.getElementById('thermo-fill'), say = document.getElementById('curio-say');
+  let curio = null;
+  try { if (window.Curio) curio = Curio.create(document.getElementById('curio-spot')); } catch (e) {}
+  const LINES = {
+    solid: ['Solid: particles only vibrate in place.', 'idle'],
+    liquid: ['Liquid: now they slide past each other!', 'point'],
+    gas: ['Gas: fast, free, filling the box!', 'surprise'],
+    cool: ['Cool it down… they lock back in place.', 'think'],
+  };
+  const LABEL = { solid: 'Solid', liquid: 'Liquid', gas: 'Gas', cool: 'Cooling' };
+  function speak(text, pose) {
+    if (say) { say.textContent = text; say.classList.remove('pop'); void say.offsetWidth; say.classList.add('pop'); }
+    if (curio) { curio.pose(pose); curio.talk(Math.min(2.2, text.length * .06)); curio.look(pose === 'wave' ? undefined : .7, pose === 'wave' ? undefined : -.5); }
+  }
+  speak("Hi! I'm Curio 👋", 'wave');
+
+  let phase = null, t = 0, first = true, last = performance.now(), visible = true, raf = 0;
+  try { new IntersectionObserver(es => { visible = es[0].isIntersecting; }).observe(cv); } catch (e) {}
+
+  function tick(now) {
+    raf = requestAnimationFrame(tick);
+    try {
+      const dt = Math.min(.05, (now - last) / 1000); last = now;
+      if (!visible || document.hidden) return;
+      t = RM ? 1 : (t + dt) % CYCLE;
+      const e = env(t);
+      const steps = RM ? 0 : 1;
+      for (let s = 0; s < steps; s++) step(e);
+      draw(e);
+      if (fill) fill.style.height = (10 + e.T * 85).toFixed(1) + '%';
+      const ph = phaseOf(t);
+      if (ph !== phase) {
+        phase = ph;
+        if (chip) { chip.textContent = LABEL[ph]; chip.className = 'phase-chip ' + ph; }
+        if (first && ph === 'solid') { setTimeout(() => speak(...LINES.solid), 2200); first = false; }
+        else speak(...LINES[ph]);
+        if (ph === 'gas' && curio) setTimeout(() => { if (phase === 'gas') curio.pose('cheer'); }, 900);
+      }
+    } catch (err) { /* keep looping */ }
+  }
+  // reduced motion: one still frame per phase, no particle motion
+  // reduced motion: frozen solid frame, no cycling
+  raf = requestAnimationFrame(tick);
+})();
+
+</script>
 </body>
 </html>

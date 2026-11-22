@@ -24,7 +24,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png"/>
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png"/>
 
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Nunito+Sans:wght@400;600&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -877,6 +877,94 @@
       .stats-grid, .impact-section, .instagram-cta { animation: none; opacity: 1; transform: none; }
     }
   </style>
+<style id="site2">
+/* ===== Site-wide restyle (matches homepage): ui-ux-fundamentals + cosmic sticker layer, CurioMinds brand kept ===== */
+:root{
+  --s1:4px;--s2:8px;--s3:12px;--s4:16px;--s5:20px;--s6:24px;--s8:32px;--s10:40px;--s12:48px;--s16:64px;
+  --t-xs:12px;--t-sm:14px;--t-md:16px;--t-lg:18px;--t-xl:24px;
+  --card:#1C2D57;--card-hi:#233766;
+  --card-shadow:0 1px 2px rgba(0,0,0,.18),0 8px 24px rgba(0,0,0,.18);
+  --card-shadow-hover:0 2px 4px rgba(0,0,0,.2),0 16px 40px rgba(0,0,0,.28);
+  --cream-a:rgba(240,237,232,.16);--red-50:rgba(217,79,107,.12);
+  --acc:var(--red);--hand:'Caveat',cursive;
+}
+body{font-family:'Nunito',sans-serif;-webkit-font-smoothing:antialiased}
+
+/* nav: original brand style (caps, red when selected), aligned with homepage height */
+nav{height:56px;box-shadow:none;border-bottom:1px solid rgba(255,255,255,.07)}
+
+/* ── deep-space hero ── */
+header.space{padding:var(--s12) var(--s8) var(--s10);
+  background:radial-gradient(ellipse at 70% 0%,#24205a 0%,transparent 55%),radial-gradient(ellipse at 10% 100%,#2a1850 0%,transparent 55%),linear-gradient(180deg,#0A1430 0%,#0D1B3E 60%,#14224a 100%)}
+header.space::before,header.space::after{display:none}
+.cosmos{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+#stars{position:absolute;inset:0;width:100%;height:100%}
+.nebula{position:absolute;inset:-20%;background:
+  radial-gradient(closest-side at 30% 35%,rgba(107,63,160,.22),transparent),
+  radial-gradient(closest-side at 75% 60%,rgba(217,79,107,.14),transparent),
+  radial-gradient(closest-side at 55% 20%,rgba(43,74,138,.25),transparent);
+  filter:blur(30px);animation:nebula 60s linear infinite}
+@keyframes nebula{to{transform:rotate(360deg)}}
+.glow{position:absolute;border-radius:50%;filter:blur(60px);mix-blend-mode:screen;animation:drift 18s ease-in-out infinite alternate}
+.g1{width:380px;height:380px;background:var(--purple);left:-120px;top:-140px;opacity:.4}
+.g2{width:340px;height:340px;background:var(--red);right:-100px;top:40px;opacity:.28;animation-duration:22s}
+@keyframes drift{to{transform:translate(40px,30px) scale(1.08)}}
+header.space .hero-inner{position:relative;z-index:1}
+
+/* hero type */
+.avatar-wrap{margin-bottom:var(--s5)}
+.avatar-wrap .avatar-ring{border:2px solid var(--cream);box-shadow:5px 5px 0 var(--red),0 0 40px rgba(217,79,107,.25);transform:rotate(-2deg)}
+header h1{letter-spacing:-0.025em;line-height:1.1;font-size:clamp(32px,4.6vw,48px)}
+header p.tagline{margin-top:var(--s2);font-size:var(--t-lg);font-weight:800;letter-spacing:-0.01em;text-transform:none;color:#E57A90}
+header p.sub{margin-top:var(--s3);font-size:var(--t-md);color:rgba(255,255,255,.7);max-width:34rem}
+header .hero-link{margin-top:var(--s5);display:inline-flex;align-items:center;gap:var(--s2);height:36px;padding:0 var(--s4);border-radius:12px;border:2px solid var(--cream);background:var(--navy-lt);color:var(--white);text-decoration:none;font-size:var(--t-sm);box-shadow:0 3px 0 var(--cream);transform:rotate(-1deg);transition:transform .2s,box-shadow .2s}
+header .hero-link:hover{transform:rotate(0) translateY(-2px);box-shadow:0 5px 0 var(--cream)}
+header .hero-link:active{transform:translateY(2px);box-shadow:0 1px 0 var(--cream)}
+header .hero-link:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+.hand-note{position:relative;z-index:1;margin-top:var(--s3);font:600 22px var(--hand);color:var(--red);transform:rotate(-2deg)}
+
+/* ── sections ── */
+main{padding-top:var(--s12)}
+.about-section,.impact-section{--acc:var(--red)}
+.about-section:nth-of-type(4n+2),.impact-section:nth-of-type(4n+2){--acc:var(--purple)}
+.about-section:nth-of-type(4n+3),.impact-section:nth-of-type(4n+3){--acc:#4A6FC0}
+.about-section:nth-of-type(4n),.impact-section:nth-of-type(4n){--acc:#9466D0}
+.section-header{gap:var(--s3);margin-bottom:var(--s4)}
+.sec-icon{width:44px;height:44px;border-radius:50%;background:var(--acc);border:2px solid var(--cream);box-shadow:0 3px 0 var(--cream);transform:rotate(-8deg);font-size:20px}
+.section-header h2{font-size:var(--t-xl);letter-spacing:-0.02em;text-transform:none}
+.section-header h2 span{display:none}
+.divider{height:2px;opacity:.7;background:linear-gradient(to right,var(--acc) 0%,transparent 70%);margin-bottom:var(--s6)}
+
+/* ── cards: lighter surface for depth; static cards don't pretend to be clickable ── */
+.bio-card,.philosophy-card,.highlight-card,.exp-card,.stat-card,.event-card,.feedback-card,.quote-card,.award-card{border:2px solid var(--cream-a);box-shadow:var(--card-shadow)}
+.bio-card::before,.highlight-card::before,.event-card::before,.quote-card::before{background:var(--acc)}
+.highlight-card:hover,.exp-card:hover,.quote-card:hover{transform:none;box-shadow:var(--card-shadow);border-color:var(--cream-a)}
+.highlight-card:hover::before{opacity:0}
+/* real links get the sticker pop */
+.mentor-card{border:2px solid var(--cream-a);transition:transform .2s cubic-bezier(.3,1.4,.5,1),box-shadow .2s,border-color .2s,background .2s}
+.mentor-card:hover{transform:translate(-3px,-3px);border-color:var(--cream);box-shadow:6px 6px 0 var(--acc);background:var(--card-hi)}
+.mentor-card:active{transform:translate(0,0);box-shadow:2px 2px 0 var(--acc)}
+/* impact numbers = achievements → gold reward colour, slight sticker tilt */
+.stat-card{background:var(--card)}
+.stat-num{color:var(--gold);letter-spacing:-0.02em}
+.stat-card:nth-child(odd){transform:rotate(-1deg)}.stat-card:nth-child(even){transform:rotate(1deg)}
+
+/* buttons: sticker CTA, sentence case */
+.instagram-btn{text-transform:none;letter-spacing:0;border:2px solid var(--cream);box-shadow:0 3px 0 var(--cream);transition:transform .15s,box-shadow .15s,filter .15s}
+.instagram-btn:hover{transform:translateY(-2px);box-shadow:0 5px 0 var(--cream);filter:brightness(1.06)}
+.instagram-btn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--cream)}
+.tag{text-transform:none;letter-spacing:.01em}
+.quote-card cite{text-transform:none;letter-spacing:0}
+
+/* footer: matches homepage */
+footer{font-size:var(--t-sm);letter-spacing:0;text-transform:none;font-weight:600;color:rgba(255,255,255,.5)}
+
+@media (max-width:600px){
+  header.space{padding:var(--s8) var(--s4) var(--s8)}
+  .stat-card:nth-child(n){transform:none}
+}
+@media (prefers-reduced-motion:reduce){.nebula,.glow{animation:none}}
+</style>
 </head>
 <body>
 
@@ -889,7 +977,8 @@
 </nav>
 
 <!-- HERO -->
-<header>
+<header class="space">
+  <div class="cosmos" aria-hidden="true"><div class="nebula"></div><div class="glow g1"></div><div class="glow g2"></div><canvas id="stars"></canvas></div>
   <div class="hero-inner">
     <div class="avatar-wrap">
       <div class="avatar-ring">🌱</div>
@@ -1298,5 +1387,80 @@
 
 <!-- Cloudflare Web Analytics is enabled on the Pages project and injected
      automatically at build time — no snippet needed here. -->
+<script id="space-js">
+/* Hero space: twinkling starfield, glinting stars, shooting stars */
+(function () {
+  'use strict';
+  const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  /* ── space: twinkling starfield, glinting bright stars, shooting stars ── */
+  const sc = document.getElementById('stars');
+  let SW = 0, SH = 0, sx = null, STARS = [], SHOOT = null, nextShoot = 2.5, heroVisible = true;
+  const TINTS = ['240,237,232', '255,255,255', '200,215,255', '255,200,215', '220,200,255'];
+  function buildStars() {
+    if (!sc) return;
+    const r = sc.getBoundingClientRect(), d = Math.min(2, devicePixelRatio || 1);
+    SW = r.width; SH = r.height; sc.width = SW * d; sc.height = SH * d;
+    sx = sc.getContext('2d'); sx.setTransform(d, 0, 0, d, 0, 0);
+    let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    const n = Math.round(SW * SH / 2600);
+    STARS = [];
+    for (let i = 0; i < n; i++) {
+      const big = rnd() < 0.04, mid = !big && rnd() < 0.18;
+      STARS.push({ x: rnd() * SW, y: rnd() * SH, r: big ? 1.6 + rnd() : mid ? 1 + rnd() * .4 : .5 + rnd() * .5,
+        a: .25 + rnd() * .6, sp: .6 + rnd() * 2.2, ph: rnd() * 6.3, c: TINTS[Math.floor(rnd() * TINTS.length)], glint: big });
+    }
+  }
+  function drawSpace(t) {
+    if (!sx) return;
+    sx.clearRect(0, 0, SW, SH);
+    for (const s of STARS) {
+      const tw = RM ? 1 : .55 + .45 * Math.sin(t * s.sp + s.ph);
+      const a = s.a * tw;
+      sx.fillStyle = `rgba(${s.c},${a.toFixed(3)})`;
+      sx.beginPath(); sx.arc(s.x, s.y, s.r, 0, 7); sx.fill();
+      if (s.glint) { // 4-point sparkle with soft halo
+        const L = s.r * (4 + 4 * tw);
+        const gr = sx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.r * 6);
+        gr.addColorStop(0, `rgba(${s.c},${(a * .5).toFixed(3)})`); gr.addColorStop(1, `rgba(${s.c},0)`);
+        sx.fillStyle = gr; sx.beginPath(); sx.arc(s.x, s.y, s.r * 6, 0, 7); sx.fill();
+        sx.strokeStyle = `rgba(${s.c},${(a * .9).toFixed(3)})`; sx.lineWidth = .8;
+        sx.beginPath(); sx.moveTo(s.x - L, s.y); sx.lineTo(s.x + L, s.y); sx.moveTo(s.x, s.y - L); sx.lineTo(s.x, s.y + L); sx.stroke();
+      }
+    }
+    // shooting star
+    if (!RM) {
+      if (!SHOOT && t > nextShoot) {
+        const fromLeft = Math.random() < .5;
+        SHOOT = { x: fromLeft ? Math.random() * SW * .5 : SW * (.5 + Math.random() * .5), y: Math.random() * SH * .35,
+          vx: (fromLeft ? 1 : -1) * (520 + Math.random() * 260), vy: 200 + Math.random() * 120, t0: t, life: .9 };
+      }
+      if (SHOOT) {
+        const k = (t - SHOOT.t0) / SHOOT.life;
+        if (k >= 1) { SHOOT = null; nextShoot = t + 3 + Math.random() * 4; }
+        else {
+          const hx = SHOOT.x + SHOOT.vx * (t - SHOOT.t0), hy = SHOOT.y + SHOOT.vy * (t - SHOOT.t0);
+          const tl = .16, tx = hx - SHOOT.vx * tl, ty = hy - SHOOT.vy * tl, fade = Math.sin(k * Math.PI);
+          const lg = sx.createLinearGradient(tx, ty, hx, hy);
+          lg.addColorStop(0, 'rgba(240,237,232,0)'); lg.addColorStop(1, `rgba(255,255,255,${(.9 * fade).toFixed(3)})`);
+          sx.strokeStyle = lg; sx.lineWidth = 2; sx.lineCap = 'round';
+          sx.beginPath(); sx.moveTo(tx, ty); sx.lineTo(hx, hy); sx.stroke();
+        }
+      }
+    }
+  }
+  buildStars(); addEventListener('resize', buildStars);
+  try { new IntersectionObserver(es => { heroVisible = es[0].isIntersecting; }).observe(sc); } catch (e) {}
+  let lastSpace = 0;
+  (function spaceLoop(now) {
+    requestAnimationFrame(spaceLoop);
+    try {
+      if (!heroVisible || document.hidden) return;
+      if (now - lastSpace < 33) return; // ~30 fps is plenty for twinkle
+      lastSpace = now; drawSpace(now / 1000);
+    } catch (e) {}
+  })(0);
+
+})();
+</script>
 </body>
 </html>
