@@ -7,6 +7,7 @@
   <url><loc>https://curiomindsinc.pages.dev/impact</loc><lastmod>2026-10-02</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
 
   <!-- Physics -->
+  <url><loc>https://curiomindsinc.pages.dev/Physics/forces_energy</loc><lastmod>2026-11-24</lastmod><priority>0.8</priority></url>
   <url><loc>https://curiomindsinc.pages.dev/Physics/springs</loc><lastmod>2026-11-12</lastmod><priority>0.8</priority></url>
   <url><loc>https://curiomindsinc.pages.dev/Physics/magnetism</loc><lastmod>2026-11-23</lastmod><priority>0.8</priority></url>
   <url><loc>https://curiomindsinc.pages.dev/Physics/radioactivity</loc><lastmod>2026-10-26</lastmod><priority>0.8</priority></url>
@@ -18,7 +19,6 @@
   <url><loc>https://curiomindsinc.pages.dev/Physics/catapult_simulator</loc><lastmod>2026-08-19</lastmod><priority>0.8</priority></url>
   <url><loc>https://curiomindsinc.pages.dev/Physics/fma-standalone</loc><lastmod>2026-09-22</lastmod><priority>0.8</priority></url>
   <url><loc>https://curiomindsinc.pages.dev/Physics/conservationenergy-standalone</loc><lastmod>2026-09-22</lastmod><priority>0.8</priority></url>
-  <url><loc>https://curiomindsinc.pages.dev/Physics/moments-standalone</loc><lastmod>2026-09-22</lastmod><priority>0.8</priority></url>
   <url><loc>https://curiomindsinc.pages.dev/Physics/electricity-lab/</loc><lastmod>2026-10-13</lastmod><priority>0.8</priority></url>
   <url><loc>https://curiomindsinc.pages.dev/Physics/electricity-lab/current-resistance</loc><lastmod>2026-10-13</lastmod><priority>0.8</priority></url>
   <url><loc>https://curiomindsinc.pages.dev/Physics/electricity-lab/dc-circuits</loc><lastmod>2026-10-13</lastmod><priority>0.8</priority></url>

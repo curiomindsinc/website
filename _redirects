@@ -45,8 +45,10 @@
 /Earth%20Science/water_cycle.html /Earth%20Science/watercycle-standalone  301
 /Physics/fma      /Physics/fma-standalone  301
 /Physics/fma.html /Physics/fma-standalone  301
-/Physics/moments      /Physics/moments-standalone  301
-/Physics/moments.html /Physics/moments-standalone  301
+/Physics/moments      /Physics/forces_energy  301
+/Physics/moments.html /Physics/forces_energy  301
+/Physics/moments-standalone      /Physics/forces_energy  301
+/Physics/moments-standalone.html /Physics/forces_energy  301
 /Physics/pendulum-energy-sim      /Physics/conservationenergy-standalone  301
 /Physics/pendulum-energy-sim.html /Physics/conservationenergy-standalone  301
 /Physics/refraction-sim      /Physics/light_lab  301
